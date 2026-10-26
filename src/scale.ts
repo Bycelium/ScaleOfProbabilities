@@ -464,7 +464,6 @@ export function createScale(root: HTMLElement): () => void {
         image.src = artworkImageSource(item);
         button.dataset.locale = locale.code;
       }
-      if (button.parentElement !== layer) layer.append(button);
       setStyle(button, "left", `${x}px`);
       setStyle(button, "top", `${y - artSize / 2}px`);
       setStyle(button, "--size", `${item.size * compactArtScale}px`);
@@ -510,7 +509,6 @@ export function createScale(root: HTMLElement): () => void {
       ...visibleTickDepths(referenceDiameter, maximumRingDiameter, bounds, originCenter + SCENE_REBASE_DECIBANS),
     ]);
     for (const position of tickPositions) {
-      if (!ringCanEnterScene(position)) continue;
       const major = Math.abs(position / 5 - Math.round(position / 5)) < 1e-8;
       updateRing(tickRingNodes, position, `depth-ring tick-depth-ring${major ? " major-depth-ring" : ""}`).element.dataset.tickDepthRing = trimDecimal(position);
     }
