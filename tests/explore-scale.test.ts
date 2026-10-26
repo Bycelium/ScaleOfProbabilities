@@ -172,6 +172,7 @@ describe("public probability exploration", () => {
     render();
 
     const scene = document.querySelector<HTMLElement>("[data-depth-scene]")!;
+    const ringScene = document.querySelector<HTMLElement>("[data-depth-ring-scene]")!;
     const coin = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!;
     const initialLeft = coin.style.left;
     const initialTop = coin.style.top;
@@ -184,6 +185,7 @@ describe("public probability exploration", () => {
 
     expect(movedCenter).toBeCloseTo(0.2, 10);
     expect(sceneZoom).toBeCloseTo(10 ** (-movedCenter / 10), 10);
+    expect(ringScene.style.transform).toBe(scene.style.transform);
     expect(initialScale * sceneZoom).toBeCloseTo(10 ** (-movedCenter / 10), 10);
     expect([coin.style.left, coin.style.top]).toEqual([initialLeft, initialTop]);
 
@@ -206,10 +208,28 @@ describe("public probability exploration", () => {
     clock.advanceTo(30);
     expect(writes.mock.calls.filter(([key]) => key === "probability-scale-view-v1")).toHaveLength(0);
 
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(writes.mock.calls.filter(([key]) => key === "probability-scale-view-v1")).toHaveLength(0);
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(writes.mock.calls.filter(([key]) => key === "probability-scale-view-v1")).toHaveLength(1);
+    clock.advanceTo(60);
     window.dispatchEvent(new PageTransitionEvent("pagehide"));
     const viewWrites = writes.mock.calls.filter(([key]) => key === "probability-scale-view-v1");
-    expect(viewWrites).toHaveLength(1);
-    expect(JSON.parse(String(viewWrites[0]![1])).center).toBeCloseTo(Number(scale.dataset.depth), 10);
+    expect(viewWrites).toHaveLength(2);
+    expect(JSON.parse(String(viewWrites[1]![1])).center).toBeCloseTo(Number(scale.dataset.depth), 10);
+  });
+
+  it("reprojects the scene when its measured width changes", () => {
+    render(1200);
+    const coin = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!;
+    const initialLeft = coin.style.left;
+
+    scaleWidth = 800;
+    TestResizeObserver.instances.at(-1)!.fire();
+
+    expect(coin.style.left).not.toBe(initialLeft);
+    expect(Number.parseFloat(coin.style.left)).toBeCloseTo(Number.parseFloat(initialLeft) - 200, 8);
   });
 
   it("keeps subpixel landmark art keyboard accessible down to its geometric visibility threshold", () => {
@@ -422,6 +442,12 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-center-marker] .odds")?.textContent).toContain("Cote :");
     expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("P");
     expect(localStorage.getItem("probability-scale-locale")).toBe("fr");
+    document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.click();
+    document.querySelector<HTMLButtonElement>('[data-language-menu] [data-locale-choice="en"]')!.click();
+    expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("H");
+    document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.click();
+    document.querySelector<HTMLButtonElement>('[data-language-menu] [data-locale-choice="fr"]')!.click();
+    expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("P");
     document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
 
@@ -1294,7 +1320,7 @@ describe("public probability exploration", () => {
     const base = render();
 
     const password = document.querySelector<HTMLButtonElement>('[data-landmark="password-password"]')!;
-    expect(password.querySelector("svg text")?.textContent).toBe("password");
+    expect(sceneArtwork("password-password").querySelector("text")?.textContent).toBe("password");
     password.click();
     expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("59,462 times among 32,603,388");
     expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a[href*="ab068333d7d44a9376e2037b0ed7d2e8ca5c6610"]')).not.toBeNull();
@@ -1480,8 +1506,8 @@ describe("public probability exploration", () => {
     const euroLoss = document.querySelector<HTMLButtonElement>('[data-landmark="euromillions-main-loss"]')!;
     expect(euroLoss).not.toBeNull();
     expect(euroLoss.getAttribute("aria-label")).toContain("92.29%");
-    expect(euroLoss.querySelector(".lottery-ticket[data-event='loss']")).not.toBeNull();
-    expect(euroLoss.querySelector(".ticket-flag.european")).not.toBeNull();
+    expect(sceneArtwork("euromillions-main-loss").querySelector(".lottery-ticket[data-event='loss']")).not.toBeNull();
+    expect(sceneArtwork("euromillions-main-loss").querySelector(".ticket-flag.european")).not.toBeNull();
     euroLoss.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toBe("A EuroMillions line wins no main-draw prize");
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("129,059,469");
@@ -1491,7 +1517,7 @@ describe("public probability exploration", () => {
     history.replaceState(null, "", "#d=-72.8");
     render(390);
     const franceJackpot = document.querySelector<HTMLButtonElement>('[data-landmark="france-loto-jackpot"]')!;
-    expect(franceJackpot.querySelector(".lottery-ticket[data-event='jackpot'] .ticket-jackpot")?.textContent).toBe("Jackpot!");
+    expect(sceneArtwork("france-loto-jackpot").querySelector(".lottery-ticket[data-event='jackpot'] .ticket-jackpot")?.textContent).toBe("Jackpot!");
   });
 
   it("states the radon decay model with an explicit exponent", () => {
