@@ -334,12 +334,12 @@ describe("public probability exploration", () => {
     summaries[1].focus();
     intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(intro.querySelector('a[href*="Good1979"]'));
-    const allReferences = intro.querySelector<HTMLInputElement>("[data-all-references]")!;
-    allReferences.focus();
+    const introLanguage = intro.querySelector<HTMLButtonElement>('[data-locale-choice="fr"]')!;
+    introLanguage.focus();
     intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
-    expect(document.activeElement).toBe(intro.querySelector('.intro-credit a'));
+    expect(document.activeElement).toBe(summaries[0]);
     intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
-    expect(document.activeElement).toBe(allReferences);
+    expect(document.activeElement).toBe(introLanguage);
     const ordinary = new KeyboardEvent("keydown", { key: "a", bubbles: true, cancelable: true });
     intro.dispatchEvent(ordinary);
     expect(ordinary.defaultPrevented).toBe(false);
@@ -424,18 +424,18 @@ describe("public probability exploration", () => {
     expect(document.querySelector('[data-landmark="rain-brest-december"]')).not.toBeNull();
     expect(document.querySelector('[data-landmark="france-loto-main-prize"]')).not.toBeNull();
 
-    document.querySelector<HTMLButtonElement>("[data-open-intro]")!.click();
-    const all = document.querySelector<HTMLInputElement>("[data-all-references]")!;
-    expect(all.checked).toBe(false);
+    const all = document.querySelector<HTMLButtonElement>("[data-all-references]")!;
+    expect(all.getAttribute("aria-pressed")).toBe("false");
+    expect(all.getAttribute("aria-label")).toBe("All references");
+    expect(all.querySelector("[data-all-references-help]")?.textContent).toBe("Include local references from every language");
     all.click();
+    expect(all.getAttribute("aria-pressed")).toBe("true");
     expect(localStorage.getItem("probability-scale-all-references")).toBe("true");
     expect(scale.dataset.depth).toBe(selectedDepth);
     expect(document.querySelector('[data-landmark="rain-hilo"]')).not.toBeNull();
     expect(document.querySelector('[data-landmark="rain-brest-december"]')).not.toBeNull();
 
-    document.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.click();
     document.querySelector<HTMLButtonElement>('[data-landmark="rain-hilo"]')!.dispatchEvent(new MouseEvent("mouseenter"));
-    document.querySelector<HTMLButtonElement>("[data-open-intro]")!.click();
     all.click();
     expect(document.querySelector('[data-landmark="rain-hilo"]')).toBeNull();
     all.click();
@@ -443,7 +443,7 @@ describe("public probability exploration", () => {
     rendered.dispose();
     document.body.innerHTML = '<main id="app"></main>';
     createScale(document.querySelector<HTMLElement>("#app")!);
-    expect(document.querySelector<HTMLInputElement>("[data-all-references]")?.checked).toBe(true);
+    expect(document.querySelector<HTMLButtonElement>("[data-all-references]")?.getAttribute("aria-pressed")).toBe("true");
     expect(document.querySelector('[data-landmark="rain-hilo"]')).not.toBeNull();
     expect(document.querySelector('[data-landmark="rain-brest-december"]')).not.toBeNull();
   });
@@ -617,13 +617,11 @@ describe("public probability exploration", () => {
     press(coin, "ArrowRight");
     expect(depth()).toBeGreaterThan(-1);
 
-    document.querySelector<HTMLButtonElement>("[data-open-intro]")!.click();
-    const allReferences = document.querySelector<HTMLInputElement>("[data-all-references]")!;
+    const allReferences = document.querySelector<HTMLButtonElement>("[data-all-references]")!;
     allReferences.focus();
     const beforeControl = depth();
     press(allReferences, "ArrowUp");
     expect(depth()).toBeCloseTo(beforeControl);
-    document.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.click();
 
     const languageArrow = new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true });
     document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.dispatchEvent(languageArrow);
@@ -1962,7 +1960,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("0 dBan");
 
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("storage unavailable"); });
-    document.querySelector<HTMLInputElement>("[data-all-references]")!.click();
+    document.querySelector<HTMLButtonElement>("[data-all-references]")!.click();
     const scale = document.querySelector<HTMLElement>(".scale")!;
     scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
     expect(Number(scale.dataset.depth)).toBeGreaterThan(0);
