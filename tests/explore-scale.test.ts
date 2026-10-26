@@ -1027,13 +1027,13 @@ describe("public probability exploration", () => {
     for (const [id, winningPockets] of roulette) {
       const item = byId.get(id)!;
       expect(item.position).toBeCloseTo(10 * Math.log10(winningPockets / (37 - winningPockets)), 10);
-      expect(item.explanation).toContain("returns the €1 stake");
-      expect(item.explanation).toContain("expected net return");
+      expect(item.explanation).toContain("€100 stake");
+      expect(item.explanation).toContain("average net return");
     }
-    expect(byId.get("roulette-straight-up")?.explanation).toContain("−€0.027 per €1 bet");
-    expect(byId.get("roulette-straight-up")?.explanation).toContain("An uncovered number loses the €1 stake");
-    expect(byId.get("roulette-even-money")?.explanation).toContain("−€0.0135 per €1 bet");
-    expect(byId.get("roulette-even-money")?.explanation).toContain("half the €1 stake");
+    expect(byId.get("roulette-straight-up")?.explanation).toContain("−€100/37 ≈ −€2.70 per €100 bet");
+    expect(byId.get("roulette-straight-up")?.explanation).toContain("An uncovered number loses the €100 stake");
+    expect(byId.get("roulette-even-money")?.explanation).toContain("−€100/74 ≈ −€1.35 per €100 bet");
+    expect(byId.get("roulette-even-money")?.explanation).toContain("half the €100 stake");
     expect(byId.get("roulette-two-dozens-columns")?.position).toBeGreaterThan(0);
 
     const clover = byId.get("four-leaf-clover")!;
@@ -1055,8 +1055,8 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-landmark="roulette-even-money"]')!.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("rouge");
     expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("chances simples équivalentes");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("rend la mise de 1 €");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("espérance de gain net");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("rend la mise");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("perte moyenne");
     expect(document.querySelector('[data-related-landmark="roulette-dozen-column"]')).not.toBeNull();
   });
 

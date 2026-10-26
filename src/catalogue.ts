@@ -148,14 +148,19 @@ const gbCarInjuryCollisionRatePerKm = 484 / (1_000_000_000 * 1.609344);
 const injuryCollisionOver = (kilometres: number): number => -Math.expm1(-gbCarInjuryCollisionRatePerKm * kilometres);
 const gbCarInjuryCollision20Km = injuryCollisionOver(20);
 const gbCarInjuryCollision500Km = injuryCollisionOver(500);
-const rouletteBet = (id: string, title: string, shortTitle: string, description: string, winningPockets: number, netPayout: number, color: string, halfZero = false): Landmark => {
-  const expectedReturn = halfZero ? "−€0.0135 per €1 bet (−1.35 cents)" : "−€0.027 per €1 bet (−2.7 cents)";
+const rouletteBet = (id: string, title: string, shortTitle: string, description: string, winningPockets: number, netPayoutMultiplier: number, color: string, halfZero = false): Landmark => {
+  const stake = 100;
+  const netPayout = stake * netPayoutMultiplier;
+  const expectedReturn = halfZero ? "−€100/74 ≈ −€1.35 per €100 bet" : "−€100/37 ≈ −€2.70 per €100 bet";
   const zeroRule = halfZero
-    ? "If zero wins, the casino returns half the €1 stake, so the net loss is €0.50."
-    : "An uncovered number loses the €1 stake.";
+    ? "If zero wins, the casino returns half the €100 stake, so the net loss is €50."
+    : "An uncovered number loses the €100 stake.";
+  const returnedStake = winningPockets === 24
+    ? "returns the €50 placed on the winning dozen or column"
+    : "returns the €100 stake";
   const calculation = halfZero
-    ? "p = 18/37; expected net return = [(18 × €1) − (18 × €1) − €0.50] / 37 = −€1/74 ≈ −€0.0135 per €1"
-    : `p = ${winningPockets}/37; expected net return = [(${winningPockets} × €${netPayout}) − (${37 - winningPockets} × €1)] / 37 = −€1/37 ≈ −€0.027 per €1`;
+    ? "p = 18/37; expected net return = [(18 × €100) − (18 × €100) − €50] / 37 = −€100/74 ≈ −€1.35 per €100"
+    : `p = ${winningPockets}/37; expected net return = [(${winningPockets} × €${netPayout}) − (${37 - winningPockets} × €100)] / 37 = −€100/37 ≈ −€2.70 per €100`;
   return {
     id,
     title,
@@ -163,9 +168,9 @@ const rouletteBet = (id: string, title: string, shortTitle: string, description:
     chance: lowerRatio(winningPockets, 37),
     size: 88,
     art: rouletteArtwork(winningPockets, color),
-    explanation: `${description} A winning bet pays €${netPayout} net and returns the €1 stake. ${zeroRule} The expected net return is ${expectedReturn}.`,
+    explanation: `${description} On a €100 stake, a win adds €${netPayout} net and ${returnedStake}. ${zeroRule} Over many spins, the average net return is ${expectedReturn}.`,
     calculation,
-    assumptions: "This exact model uses one €1 bet on the 37-pocket single-zero wheel and French casino rules for roulette anglaise. Pockets are treated as equally likely. The expected return averages the stated net wins and losses; it does not promise the result of one bet or create a strategy advantage.",
+    assumptions: "This exact model uses a €100 stake on a fair 37-pocket single-zero wheel under French roulette anglaise rules. Its expected return is an average over repeated plays.",
     sources: [rouletteRulesSource, rouletteOperatorSource],
     classification: exact,
   };
@@ -309,7 +314,7 @@ export const landmarks: readonly Landmark[] = [
   rouletteBet("roulette-six-line", "A six-line roulette bet wins", "roulette · six-line", "One chosen six-line bet covers six adjacent numbers on two rows of the roulette layout, or six of the 37 wheel pockets.", 6, 5, "#8b6b9b"),
   rouletteBet("roulette-dozen-column", "A dozen or column roulette bet wins", "roulette · dozen or column", "One chosen dozen or column covers 12 of the 37 pockets on a single-zero roulette wheel.", 12, 2, "#597c9b"),
   rouletteBet("roulette-even-money", "A roulette bet on red wins", "roulette · red", "A bet on red covers 18 of the 37 pockets on a single-zero roulette wheel. Black, odd, even, low, and high are equivalent even-money choices.", 18, 1, "#9e4249", true),
-  rouletteBet("roulette-two-dozens-columns", "A two-dozen or two-column roulette bet wins", "roulette · 24 pockets", "One chosen pair of dozens or columns covers 24 of the 37 pockets on a single-zero roulette wheel.", 24, 0.5, "#4e8b78"),
+  rouletteBet("roulette-two-dozens-columns", "A two-dozen or two-column roulette bet wins", "roulette · 24 pockets", "A €100 total stake, split as €50 on each of two chosen dozens or columns, covers 24 of the 37 pockets on a single-zero roulette wheel.", 24, 0.5, "#4e8b78"),
   { id: "blackjack-natural-six-deck", title: "A natural blackjack from a six-deck shoe", shortTitle: "natural blackjack · 6 decks", chance: lower(2 * (24 / 312) * (96 / 311)), size: 92, art: blackjackArtwork("#806a9b"), explanation: "The first two cards from a full six-deck casino shoe are an ace and a ten, jack, queen, or king, in either order. This is a natural blackjack, received about once in 21.06 initial two-card deals.", calculation: "p = 2 × (24 aces / 312 cards) × (96 ten-valued cards / 311 remaining cards) ≈ 0.047489488", assumptions: "The 312-card shoe contains 24 aces and 96 ten-valued cards and is uniformly shuffled. A natural is the initial two-card hand, so a 21 made after a split is excluded. Receiving a natural does not mean winning against the dealer. Unknown burned or intervening cards do not change this unconditional chance; known shoe depletion can change it.", sources: [blackjackRulesSource], classification: exact },
 ];
 
