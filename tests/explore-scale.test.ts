@@ -1516,7 +1516,6 @@ describe("public probability exploration", () => {
 
     history.replaceState(null, "", "#d=-72.8");
     render(390);
-    const franceJackpot = document.querySelector<HTMLButtonElement>('[data-landmark="france-loto-jackpot"]')!;
     expect(sceneArtwork("france-loto-jackpot").querySelector(".lottery-ticket[data-event='jackpot'] .ticket-jackpot")?.textContent).toBe("Jackpot!");
   });
 
