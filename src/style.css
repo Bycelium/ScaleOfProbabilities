@@ -97,13 +97,22 @@ dialog[data-detail-panel] { bottom: 4rem; left: auto; margin: 0; max-height: cal
 .scale-intro [data-dismiss-intro] { background: #286454; border: 1px solid #6da38f; border-radius: 999px; padding: .6rem 1rem; }
 .scale-intro .intro-credit { font-size: .78rem; margin: 0 0 0 auto; text-align: right; }
 .intro-credit a { color: #9ed6c8; }
-.intro-directions { align-items: center; border-block: 1px solid #426674; display: flex; gap: .8rem; margin: .75rem 0; padding: .55rem 0; }
-.intro-directions svg { flex: none; height: 4.1rem; width: 5.6rem; }
-.intro-directions circle { fill: none; stroke: #809195; stroke-width: 1.25; }
-.intro-directions path { fill: none; stroke-linecap: round; stroke-width: 4; }
+.intro-directions { border-block: 1px solid #426674; margin: .75rem 0; padding: .55rem 0; text-align: center; }
+.intro-directions svg { display: block; height: 9rem; margin: 0 auto; max-width: 100%; width: min(22rem, 100%); }
+.intro-rings circle { fill: none; stroke: #809195; stroke-width: 1.25; }
+.intro-rings circle:nth-child(1) { opacity: .28; stroke-width: 1.7; }
+.intro-rings circle:nth-child(2) { opacity: .42; stroke-width: 1.5; }
+.intro-rings circle:nth-child(3) { opacity: .58; }
+.intro-rings circle:nth-child(4) { opacity: .72; }
+.intro-rings circle:nth-child(5) { opacity: .84; }
+.intro-rope { fill: #b8c7c744; }
+.intro-axis, .intro-ticks path { fill: none; stroke: #b8c7c788; stroke-linecap: round; }
+.intro-axis { stroke-width: 1.4; }
+.intro-ticks path { stroke-width: 1.2; }
+.intro-directions .intro-inward, .intro-directions .intro-outward { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3.5; }
 .intro-directions .intro-inward { stroke: #de746b; }
 .intro-directions .intro-outward { stroke: #7bbf9a; }
-.intro-directions p { display: grid; gap: .3rem; line-height: 1.2; margin: 0; }
+.intro-directions p { display: grid; gap: .75rem; grid-template-columns: 1fr 1fr; line-height: 1.2; margin: .25rem auto 0; max-width: min(22rem, 100%); }
 .intro-directions .rarer { color: #f0998d; }
 .intro-directions .likely { color: #9ed6b8; }
 dialog [data-detail-art] { width: 6.25rem; }
@@ -154,8 +163,8 @@ dd a { color: #9ed6c8; }
   dialog[data-detail-panel] { border-radius: 1rem 1rem 0 0; bottom: 3.75rem; left: 0; max-height: min(72vh, calc(100vh - 4.25rem)); right: 0; width: 100%; }
   dialog [data-detail-art] { width: 4.5rem; }
   .scale-intro { inset: 6svh 1rem; max-height: 88svh; padding: 1rem; transform: none; width: auto; }
-  .intro-directions { gap: .55rem; }
-  .intro-directions svg { height: 3.7rem; width: 5rem; }
+  .intro-directions svg { height: 8rem; }
+  .intro-directions p { font-size: .86rem; gap: .5rem; }
   .gap-caption { font-size: .75rem; max-width: calc(100vw - 1.6rem); white-space: normal; width: max-content; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } .hyperspace { display: none; } }
