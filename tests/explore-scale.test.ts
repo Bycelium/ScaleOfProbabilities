@@ -1496,7 +1496,6 @@ describe("public probability exploration", () => {
       "die-d4-highest": "−4.8 dBan",
       "die-d12-highest": "−10.4 dBan",
       "die-d20-highest": "−12.8 dBan",
-      "die-d100-highest": "−20 dBan",
     };
     for (const [id, label] of Object.entries(positions)) {
       history.replaceState(null, "", `#d=${label.replace("−", "-").replace(" dBan", "")}`);
@@ -1513,13 +1512,6 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-landmark="die-d20-highest"]')!.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("critical");
     expect(document.querySelector('[data-related-landmark="die-d20-no-critical-failure"]')).not.toBeNull();
-
-    history.replaceState(null, "", "#d=-20");
-    render();
-    expect([...sceneArtwork("die-d100-highest").querySelectorAll("text")].map(node => node.textContent)).toEqual(["00", "0"]);
-    document.querySelector<HTMLButtonElement>('[data-landmark="die-d100-highest"]')!.click();
-    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("designated as tens");
-    expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a')?.href).toContain("dndbeyond.com");
 
     history.replaceState(null, "", "#d=-233.4");
     render();
@@ -1572,9 +1564,9 @@ describe("public probability exploration", () => {
     history.replaceState(null, "", "#d=0");
     render(390);
     const d4 = document.querySelector<HTMLElement>('[data-landmark="die-d4-highest"]')!;
-    const d100 = document.querySelector<HTMLElement>('[data-landmark="die-d100-highest"]')!;
-    expect(Number(d4.dataset.depthScale)).toBeGreaterThan(Number(d100.dataset.depthScale));
-    expect(d100.querySelector<HTMLElement>(".landmark-title")?.hidden).toBe(true);
+    const d20 = document.querySelector<HTMLElement>('[data-landmark="die-d20-highest"]')!;
+    expect(Number(d4.dataset.depthScale)).toBeGreaterThan(Number(d20.dataset.depthScale));
+    expect(d20.querySelector<HTMLElement>(".landmark-title")?.hidden).toBe(true);
   });
 
   it("explains final Texas Hold’em categories after all seven cards are dealt", () => {

@@ -50,13 +50,6 @@ export const dice_gamesFR = {
     calculation: "p = 1 résultat 20 naturel / 20 résultats = 1/20",
     assumptions: "Le d20 est équilibré et lancé une fois pour une attaque. Les modificateurs, relances, avantages et désavantages sont exclus. Les résultats critiques d’autres tests ou d’autres jeux de rôle peuvent suivre des règles différentes.",
   },
-  "die-d100-highest": {
-    title: "Cent avec un lancer de dé de pourcentage",
-    shortTitle: "100 avec un d100",
-    explanation: "Une seule des 100 paires équiprobables se lit 100 : 00 sur le dé des dizaines et 0 sur celui des unités.",
-    calculation: "p = 1 paire correspondante / (10 faces des dizaines × 10 faces des unités) = 1/100",
-    assumptions: "Deux dés équilibrés à dix faces sont lancés indépendamment. L’un indique les dizaines et l’autre les unités, ce qui produit 100 résultats équiprobables. La paire 00 et 0 représente 100.",
-  },
   "two-dice-any-double": {
     title: "Deux dés affichent le même nombre",
     shortTitle: "deux dés identiques",

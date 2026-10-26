@@ -10,7 +10,6 @@ export const dice_gamesModels = [
   { id: "die-d4-highest", chance: lowerRatio(1, 4), size: 82, art: polyhedralDieArtwork(4, "#b7655f", "#ffe9d0"), sourceIds: ["dnd-dice"], classification: exact },
   { id: "die-d12-highest", chance: lowerRatio(1, 12), size: 84, art: polyhedralDieArtwork(12, "#8a668e", "#f4e5ff"), sourceIds: ["dnd-dice"], classification: exact },
   { id: "die-d20-highest", chance: lowerRatio(1, 20), size: 86, art: polyhedralDieArtwork(20, "#6577a5", "#eef1ff"), sourceIds: ["dnd-critical"], classification: exact },
-  { id: "die-d100-highest", chance: lowerRatio(1, 100), size: 88, art: polyhedralDieArtwork(100, "#547f93", "#e5f3ef"), sourceIds: ["dnd-dice"], classification: exact },
   { id: "two-dice-any-double", chance: lowerRatio(1, 6), size: 78, art: diceArtwork(2, 4, "#c66f53", "#fff1d8"), sourceIds: ["fair-independent-dice-model"], classification: exact },
   { id: "two-dice-both-six", chance: lowerRatio(1, 36), size: 78, art: diceArtwork(2, 6, "#ba5d68", "#ffe8df"), sourceIds: ["fair-independent-dice-model"], classification: exact },
   { id: "three-dice-any-triple", chance: lowerRatio(1, 36), size: 78, art: diceArtwork(3, 4, "#9b668f", "#f5e6ff"), sourceIds: ["fair-independent-dice-model"], classification: exact },

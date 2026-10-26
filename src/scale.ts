@@ -1,5 +1,6 @@
 import { displayLandmarks, regionalLandmarkLocales, relatedLandmarkIds, type DisplayLandmark, type LandmarkDiagnostic, type Source } from "./catalogue";
 import { localeChoices, locales, localizeLandmark, resolveInitialLocale, saveLocale, translateArtwork, type LocaleCode, type LocaleDefinition } from "./locales";
+import { catalogueSlots } from "./catalogue/order";
 import { fillTemplate } from "./locales/helpers";
 import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabilityPercent } from "./probability";
 
@@ -233,9 +234,9 @@ export function createScale(root: HTMLElement): () => void {
     "enigma-m4-known-rings": 11 * Math.PI / 6,
     "sahara-grain": Math.PI / 2,
   };
-  const landmarkAngles = new Map(displayLandmarks.map((item, index) => [
+  const landmarkAngles = new Map(displayLandmarks.map(item => [
     item.id,
-    landmarkAngleOverrides[item.id] ?? -Math.PI / 4 + (((index * 137.508) % 360) / 360) * (3 * Math.PI / 2),
+    landmarkAngleOverrides[item.id] ?? -Math.PI / 4 + (((catalogueSlots[item.id] * 137.508) % 360) / 360) * (3 * Math.PI / 2),
   ]));
   const compactTitleOffsets: Readonly<Record<string, Readonly<{ x: number; y: number }>>> = {
     "weekday": { x: 20, y: 0 },

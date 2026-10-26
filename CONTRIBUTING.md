@@ -10,7 +10,7 @@ Each example needs a meaningful event, an explicit probability model, and source
 
 Use decibans for positions and differences. For event probability `p`, compute the position as `d = 10 log10(p / (1 − p))`. A difference `Δd = d₂ − d₁` compares the two events' odds and corresponds to an odds multiplier of `10^(Δd / 10)`. The difference does not represent the probability of a shift. Explain odds as the ratio between an event and its complement. One-in-X notation gives a probability denominator. Preserve finite internal positions and write copy that never displays 0%, 100%, or infinity for a finite probability.
 
-Append every new landmark ID to `order.ts`. Existing array indices determine scene angles, so preserve their order. Stable IDs identify an event across models, locales, relationships, regional metadata, and tests. Keep related relationships reciprocal and point every relationship at an existing landmark.
+Append every new landmark ID to the stable slot registry in `order.ts`, assigning the next unused slot. Existing slot values determine scene angles, so preserve those values when removing or adding examples. Stable IDs identify an event across models, locales, relationships, regional metadata, and tests. Keep related relationships reciprocal and point every relationship at an existing landmark.
 
 ## Add a language
 

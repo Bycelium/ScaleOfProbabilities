@@ -50,13 +50,6 @@ export const dice_gamesEN = {
     calculation: "p = 1 natural 20 / 20 results = 1/20",
     assumptions: "The d20 is fair and rolled once for an attack. Modifiers, rerolls, advantage, and disadvantage are excluded. Critical outcomes for other checks or other role-playing systems can follow different rules.",
   },
-  "die-d100-highest": {
-    title: "A hundred on a fair percentile roll",
-    shortTitle: "100 on a d100",
-    explanation: "One of the 100 equally likely percentile pairs is read as 100: 00 on the designated tens die and 0 on the ones die.",
-    calculation: "p = 1 matching pair / (10 tens faces × 10 ones faces) = 1/100",
-    assumptions: "Two fair ten-sided dice roll independently. One is designated as tens and one as ones, producing 100 equally likely percentile results. The pair 00 and 0 represents 100.",
-  },
   "two-dice-any-double": {
     title: "Two dice show the same number",
     shortTitle: "two dice match",
