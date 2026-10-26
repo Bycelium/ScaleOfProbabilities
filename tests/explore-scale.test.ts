@@ -75,11 +75,11 @@ class RecordingCanvasContext {
 
 let guideContext: RecordingCanvasContext;
 
-const drawnGuideAt = (position: number, dashed = false): DrawnCircle | undefined => {
+const drawnGuideAt = (position: number): DrawnCircle | undefined => {
   const center = Number(document.querySelector<HTMLElement>(".scale")!.dataset.depth);
   const diameter = Number.parseFloat(document.querySelector<HTMLElement>("[data-current-depth-ring]")!.style.width);
   const radius = diameter / 2 * 10 ** ((position - center) / 10);
-  return guideContext.circles.find(circle => Boolean(circle.dash.length) === dashed && Math.abs(circle.radius - radius) < 1e-8);
+  return guideContext.circles.find(circle => Math.abs(circle.radius - radius) < 1e-8);
 };
 
 let scaleWidth = 1200;
@@ -151,10 +151,9 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-zoom-in], [data-zoom-out]")).toBeNull();
     expect(document.querySelector<HTMLButtonElement>("[data-return-zero]")?.hidden).toBe(true);
     expect(document.querySelector("[data-stem-for]")).toBeNull();
-    expect(guideContext.circles.filter(circle => circle.dash.length > 0).length).toBeGreaterThan(0);
     const coinRing = document.querySelector<HTMLElement>("[data-current-depth-ring]")!;
     expect(coinRing).not.toBeNull();
-    expect(guideContext.circles.filter(circle => circle.dash.length === 0).length).toBeGreaterThan(10);
+    expect(guideContext.circles.length).toBeGreaterThan(10);
     expect(guideContext.circles.filter(circle => circle.alpha === 0.2).length).toBeGreaterThanOrEqual(2);
     expect(document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')?.dataset.ringSize).toBe(coinRing.style.width);
     expect(document.querySelector<HTMLElement>("[data-current-depth-marker]")?.style.getPropertyValue("--axis-color")).toBe("rgb(134 147 140)");
@@ -201,7 +200,7 @@ describe("public probability exploration", () => {
     expect(Number.parseFloat(coin.style.top) + 40).toBeGreaterThan(272);
   });
 
-  it("draws gray guide circles at exact depth with pixel-sharp strokes throughout travel", () => {
+  it("draws gray guide circles only for integral dBan ticks with pixel-sharp strokes throughout travel", () => {
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
     vi.stubGlobal("devicePixelRatio", 2);
@@ -217,9 +216,14 @@ describe("public probability exploration", () => {
       else clock.advanceTo(timestamp);
       const center = Number(scale.dataset.depth);
       const expectedRadius = referenceDiameter / 2 * 10 ** ((-1 - center) / 10);
-      expect(guideContext.circles.some(circle => circle.dash.length === 0 && Math.abs(circle.radius - expectedRadius) < 1e-8)).toBe(true);
+      expect(guideContext.circles.some(circle => Math.abs(circle.radius - expectedRadius) < 1e-8)).toBe(true);
       expect(guideContext.circles.every(circle => circle.width === 1 && circle.x === 600 && circle.y === 160)).toBe(true);
-      expect(guideContext.circles.filter(circle => circle.dash.length > 0).every(circle => circle.dash.join(",") === "4,4" && circle.alpha === 0.16)).toBe(true);
+      for (const circle of guideContext.circles) {
+        const position = center + 10 * Math.log10(circle.radius / (referenceDiameter / 2));
+        const tick = Math.round(position);
+        expect(position).toBeCloseTo(tick, 8);
+        expect(circle.alpha).toBe(tick % 5 === 0 ? 0.2 : 0.11);
+      }
       expect(guideContext.circles.some(circle => Math.abs(circle.radius - referenceDiameter / 2) < 1e-8)).toBe(false);
     }
   });
@@ -1644,8 +1648,6 @@ describe("public probability exploration", () => {
 
     matchingDice.focus();
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("−7 dBan");
-    const matchingPosition = displayLandmarks.find(item => item.id === "two-dice-any-double")!.position;
-    expect(drawnGuideAt(matchingPosition, true)!.radius * 2).toBeCloseTo(Number.parseFloat(matchingDice.dataset.ringSize!), 8);
     matchingDice.click();
     expect(document.querySelector("[data-detail-sources]")?.textContent).toContain("Fair independent dice model");
     first.dispose();
