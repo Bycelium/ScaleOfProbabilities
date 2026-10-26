@@ -15,7 +15,7 @@ type LandmarkNode = Readonly<{
   baseY: number;
   baseArtSize: number;
 }>;
-type RingNode = Readonly<{ element: HTMLElement; baseDiameter: number }>;
+type RingNode = Readonly<{ element: SVGSVGElement; baseDiameter: number }>;
 type RulerTickNode = Readonly<{ element: HTMLElement; mark: HTMLElement; label: HTMLElement }>;
 
 const STORAGE_KEY = "probability-scale-view-v1";
@@ -260,7 +260,7 @@ export function createScale(root: HTMLElement): () => void {
   const setText = (element: HTMLElement, value: string): void => {
     if (element.textContent !== value) element.textContent = value;
   };
-  const setStyle = (element: HTMLElement, property: string, value: string): void => {
+  const setStyle = (element: HTMLElement | SVGElement, property: string, value: string): void => {
     if (element.style.getPropertyValue(property) !== value) element.style.setProperty(property, value);
   };
 
@@ -472,12 +472,15 @@ export function createScale(root: HTMLElement): () => void {
       const baseDiameter = referenceDiameter * 10 ** ((position - originCenter) / 10);
       let node = nodes.get(position);
       if (!node) {
-        const element = document.createElement("i");
+        const element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        element.setAttribute("viewBox", "0 0 100 100");
+        element.setAttribute("preserveAspectRatio", "none");
+        element.innerHTML = '<circle cx="50" cy="50" r="50"></circle>';
         setStyle(element, "--ring-color", "rgb(126 142 145)");
         node = { element, baseDiameter };
       }
       const { element } = node;
-      element.className = className;
+      element.setAttribute("class", className);
       setStyle(element, "width", `${baseDiameter}px`);
       setStyle(element, "height", `${baseDiameter}px`);
       if (element.parentElement !== rings) rings.append(element);
@@ -522,8 +525,6 @@ export function createScale(root: HTMLElement): () => void {
     const sceneZoom = 10 ** ((sceneOrigin!.center - view.center) / 10);
     const inverseZoom = 1 / sceneZoom;
     setStyle(depthScene, "transform", `scale(${sceneZoom})`);
-    setStyle(depthScene, "--scene-inverse-zoom", String(inverseZoom));
-    setStyle(depthScene, "--scene-ring-width", `${inverseZoom}px`);
     const sceneZoomText = String(sceneZoom);
     if (depthScene.dataset.sceneZoom !== sceneZoomText) depthScene.dataset.sceneZoom = sceneZoomText;
     const { width, height, centerX, centerY, referenceDiameter } = nextMetrics;
@@ -535,6 +536,7 @@ export function createScale(root: HTMLElement): () => void {
       button.hidden = !visible;
       const readable = visible && artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7);
       title.hidden = !readable;
+      if (readable) setStyle(title, "transform", `scale(${inverseZoom}) translate(var(--title-x), var(--title-y))`);
       const receded = String(!readable);
       if (button.dataset.receded !== receded) button.dataset.receded = receded;
     }
@@ -542,7 +544,9 @@ export function createScale(root: HTMLElement): () => void {
     const updateRingVisibility = (nodes: ReadonlyMap<number, RingNode>, hideCurrent: boolean): void => {
       for (const [position, node] of nodes) {
         const diameter = node.baseDiameter * sceneZoom;
-        node.element.hidden = diameter < 0.75 || diameter > maximumRingDiameter || (hideCurrent && Math.abs(position - view.center) < 1e-8);
+        const hidden = diameter < 0.75 || diameter > maximumRingDiameter || (hideCurrent && Math.abs(position - view.center) < 1e-8);
+        if (hidden) node.element.setAttribute("hidden", "");
+        else node.element.removeAttribute("hidden");
       }
     };
     updateRingVisibility(tickRingNodes, true);
