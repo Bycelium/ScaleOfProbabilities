@@ -1642,6 +1642,43 @@ describe("public probability exploration", () => {
     expect(cancelled.size).toBe(2);
   });
 
+  it("shares travel lifecycle cleanup between a return and landmark journeys", () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.push(callback); return frames.length; });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    history.replaceState(null, "", "#d=-6.989700043360188");
+    const rendered = render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const returnButton = document.querySelector<HTMLButtonElement>("[data-return-zero]")!;
+
+    document.querySelector<HTMLButtonElement>('[data-landmark="two-dice-any-double"]')!.click();
+    expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
+    returnButton.focus();
+    returnButton.click();
+
+    expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
+    expect(scale.dataset.fastForward).toBe("outward");
+    frames.shift()?.(0);
+    frames.shift()?.(16);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(-6.8);
+    frames.shift()?.(4000);
+    expect(Number(scale.dataset.depth)).toBe(0);
+    expect(document.activeElement).toBe(scale);
+
+    history.replaceState(null, "", "#d=100");
+    rendered.dispose();
+    const wheelRendered = render();
+    const wheelScale = document.querySelector<HTMLElement>(".scale")!;
+    wheelScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    frames.shift()?.(0);
+    frames.shift()?.(16);
+    expect(Number(wheelScale.dataset.depth)).toBeGreaterThan(100.1);
+    frames.shift()?.(4000);
+    expect(Number(wheelScale.dataset.depth)).toBeCloseTo(289.1, 1);
+    wheelRendered.dispose();
+  });
+
   it("keeps the current extreme readout authoritative on the spoke", () => {
     history.replaceState(null, "", "#d=525");
     render(390);
