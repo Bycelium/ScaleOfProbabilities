@@ -1,6 +1,12 @@
 import { catalogueOrder, type LandmarkId } from "../catalogue/order";
 import type { LandmarkCopyFamily, LandmarkTranslation, LandmarkTranslationRegistry } from "./types";
 
+export const fillTemplate = (template: string, values: Readonly<Record<string, string>>): string => template.replace(/\{(\w+)\}/g, (_token, key: string) => {
+  const value = values[key];
+  if (value === undefined) throw new Error(`Missing template value: ${key}`);
+  return value;
+});
+
 export const assembleLandmarkTranslations = (
   families: readonly LandmarkCopyFamily[],
 ): LandmarkTranslationRegistry => {

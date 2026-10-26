@@ -1,6 +1,7 @@
 import type { DisplayLandmark, Landmark, Source } from "../catalogue";
 import { en } from "./en";
 import { fr } from "./fr";
+import { fillTemplate } from "./helpers";
 import type { LocaleCode, LocaleDefinition } from "./types";
 
 export type { LocaleCode, LocaleDefinition } from "./types";
@@ -57,9 +58,11 @@ export const localizeLandmark = <T extends Landmark | DisplayLandmark>(item: T, 
       falsePositive: model.falsePositive,
       falseNegative: model.falseNegative,
     };
-    explanation = explanation.replace(/\{(\w+)\}/g, (token, key: string) => (
-      key in values ? values[key].toLocaleString(locale.numberLocale, { maximumFractionDigits: 1 }) : token
-    ));
+    const localizedValues = Object.fromEntries(Object.entries(values).map(([key, value]) => [
+      key,
+      value.toLocaleString(locale.numberLocale, { maximumFractionDigits: 1 }),
+    ]));
+    explanation = fillTemplate(explanation, localizedValues);
   }
   return { ...local, sources, advice, explanation };
 };
