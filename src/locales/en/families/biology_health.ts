@@ -1,14 +1,67 @@
-import { t } from "../../helpers";
 import type { LandmarkCopyFamily } from "../../types";
 
 export const biology_healthEN = {
-  "green-pea": t("A green pea seed", "green pea seed", "A green seed from two pea plants that each carry yellow and green seed-colour variants. Yellow is dominant and green is recessive, so the seed is green only when both parents pass on the green variant. One of the four equally likely combinations is green.", "p = 1 green combination / 4 combinations = 1/4", "This Yy × Yy breeding setup uses a simple one-gene Mendelian model. Peas with other parent genes can have different chances."),
-  "yellow-pea": t("A yellow pea seed", "yellow pea seed", "A yellow seed from two pea plants that each carry yellow and green seed-colour variants. Yellow is dominant, so three of the four equally likely combinations are yellow.", "p = 3 yellow combinations / 4 combinations = 3/4", "This Yy × Yy breeding setup uses a simple one-gene Mendelian model. Peas with other parent genes can have different chances."),
-  "double-yolk-young-hens": t("A double-yolk egg from young hens", "a double-yolk egg", "An egg from a young commercial laying flock near the onset of lay contains two yolks. A production study reports a rate around 2% in that setting.", "p ≈ 0.02", "The estimate applies to young laying hens near the onset of production. Age, genetics, diet, flock management, and egg sorting change the rate, so it is not a universal supermarket-egg probability."),
-  "dna-nucleotide-copied-correctly": t("One DNA nucleotide is copied correctly", "DNA nucleotide copied correctly", "One nucleotide copied during DNA replication remains correct after polymerase proofreading and mismatch repair. A standard molecular-biology estimate is about one mistake per billion nucleotides copied.", "p ≈ 1 − 10⁻⁹", "This is a textbook order-of-magnitude estimate after proofreading and mismatch repair. Fidelity varies across organisms, cells, conditions, and repair systems. The event concerns one nucleotide, not an entire genome."),
-  "covid-scenario-prior": t("COVID infection before a rapid antigen test", "COVID · before test", "Imagine {population} asymptomatic people with suspected exposure taking a COVID test. At the hypothetical prevalence of {prevalence}%, {infected} of them are infected before testing.", "prior p = 0.005; prior odds = 0.005 / 0.995", "The 0.5% prevalence is a hypothetical input, not a measured current prevalence or a personal risk estimate. The same infection hypothesis and population are used for both test-result updates."),
-  "covid-scenario-positive": t("COVID infection after a positive rapid antigen test", "COVID · positive", "Suppose {infected} people out of {population} are infected, or {prevalence}%. About {positiveTotal} test positive. Of those, {truePositive} are infected; {falsePositive} are not infected: they are the false positives. That is about a one-in-three chance of infection.", "p = (0.005 × 0.586) / [(0.005 × 0.586) + (0.995 × (1 − 0.994))] ≈ 0.3292", "The calculation starts from the hypothetical 0.5% prevalence and uses pooled sensitivity 0.586 and specificity 0.994 for asymptomatic people with suspected exposure. These historical pooled estimates combine different tests and studies through February 2022. Performance varies by kit, timing, sampling, and setting. This calculation is not a personal diagnosis."),
-  "covid-scenario-negative": t("COVID infection after a negative rapid antigen test", "COVID · negative", "Suppose {infected} people out of {population} are infected, or {prevalence}%. About {negativeTotal} test negative. The test misses {falseNegative} infections among them, about one infected person in 479 negative results.", "p = (0.005 × (1 − 0.586)) / [(0.005 × (1 − 0.586)) + (0.995 × 0.994)] ≈ 0.00209", "The calculation starts from the hypothetical 0.5% prevalence and uses pooled sensitivity 0.586 and specificity 0.994 for asymptomatic people with suspected exposure. These historical pooled estimates combine different tests and studies through February 2022. Performance varies by kit, timing, sampling, and setting. This calculation is not a personal diagnosis."),
-  "human-denovo-snv": t("A de novo DNA-letter mutation in one human generation", "new DNA-letter mutation", "One transmitted DNA position sampled from parent to child has a new single-nucleotide variant. A study of 283 Icelandic parent-offspring trios estimated 1.29 × 10⁻⁸ such mutations per position per generation.", "p ≈ 1.29 × 10⁻⁸ per transmitted position per generation", "The 95% confidence interval is 1.27–1.30 × 10⁻⁸ after coverage and callability correction. The observed study average was about 63 de novo SNVs per person. Rates vary with parental age and sequence context. This samples one transmitted position, not the chance that a child has any mutation or disease, and it differs from the cell-replication error model."),
-  "four-leaf-clover": t("A four-leaf white clover", "four-leaf white clover", "The cited estimate finds one white clover with four leaflets for every 5,076 with three. Among those three- and four-leaf clovers, that is one in 5,077.", "p ≈ 1 / (5,076 + 1) = 1 / 5,077", "The comparison is restricted to three- or four-leaf white clovers. It is an approximate occurrence estimate rather than a precise worldwide survey. Genetics, environment, and the clover patch can change the rate. Search method, time, and patch choice determine the chance of finding one during a search."),
+  "green-pea": {
+    title: "A green pea seed",
+    shortTitle: "green pea seed",
+    explanation: "One of the four equally likely combinations from two plants carrying yellow and green variants produces a green seed. Green is recessive, so both parents must pass on that variant.",
+    calculation: "p = 1 green combination / 4 combinations = 1/4",
+    assumptions: "This Yy × Yy breeding setup uses a simple one-gene Mendelian model. Peas with other parent genes can have different chances.",
+  },
+  "yellow-pea": {
+    title: "A yellow pea seed",
+    shortTitle: "yellow pea seed",
+    explanation: "Three of the four equally likely combinations from two plants carrying yellow and green variants produce a yellow seed, because yellow is dominant.",
+    calculation: "p = 3 yellow combinations / 4 combinations = 3/4",
+    assumptions: "This Yy × Yy breeding setup uses a simple one-gene Mendelian model. Peas with other parent genes can have different chances.",
+  },
+  "double-yolk-young-hens": {
+    title: "A double-yolk egg from young hens",
+    shortTitle: "a double-yolk egg",
+    explanation: "A production study reports about two double-yolk eggs per 100 eggs from young commercial laying hens near the onset of lay.",
+    calculation: "p ≈ 0.02",
+    assumptions: "The estimate applies to young laying hens near the onset of production. Age, genetics, diet, flock management, and egg sorting change the rate, so it is not a universal supermarket-egg probability.",
+  },
+  "dna-nucleotide-copied-correctly": {
+    title: "One DNA nucleotide is copied correctly",
+    shortTitle: "DNA nucleotide copied correctly",
+    explanation: "A standard molecular-biology estimate gives about one mistake after proofreading and mismatch repair per billion nucleotides copied. That leaves about 999,999,999 copied correctly.",
+    calculation: "p ≈ 1 − 10⁻⁹",
+    assumptions: "This is a textbook order-of-magnitude estimate after proofreading and mismatch repair. Fidelity varies across organisms, cells, conditions, and repair systems. The event concerns one nucleotide, not an entire genome.",
+  },
+  "covid-scenario-prior": {
+    title: "COVID infection before a rapid antigen test",
+    shortTitle: "COVID · before test",
+    explanation: "Imagine {population} asymptomatic people with suspected exposure taking a COVID test. At the hypothetical prevalence of {prevalence}%, {infected} of them are infected before testing.",
+    calculation: "prior p = 0.005; prior odds = 0.005 / 0.995",
+    assumptions: "The 0.5% prevalence is a hypothetical input, not a measured current prevalence or a personal risk estimate. The same infection hypothesis and population are used for both test-result updates.",
+  },
+  "covid-scenario-positive": {
+    title: "COVID infection after a positive rapid antigen test",
+    shortTitle: "COVID · positive",
+    explanation: "Suppose {infected} people out of {population} are infected, or {prevalence}%. About {positiveTotal} test positive. Of those, {truePositive} are infected. The other {falsePositive} are the false positives. That is about a one-in-three chance of infection.",
+    calculation: "p = (0.005 × 0.586) / [(0.005 × 0.586) + (0.995 × (1 − 0.994))] ≈ 0.3292",
+    assumptions: "The calculation starts from the hypothetical 0.5% prevalence and uses pooled sensitivity 0.586 and specificity 0.994 for asymptomatic people with suspected exposure. These historical pooled estimates combine different tests and studies through February 2022. Performance varies by kit, timing, sampling, and setting. This calculation is not a personal diagnosis.",
+  },
+  "covid-scenario-negative": {
+    title: "COVID infection after a negative rapid antigen test",
+    shortTitle: "COVID · negative",
+    explanation: "Suppose {infected} people out of {population} are infected, or {prevalence}%. About {negativeTotal} test negative. The test misses {falseNegative} infections among them, about one infected person in 479 negative results.",
+    calculation: "p = (0.005 × (1 − 0.586)) / [(0.005 × (1 − 0.586)) + (0.995 × 0.994)] ≈ 0.00209",
+    assumptions: "The calculation starts from the hypothetical 0.5% prevalence and uses pooled sensitivity 0.586 and specificity 0.994 for asymptomatic people with suspected exposure. These historical pooled estimates combine different tests and studies through February 2022. Performance varies by kit, timing, sampling, and setting. This calculation is not a personal diagnosis.",
+  },
+  "human-denovo-snv": {
+    title: "A de novo DNA-letter mutation in one human generation",
+    shortTitle: "new DNA-letter mutation",
+    explanation: "A study of 283 Icelandic parent-offspring trios estimated about one new single-nucleotide variant per 77.5 million transmitted positions per generation, a rate of 1.29 × 10⁻⁸.",
+    calculation: "p ≈ 1.29 × 10⁻⁸ per transmitted position per generation",
+    assumptions: "The 95% confidence interval is 1.27–1.30 × 10⁻⁸ after coverage and callability correction. The observed study average was about 63 de novo SNVs per person. Rates vary with parental age and sequence context. This samples one transmitted position, not the chance that a child has any mutation or disease, and it differs from the cell-replication error model.",
+  },
+  "four-leaf-clover": {
+    title: "A four-leaf white clover",
+    shortTitle: "four-leaf white clover",
+    explanation: "The cited estimate finds one white clover with four leaflets for every 5,076 with three. Among those three- and four-leaf clovers, that is one in 5,077.",
+    calculation: "p ≈ 1 / (5,076 + 1) = 1 / 5,077",
+    assumptions: "The comparison is restricted to three- or four-leaf white clovers. It is an approximate occurrence estimate rather than a precise worldwide survey. Genetics, environment, and the clover patch can change the rate. Search method, time, and patch choice determine the chance of finding one during a search.",
+  },
 } satisfies LandmarkCopyFamily;

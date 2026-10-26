@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { catalogueOrder, displayLandmarks, landmarkModels, relatedLandmarkIds, sourceReferences } from "../src/catalogue";
-import { localizeLandmark } from "../src/locales";
-import { en } from "../src/locales/en";
-import { fr } from "../src/locales/fr";
+import { localeChoices } from "../src/locales";
 import { createScale } from "../src/scale";
 
 class TestResizeObserver {
@@ -135,7 +133,7 @@ describe("public probability exploration", () => {
 
     const intro = document.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
     expect(intro.open).toBe(true);
-    expect(intro.textContent).toContain("Probability expresses how likely an event is");
+    expect(intro.textContent).toContain("Probability ranges from 0 for an impossible event to 1 for a certain event");
     expect(intro.textContent).toContain("75% gives odds of 3 to 1");
     expect(intro.textContent).toContain("introduced by Alan Turing");
     expect(intro.textContent).toContain("Each additional 10 dBan multiplies the odds by ten");
@@ -284,22 +282,20 @@ describe("public probability exploration", () => {
     expect(document.documentElement.lang).toBe("fr");
   });
 
-  it("provides French copy for every landmark while retaining safe English fallback", () => {
+  it("provides complete copy for every registered locale", () => {
     const orderedIds = [...catalogueOrder];
     const modelIds = landmarkModels.map(item => item.id);
     expect(displayLandmarks.map(item => item.id)).toEqual(orderedIds);
     expect(new Set(modelIds).size).toBe(orderedIds.length);
     expect(new Set(modelIds)).toEqual(new Set(orderedIds));
-    expect(new Set(Object.keys(en.landmarks))).toEqual(new Set(orderedIds));
-    expect(new Set(Object.keys(fr.landmarks))).toEqual(new Set(orderedIds));
-    expect(new Set(Object.keys(en.sources))).toEqual(new Set(Object.keys(sourceReferences)));
-    expect(new Set(Object.keys(fr.sources))).toEqual(new Set(Object.keys(sourceReferences)));
-    expect(landmarkModels.flatMap(item => item.sourceIds).every(id => Object.hasOwn(sourceReferences, id))).toBe(true);
-
-    const item = displayLandmarks[0];
-    const localized = localizeLandmark(item, { ...fr, landmarks: {}, sources: {} });
-    expect(localized.title).toBe(item.title);
-    expect(localized.sources).toEqual(item.sources);
+    for (const locale of localeChoices) {
+      expect(new Set(Object.keys(locale.landmarks))).toEqual(new Set(orderedIds));
+      expect(new Set(Object.keys(locale.sources))).toEqual(new Set(Object.keys(sourceReferences)));
+      for (const model of landmarkModels.filter(item => item.advice)) {
+        expect(locale.landmarks[model.id].advice).toBeDefined();
+      }
+    }
+    expect(new Set(landmarkModels.flatMap(item => item.sourceIds))).toEqual(new Set(Object.keys(sourceReferences)));
   });
 
   it("switches language without losing the current depth or open details", () => {
@@ -995,7 +991,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLElement>("[data-detail-kind]")?.hidden).toBe(true);
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("0.586");
     expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("Suppose 500 people out of 100,000 are infected, or 0.5%.");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("597 are not infected: they are the false positives.");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("The other 597 are the false positives.");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("0.5% prevalence");
     expect(document.querySelector('[data-related-landmark="covid-scenario-prior"]')).not.toBeNull();
     const evidence = document.querySelector<HTMLElement>("[data-detail-diagnostic]")!;

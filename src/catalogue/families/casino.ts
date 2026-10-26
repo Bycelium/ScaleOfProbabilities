@@ -4,8 +4,12 @@ import type { LandmarkId } from "../order";
 import type { LandmarkModel } from "../types";
 
 const rouletteBetModel = (id: LandmarkId, winningPockets: number, color: string): LandmarkModel => ({
-  id, chance: lowerRatio(winningPockets, 37), size: 88, art: rouletteArtwork(winningPockets, color),
-  sourceIds: ["roulette-rules", "roulette-operator"], classification: exact,
+  id,
+  chance: lowerRatio(winningPockets, 37),
+  size: 88,
+  art: rouletteArtwork(winningPockets, color),
+  sourceIds: ["roulette-rules", "roulette-operator"],
+  classification: exact,
 });
 
 export const casinoModels = [
