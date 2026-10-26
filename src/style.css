@@ -84,6 +84,14 @@ dialog[data-detail-panel] { bottom: 4rem; left: auto; margin: 0; max-height: cal
 .scale-intro p { margin: .6rem 0; }
 .scale-intro details { border-block: 1px solid #426674; margin: .7rem 0; padding: .5rem 0; }
 .scale-intro summary { color: #9ed6c8; cursor: pointer; }
+.scale-intro .math-disclosure { background: #102b3866; border: 1px solid #426674; border-radius: .55rem; margin: .55rem 0; padding: 0; }
+.scale-intro .math-disclosure summary { font-size: .9rem; font-weight: 650; padding: .55rem .65rem; }
+.scale-intro .math-disclosure summary::marker { color: #f6cf70; }
+.scale-intro .math-disclosure summary:hover { background: #183d4b; }
+.scale-intro .math-disclosure summary:focus-visible { border-radius: .5rem; outline-offset: -3px; }
+.scale-intro .math-disclosure[open] { background: #183d4b; border-color: #6da3a0; }
+.scale-intro .math-disclosure .equation { margin-inline: .65rem; }
+.scale-intro .math-disclosure p:not(.equation) { margin-inline: .65rem; }
 .scale-intro a { color: #9ed6c8; }
 .scale-intro .equation { color: #edf4eb; font: 1.18rem/1.3 Georgia, serif; letter-spacing: .02em; text-align: center; }
 .scale-intro [data-dismiss-intro] { background: #286454; border: 1px solid #6da38f; border-radius: 999px; padding: .6rem 1rem; }
@@ -132,6 +140,7 @@ dd a { color: #9ed6c8; }
 @media (max-width: 640px) {
   .atlas { padding: 0 .5rem; }
   .explorer-tools { bottom: .5rem; right: .5rem; }
+  .reference-toggle { position: static; }
   .read-scale, .return-zero, .reference-toggle, .language-toggle, dialog > button:first-child { min-height: 2.75rem; min-width: 2.75rem; }
   .scale { margin-inline: -.5rem; }
   .landmark-title { font-size: .78rem; max-width: 7.5rem; }

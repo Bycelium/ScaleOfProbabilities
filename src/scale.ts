@@ -150,9 +150,9 @@ export function createScale(root: HTMLElement): () => void {
       <div class="intro-directions"><svg viewBox="0 0 120 88" aria-hidden="true"><circle cx="60" cy="44" r="8"/><circle cx="60" cy="44" r="20"/><circle cx="60" cy="44" r="33"/><path class="intro-inward" d="m100 58-28-9m0 0 8-4m-8 4 6 5"/><path class="intro-outward" d="m48 27-28-9m0 0 8-4m-8 4 6 5"/></svg><p><span class="rarer" data-intro-direction-rarer>${locale.ui.introDirectionRarer}</span><span class="likely" data-intro-direction-likely>${locale.ui.introDirectionLikely}</span></p></div>
       <p data-intro-probability>${locale.ui.probabilityExplanation}</p>
       <p data-intro-odds>${locale.ui.oddsExplanation}</p>
-      <details><summary data-probability-to-odds>${locale.ui.probabilityToOdds}</summary><p class="equation" data-odds-equation aria-label="${locale.ui.oddsEquationAria}"><var>o</var> = <var>p</var> / (1 − <var>p</var>)</p><p data-probability-definition>${locale.ui.probabilityDefinition}</p></details>
+      <details class="math-disclosure"><summary data-probability-to-odds>${locale.ui.probabilityToOdds}</summary><p class="equation" data-odds-equation aria-label="${locale.ui.oddsEquationAria}"><var>o</var> = <var>p</var> / (1 − <var>p</var>)</p><p data-probability-definition>${locale.ui.probabilityDefinition}</p></details>
       <p><span data-intro-decibans>${locale.ui.decibansExplanation}</span> <a href="https://languagelog.ldc.upenn.edu/myl/Good1979.pdf#page=3" target="_blank" rel="noreferrer">I. J. Good (1979)</a></p>
-      <details><summary data-odds-to-decibans>${locale.ui.oddsToDecibans}</summary><p class="equation" data-decibans-equation aria-label="${locale.ui.decibansEquationAria}"><var>d</var> = 10 log<sub>10</sub>(<var>o</var>)</p></details>
+      <details class="math-disclosure"><summary data-odds-to-decibans>${locale.ui.oddsToDecibans}</summary><p class="equation" data-decibans-equation aria-label="${locale.ui.decibansEquationAria}"><var>d</var> = 10 log<sub>10</sub>(<var>o</var>)</p></details>
       <h2 data-how-to-use>${locale.ui.howToUse}</h2>
       <p data-intro-navigation>${locale.ui.introNavigation}</p>
       <p class="intro-credit"><span data-credit-prefix>${locale.ui.creditPrefix}</span> <a href="https://www.htwins.net/scale2/" data-credit-title>${locale.ui.creditTitle}</a>, <span data-credit-by>${locale.ui.creditBy}</span></p>

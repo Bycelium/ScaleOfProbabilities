@@ -319,7 +319,7 @@ describe("public probability exploration", () => {
     expect(intro.textContent).toContain("Each additional 10 dBan multiplies the odds by ten");
     expect(intro.querySelector("[data-how-to-use]")?.textContent).toBe("How to use");
     expect(intro.querySelector("[data-odds-to-decibans]")!.compareDocumentPosition(intro.querySelector("[data-how-to-use]")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect([...intro.querySelectorAll("details summary")].map(summary => summary.textContent)).toEqual(["Probability → odds", "Odds → decibans"]);
+    expect([...intro.querySelectorAll("details summary")].map(summary => summary.textContent)).toEqual(["See the formula: probability → odds", "See the formula: odds → decibans"]);
     expect(intro.querySelector('[aria-label="Odds equals probability divided by one minus probability"]')?.textContent).toContain("o = p / (1 − p)");
     expect(intro.querySelector('[aria-label="Decibans equals ten times the base ten logarithm of odds"]')?.textContent).toContain("d = 10 log10(o)");
     const tab = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
