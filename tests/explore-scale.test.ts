@@ -1036,10 +1036,10 @@ describe("public probability exploration", () => {
     expect(byId.get("roulette-two-dozens-columns")?.position).toBeGreaterThan(0);
 
     const clover = byId.get("four-leaf-clover")!;
-    expect(clover.position).toBeCloseTo(10 * Math.log10((1 / 5000) / (1 - 1 / 5000)), 10);
+    expect(clover.position).toBeCloseTo(-10 * Math.log10(5076), 10);
     expect(clover.classification).toBe("Estimate");
     expect(clover.explanation).toContain("four leaflets");
-    expect(clover.assumptions).toContain("not the chance of finding one during a search");
+    expect(clover.assumptions).toContain("three- or four-leaf white clovers");
     expect(relatedLandmarkIds[clover.displayId]).toEqual(expect.arrayContaining(["green-pea", "double-yolk-young-hens"]));
 
     const blackjack = byId.get("blackjack-natural-six-deck")!;
