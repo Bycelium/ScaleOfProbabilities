@@ -608,6 +608,12 @@ describe("public probability exploration", () => {
     clock.advanceTo(24);
     expect(Number(scale.dataset.depth)).toBeLessThan(afterReverseInput);
     expect(Number(scale.dataset.depth)).toBeCloseTo(expectedTarget, 10);
+
+    clock.advanceTo(1000);
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    const afterIdleInput = Number(scale.dataset.depth);
+    clock.advanceTo(1008);
+    expect(Number(scale.dataset.depth) - afterIdleInput).toBeGreaterThan(0.1);
   });
 
   it("uses the latest pinch direction while leaving a touch tap at rest", () => {
