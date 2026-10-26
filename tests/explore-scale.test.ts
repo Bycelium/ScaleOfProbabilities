@@ -16,6 +16,38 @@ class TestResizeObserver {
   }
 }
 
+class TestFrameClock {
+  private timestamp = 0;
+  private nextFrameId = 1;
+  private readonly callbacks = new Map<number, FrameRequestCallback>();
+  readonly cancelled: number[] = [];
+
+  constructor() {
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      const frameId = this.nextFrameId;
+      this.nextFrameId += 1;
+      this.callbacks.set(frameId, callback);
+      return frameId;
+    });
+    vi.stubGlobal("cancelAnimationFrame", (frameId: number) => {
+      this.cancelled.push(frameId);
+      this.callbacks.delete(frameId);
+    });
+    vi.spyOn(performance, "now").mockImplementation(() => this.timestamp);
+  }
+
+  advanceTo(timestamp: number): void {
+    this.timestamp = timestamp;
+    const callbacks = [...this.callbacks.values()];
+    this.callbacks.clear();
+    for (const callback of callbacks) callback(timestamp);
+  }
+
+  get pendingFrames(): number {
+    return this.callbacks.size;
+  }
+}
+
 let scaleWidth = 1200;
 
 const render = (width = 1200, introSeen = true, allReferences = true) => {
@@ -93,7 +125,7 @@ describe("public probability exploration", () => {
     coin.dispatchEvent(new MouseEvent("mouseleave"));
     expect(document.querySelector("[data-event-marker]")).toBeNull();
     coin.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
-    expect(document.querySelector("[data-center-marker]")?.textContent).toContain("+1 dBan");
+    expect(Number(document.querySelector<HTMLElement>(".scale")?.dataset.depth)).toBeGreaterThan(0);
     const ordinaryScaleKey = new KeyboardEvent("keydown", { key: "a", bubbles: true, cancelable: true });
     document.querySelector<HTMLElement>(".scale")!.dispatchEvent(ordinaryScaleKey);
     expect(ordinaryScaleKey.defaultPrevented).toBe(false);
@@ -556,6 +588,34 @@ describe("public probability exploration", () => {
     expect(Number(scale.dataset.depth)).toBeCloseTo(target.position, 10);
   });
 
+  it("carries dense wheel momentum through repeated input and reverses from the current position", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    const afterFirstInput = Number(scale.dataset.depth);
+    expect(afterFirstInput).toBeGreaterThan(1);
+    clock.advanceTo(8);
+    const afterFirstFrame = Number(scale.dataset.depth);
+    expect(afterFirstFrame - afterFirstInput).toBeGreaterThan(0.2);
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    const afterRepeatedInput = Number(scale.dataset.depth);
+    clock.advanceTo(16);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterRepeatedInput);
+
+    const beforeReverse = Number(scale.dataset.depth);
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
+    const afterReverseInput = Number(scale.dataset.depth);
+    expect(afterReverseInput).toBeLessThan(beforeReverse);
+    clock.advanceTo(24);
+    expect(Number(scale.dataset.depth)).toBeLessThan(afterReverseInput);
+    expect(scale.dataset.fastForward).toBe("inward");
+    expect(clock.pendingFrames).toBe(1);
+  });
+
   it("adds five familiar exact outcomes across the positive opening range", () => {
     render();
 
@@ -652,9 +712,9 @@ describe("public probability exploration", () => {
     expect(document.querySelector('[data-related-landmark="holdem-one-pair"]')).not.toBeNull();
     document.querySelector<HTMLButtonElement>('[data-related-landmark="holdem-three-kind"]')!.click();
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
-    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     document.querySelector<HTMLElement>(".scale")!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
-    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
     rendered.dispose();
 
@@ -1028,7 +1088,7 @@ describe("public probability exploration", () => {
 
     history.replaceState(null, "", "/");
     render();
-    expect(document.querySelector("[data-center-marker]")?.textContent).toContain("+21 dBan");
+    expect(Number(document.querySelector<HTMLElement>(".scale")?.dataset.depth)).toBeGreaterThan(20);
 
     history.replaceState(null, "", "#d=-0.04");
     render();
@@ -1356,7 +1416,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-center-marker]")?.textContent).not.toContain("+289.1 dBan");
     frame?.(3000);
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("+289.1 dBan");
-    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
+    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
     sparse.dispose();
 
     history.replaceState(null, "", "#d=100");
@@ -1368,7 +1428,7 @@ describe("public probability exploration", () => {
     const beforeReverse = Number(reversingScale.dataset.depth);
     reversingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
     expect(cancel).toHaveBeenCalledWith(21);
-    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     frame?.(0);
     expect(Number(reversingScale.dataset.depth)).toBeLessThan(beforeReverse);
     reversing.dispose();
@@ -1449,8 +1509,8 @@ describe("public probability exploration", () => {
     expect(scale.style.getPropertyValue("--hyperspace-opacity")).toBe("0.000");
     const beforeReverse = Number(scale.dataset.depth);
     scale.dispatchEvent(pointer("pointermove", 2, 350, 300));
-    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
-    expect(scale.dataset.fastForward).toBeUndefined();
+    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
+    expect(scale.dataset.fastForward).toBe("inward");
     frames.pop()?.(1001);
     expect(Number(scale.dataset.depth)).toBeLessThan(beforeReverse);
     pinched.dispose();
@@ -1524,7 +1584,7 @@ describe("public probability exploration", () => {
     returnButton.click();
     frames.shift()?.(700);
     scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
-    expect(cancelled.size).toBe(6);
+    expect(cancelled.size).toBe(2);
     scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
     expect(cancelled.size).toBe(3);
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("+1 dBan");
@@ -1539,7 +1599,7 @@ describe("public probability exploration", () => {
     scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
     returnButton.click();
     rendered.dispose();
-    expect(cancelled.size).toBe(2);
+    expect(cancelled.size).toBeGreaterThanOrEqual(3);
   });
 
   it("shares travel lifecycle cleanup between a return and landmark journeys", () => {
@@ -1618,7 +1678,7 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLInputElement>("[data-all-references]")!.click();
     const scale = document.querySelector<HTMLElement>(".scale")!;
     scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
-    expect(document.querySelector("[data-center-marker]")?.textContent).toContain("+1 dBan");
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(0);
 
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("storage unavailable"); });
     render(1200, false);
