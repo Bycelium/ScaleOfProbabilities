@@ -51,6 +51,30 @@ class TestFrameClock {
   }
 }
 
+type DrawnCircle = Readonly<{ x: number; y: number; radius: number; width: number; alpha: number; dash: readonly number[] }>;
+
+class RecordingCanvasContext {
+  readonly circles: DrawnCircle[] = [];
+  transform: readonly number[] = [];
+  lineWidth = 1;
+  globalAlpha = 1;
+  strokeStyle = "";
+  private dash: number[] = [];
+  private path: { x: number; y: number; radius: number }[] = [];
+
+  setTransform(...values: number[]): void { this.transform = values; }
+  clearRect(): void { this.circles.length = 0; }
+  setLineDash(values: number[]): void { this.dash = values; }
+  beginPath(): void { this.path = []; }
+  moveTo(): void {}
+  arc(x: number, y: number, radius: number): void { this.path.push({ x, y, radius }); }
+  stroke(): void {
+    this.circles.push(...this.path.map(circle => ({ ...circle, width: this.lineWidth, alpha: this.globalAlpha, dash: this.dash })));
+  }
+}
+
+let guideContext: RecordingCanvasContext;
+
 let scaleWidth = 1200;
 
 const render = (width = 1200, introSeen = true, allReferences = true) => {
@@ -80,6 +104,8 @@ describe("public probability exploration", () => {
     TestResizeObserver.instances = [];
     vi.stubGlobal("ResizeObserver", TestResizeObserver);
     vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    guideContext = new RecordingCanvasContext();
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(guideContext as unknown as CanvasRenderingContext2D);
     history.replaceState(null, "", "/");
     sessionStorage.clear();
     localStorage.clear();
@@ -167,6 +193,29 @@ describe("public probability exploration", () => {
 
     const coin = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!;
     expect(Number.parseFloat(coin.style.top) + 40).toBeGreaterThan(272);
+  });
+
+  it("draws gray guide circles at exact depth with pixel-sharp strokes throughout travel", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    vi.stubGlobal("devicePixelRatio", 2);
+    render();
+    const guides = document.querySelector<HTMLCanvasElement>("canvas[data-depth-rings]");
+    expect(guides).not.toBeNull();
+    expect([guides!.width, guides!.height]).toEqual([2400, 640]);
+    expect(guideContext.transform).toEqual([2, 0, 0, 2, 0, 0]);
+    const referenceDiameter = Number.parseFloat(document.querySelector<HTMLElement>("[data-current-depth-ring]")!.style.width);
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    for (const timestamp of [0, 32, 96, 4000]) {
+      if (timestamp === 0) scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 20, cancelable: true }));
+      else clock.advanceTo(timestamp);
+      const center = Number(scale.dataset.depth);
+      const expectedRadius = referenceDiameter / 2 * 10 ** ((-1 - center) / 10);
+      expect(guideContext.circles.some(circle => circle.dash.length === 0 && Math.abs(circle.radius - expectedRadius) < 1e-8)).toBe(true);
+      expect(guideContext.circles.every(circle => circle.width === 1 && circle.x === 600 && circle.y === 160)).toBe(true);
+      expect(guideContext.circles.filter(circle => circle.dash.length > 0).every(circle => circle.dash.join(",") === "4,4" && circle.alpha === 0.16)).toBe(true);
+      expect(guideContext.circles.some(circle => Math.abs(circle.radius - referenceDiameter / 2) < 1e-8)).toBe(false);
+    }
   });
 
   it("zooms the radial scene through one common transform between bounded geometry snapshots", () => {
