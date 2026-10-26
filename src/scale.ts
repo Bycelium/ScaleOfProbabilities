@@ -4,7 +4,7 @@ import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabil
 
 type View = { center: number };
 type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter: number; centerX: number; centerY: number }>;
-type FastForwardOptions = Readonly<{ onArrival?: () => void; announce?: boolean; initialVelocity?: number }>;
+type FastForwardOptions = Readonly<{ onArrival?: () => void; initialVelocity?: number }>;
 
 const STORAGE_KEY = "probability-scale-view-v1";
 const INTRO_STORAGE_KEY = "probability-scale-intro-seen";
@@ -602,7 +602,7 @@ export function createScale(root: HTMLElement): () => void {
   };
 
   const openDetails = (item: DisplayLandmark): void => {
-    cancelMotion();
+    cancelFastForward();
     selected = item;
     active = item;
     restoreFocus = document.activeElement as HTMLElement;
@@ -772,13 +772,9 @@ export function createScale(root: HTMLElement): () => void {
   const nextLandmarkPosition = (direction: number): number | undefined => {
     const candidates = availableLandmarks()
       .map(item => item.position)
-      .filter(position => direction > 0 ? position > view.center + 0.4 : position < view.center - 0.4)
+      .filter(position => direction > 0 ? position > view.center + 1e-9 : position < view.center - 1e-9)
       .sort((first, second) => direction > 0 ? first - second : second - first);
     return candidates[0];
-  };
-
-  const cancelMotion = (): void => {
-    cancelFastForward();
   };
 
   const rememberTravelVelocity = (delta: number, timestamp: number): number => {
@@ -788,8 +784,8 @@ export function createScale(root: HTMLElement): () => void {
     return velocity;
   };
 
-  const startFastForward = (target: number, direction: number, { onArrival, announce = true, initialVelocity = 0 }: FastForwardOptions = {}): void => {
-    cancelMotion();
+  const startFastForward = (target: number, direction: number, { onArrival, initialVelocity = 0 }: FastForwardOptions = {}): void => {
+    cancelFastForward();
     if (dialog.open) closeDetails(false);
     restoreFocus = undefined;
     const start = view.center;
@@ -800,6 +796,7 @@ export function createScale(root: HTMLElement): () => void {
       gapCaption.hidden = true;
       delete scale.dataset.fastForward;
       gestureFastForwardDirection = 0;
+      travelVelocity = 0;
       scale.style.setProperty("--hyperspace-opacity", "0");
       if (!onArrival) active = nearestLandmark(target);
       moveTo(target);
@@ -815,14 +812,10 @@ export function createScale(root: HTMLElement): () => void {
     const factor = exponent <= 6
       ? oddsFactor(exponent, locale)
       : `10<sup>${trimDecimal(exponent).replace(".", locale.code === "fr" ? "," : ".")}</sup>`;
-    if (announce) {
-      gapCaption.innerHTML = `<span>${formatDecibans(target - start, locale.code)}</span> · ${locale.ui.oddsWord} ${direction > 0 ? "×" : "÷"}<span>${factor}</span>`;
-      gapCaption.hidden = false;
-    } else {
-      gapCaption.hidden = true;
-    }
+    gapCaption.innerHTML = `<span>${formatDecibans(target - start, locale.code)}</span> · ${locale.ui.oddsWord} ${direction > 0 ? "×" : "÷"}<span>${factor}</span>`;
+    gapCaption.hidden = false;
     let startedAt: number | undefined;
-    const initialSlope = clamp(Math.abs(initialVelocity) * (duration / 1000) / distance, 0, 0.8);
+    const initialSlope = clamp(Math.abs(initialVelocity) * (duration / 1000) / distance, 0, 2);
     const slopeAt = (progress: number): number => 3 * (initialSlope - 2) * progress ** 2 + 2 * (3 - 2 * initialSlope) * progress + initialSlope;
     const peakSlope = Math.max(...Array.from({ length: 33 }, (_, index) => slopeAt(index / 32)));
     const animate = (timestamp: number) => {
@@ -851,7 +844,7 @@ export function createScale(root: HTMLElement): () => void {
     const carriedVelocity = fastForwardFrame !== undefined && direction === gestureFastForwardDirection
       ? Math.abs(travelVelocity)
       : 0;
-    cancelMotion();
+    cancelFastForward();
     if (directDelta !== 0) {
       view.center = clampToCatalogue(view.center + directDelta);
       saveView(view);
@@ -922,7 +915,7 @@ export function createScale(root: HTMLElement): () => void {
   document.addEventListener("keydown", onKeydown);
 
   scale.addEventListener("pointerdown", event => {
-    cancelMotion();
+    cancelFastForward();
     if (dialog.open) closeDetails(false);
     if (pointers.size === 0) {
       suppressLandmarkClick = false;
