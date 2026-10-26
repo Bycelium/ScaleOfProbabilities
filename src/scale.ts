@@ -145,8 +145,8 @@ export function createScale(root: HTMLElement): () => void {
   </div>
   <dialog class="scale-intro" data-scale-intro aria-modal="true" aria-labelledby="scale-intro-heading">
     <div class="intro-language" role="group" aria-label="${locale.ui.language}" data-intro-language>${languageChoices("intro")}</div>
+    <h1 id="scale-intro-heading" tabindex="-1" data-intro-title>${locale.ui.title}</h1>
     <div class="intro-scroll">
-      <h1 id="scale-intro-heading" tabindex="-1" data-intro-title>${locale.ui.title}</h1>
       <div class="intro-directions"><svg viewBox="0 0 260 180" aria-hidden="true"><path class="intro-rope" d="M126 4h8l-4 131Z"/><g class="intro-rings"><circle cx="130" cy="135" r="142"/><circle cx="130" cy="135" r="80"/><circle cx="130" cy="135" r="45"/><circle cx="130" cy="135" r="25"/><circle cx="130" cy="135" r="14"/><circle cx="130" cy="135" r="8"/></g><path class="intro-axis" d="M130 4v131"/><g class="intro-ticks"><path d="M123 55h14M124 90h12m-10 20h8m-7 11h6m-5 6h4"/></g><path class="intro-outward" d="m130 76V30m0 0-5 7m5-7 5 7"/><path class="intro-inward" d="m130 104v24m0 0-5-7m5 7 5-7"/></svg><p><span class="rarer" data-intro-direction-rarer>${locale.ui.introDirectionRarer}</span><span class="likely" data-intro-direction-likely>${locale.ui.introDirectionLikely}</span></p></div>
       <p data-intro-probability>${locale.ui.probabilityExplanation}</p>
       <p data-intro-odds>${locale.ui.oddsExplanation}</p>

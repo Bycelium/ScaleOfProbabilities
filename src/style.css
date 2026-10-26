@@ -75,7 +75,7 @@ dialog[data-detail-panel] { bottom: 4rem; left: auto; margin: 0; max-height: cal
 .scale-intro { inset: 50% auto auto 50%; margin: 0; max-height: calc(100vh - 2rem); overflow: hidden; transform: translate(-50%, -50%); width: min(48rem, calc(100vw - 2rem)); }
 .scale-intro::backdrop { background: rgb(2 9 18 / 20%); }
 .scale-intro[open] { display: flex; flex-direction: column; }
-.intro-scroll { min-height: 0; overflow-y: auto; padding-right: .2rem; }
+.intro-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: .2rem; }
 .intro-actions { align-items: center; border-top: 1px solid #426674; display: flex; flex: none; flex-wrap: wrap; gap: .35rem .75rem; justify-content: space-between; margin-top: .55rem; padding-top: .65rem; }
 .scale-intro h1 { margin-bottom: .9rem; }
 .intro-language { display: flex; gap: .25rem; justify-content: flex-end; margin: -.2rem 0 .65rem; }
