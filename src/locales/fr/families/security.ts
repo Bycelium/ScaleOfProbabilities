@@ -3,31 +3,31 @@ import type { LandmarkCopyFamily } from "../../types";
 const passwordAssumptions =
   "Une occurrence est tirée uniformément parmi les 32 603 388 occurrences de l’archive de fréquences RockYou 2009 épinglée. La proposition doit correspondre exactement à la chaîne de caractères. Ce corpus historique propre à un service ne représente pas tous les mots de passe actuels. Les protections en ligne et la validation en deux étapes influent aussi sur la sécurité du compte.";
 const passwordAdvice = {
-  before: "Utilisez une clé d’accès lorsqu’elle est disponible. Sinon, remplacez ce mot de passe par un ",
+  before: "Si vous utilisez ce mot de passe, remplacez-le par un ",
   relatedLabel: "mot de passe unique généré par un gestionnaire",
-  after: ". Évitez les suites de clavier, les noms et les dates de naissance, et activez la validation en deux étapes.",
+  after: ". Évitez les suites de clavier, les noms et les dates de naissance. Utilisez une clé d’accès lorsqu’elle est disponible et activez la validation en deux étapes lorsque vous utilisez encore un mot de passe.",
 };
 
 export const securityFR = {
   "password-123456": {
-    title: "Deviner « 123456 » pour un mot de passe RockYou",
-    shortTitle: "deviner « 123456 » dans RockYou",
+    title: "Deviner « 123456 »",
+    shortTitle: "deviner « 123456 »",
     explanation: "Dans le corpus RockYou 2009, « 123456 » apparaît 290 729 fois parmi 32 603 388 occurrences de mots de passe.",
     calculation: "p = 290 729 / 32 603 388",
     assumptions: passwordAssumptions,
     advice: passwordAdvice,
   },
   "password-qwerty": {
-    title: "Deviner « qwerty » pour un mot de passe RockYou",
-    shortTitle: "deviner « qwerty » dans RockYou",
+    title: "Deviner « qwerty »",
+    shortTitle: "deviner « qwerty »",
     explanation: "Dans le corpus RockYou 2009, « qwerty » apparaît 13 456 fois parmi 32 603 388 occurrences de mots de passe.",
     calculation: "p = 13 456 / 32 603 388",
     assumptions: passwordAssumptions,
     advice: passwordAdvice,
   },
   "password-password": {
-    title: "Deviner « password » pour un mot de passe RockYou",
-    shortTitle: "deviner « password » dans RockYou",
+    title: "Deviner « password »",
+    shortTitle: "deviner « password »",
     explanation: "Dans le corpus RockYou 2009, « password » apparaît 59 462 fois parmi 32 603 388 occurrences de mots de passe.",
     calculation: "p = 59 462 / 32 603 388",
     assumptions: passwordAssumptions,
@@ -55,7 +55,7 @@ export const securityFR = {
   "eff-passphrase-six": {
     title: "Deviner une phrase secrète aléatoire de six mots",
     shortTitle: "phrase secrète de six mots",
-    explanation: "Six tirages indépendants dans la longue liste de l’EFF produisent 7 776⁶ phrases secrètes ordonnées et équiprobables.",
+    explanation: "Six mots choisis indépendamment dans la longue liste de l’EFF offrent 7 776⁶ phrases secrètes ordonnées possibles, toutes équiprobables.",
     calculation: "p = 1 / 7 776⁶ = 1 / 221 073 919 720 733 357 899 776",
     assumptions: "Chaque mot est tiré indépendamment et uniformément parmi 7 776 mots. L’ordre compte, les mots peuvent se répéter et la probabilité porte sur un seul essai indépendant.",
   },
@@ -75,7 +75,7 @@ export const securityFR = {
   },
   "exact-hash-day": {
     title: "Une empreinte Bitcoin choisie à l’avance apparaît en un jour",
-    shortTitle: "empreinte exacte en un jour",
+    shortTitle: "empreinte Bitcoin exacte en un jour",
     explanation: "Au débit modélisé du réseau, la probabilité de produire au moins une fois en un jour une empreinte précise de 256 bits choisie à l’avance est d’environ 1 sur 1,34 × 10⁵¹.",
     calculation: "p = 1 − (1 − 2⁻²⁵⁶)ᴺ ≈ N / 2²⁵⁶ ≈ 1 sur 1,34 × 10⁵¹, avec N ≈ 8,64 × 10²⁵",
     assumptions: "Le réseau effectue N tentatives de hachage indépendantes et uniformes, à un débit arrondi de 10²¹ par seconde pendant 86 400 secondes. Le minage ordinaire accepte toute empreinte inférieure à une cible. La correspondance avec une empreinte précise choisie à l’avance est un événement beaucoup plus restreint.",
