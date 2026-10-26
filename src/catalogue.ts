@@ -27,7 +27,6 @@ export type Landmark = Readonly<{
   advice?: LandmarkAdvice;
   diagnostic?: LandmarkDiagnostic;
   classification?: LandmarkModel["classification"];
-  opening?: true;
 }>;
 
 const modelById = new Map(landmarkModels.map(model => [model.id, model]));
@@ -48,16 +47,14 @@ const materializeLandmark = (model: LandmarkModel, copy: LandmarkTranslation): L
   advice: model.advice && copy.advice ? { ...model.advice, ...copy.advice } : undefined,
   diagnostic: model.diagnostic,
   classification: model.classification,
-  opening: model.opening,
 });
 
 export const landmarks: readonly Landmark[] = catalogueOrder.map(id => materializeLandmark(modelById.get(id)!, enLandmarks[id]));
 
-export type DisplayLandmark = Landmark & Readonly<{ displayId: string; position: number }>;
+export type DisplayLandmark = Landmark & Readonly<{ position: number }>;
 
 export const displayLandmarks: readonly DisplayLandmark[] = landmarks.map(item => ({
   ...item,
-  displayId: item.id,
   position: decibans(item.chance),
 }));
 

@@ -92,7 +92,7 @@ export function createScale(root: HTMLElement): () => void {
   let locale = resolveInitialLocale();
   let allReferences = loadAllReferences();
   const initiallyAvailable = displayLandmarks.filter(item => {
-    const regionalLocales = regionalLandmarkLocales[item.displayId];
+    const regionalLocales = regionalLandmarkLocales[item.id];
     return allReferences || !regionalLocales || regionalLocales.includes(locale.code);
   });
   let view = initialView(Math.min(...initiallyAvailable.map(item => item.position)), Math.max(...initiallyAvailable.map(item => item.position)));
@@ -157,11 +157,11 @@ export function createScale(root: HTMLElement): () => void {
   const tickRingNodes = new Map<number, HTMLElement>();
   const eventRingNodes = new Map<number, HTMLElement>();
   const rulerTickNodes = new Map<number, HTMLElement>();
-  const landmarksById = new Map(displayLandmarks.map(item => [item.displayId, item]));
+  const landmarksById = new Map<string, DisplayLandmark>(displayLandmarks.map(item => [item.id, item]));
   const localized = (item: DisplayLandmark): DisplayLandmark => localizeLandmark(item, locale);
   const landmarkIsAvailable = (item: DisplayLandmark): boolean => {
-    if (selected?.displayId === item.displayId && dialog.open) return true;
-    const regionalLocales = regionalLandmarkLocales[item.displayId];
+    if (selected?.id === item.id && dialog.open) return true;
+    const regionalLocales = regionalLandmarkLocales[item.id];
     return allReferences || !regionalLocales || regionalLocales.includes(locale.code);
   };
   const availableLandmarks = (): readonly DisplayLandmark[] => displayLandmarks.filter(landmarkIsAvailable);
@@ -207,8 +207,8 @@ export function createScale(root: HTMLElement): () => void {
     "sahara-grain": Math.PI / 2,
   };
   const landmarkAngles = new Map(displayLandmarks.map((item, index) => [
-    item.displayId,
-    landmarkAngleOverrides[item.displayId] ?? -Math.PI / 4 + (((index * 137.508) % 360) / 360) * (3 * Math.PI / 2),
+    item.id,
+    landmarkAngleOverrides[item.id] ?? -Math.PI / 4 + (((index * 137.508) % 360) / 360) * (3 * Math.PI / 2),
   ]));
   const compactTitleOffsets: Readonly<Record<string, Readonly<{ x: number; y: number }>>> = {
     "weekday": { x: 20, y: 0 },
@@ -336,14 +336,13 @@ export function createScale(root: HTMLElement): () => void {
   const makeLandmark = (item: DisplayLandmark): HTMLButtonElement => {
     const button = document.createElement("button");
     button.className = "landmark";
-    button.dataset.landmark = item.displayId;
-    if (item.opening) button.dataset.openingLandmark = "";
+    button.dataset.landmark = item.id;
     button.innerHTML = `<span class="art">${item.art}</span><span class="landmark-title"></span>`;
     const showMarker = () => { active = item; render(); };
     button.addEventListener("mouseenter", showMarker);
     button.addEventListener("focus", showMarker);
     button.addEventListener("mouseleave", () => {
-      if (document.activeElement !== button && selected?.displayId !== item.displayId) {
+      if (document.activeElement !== button && selected?.id !== item.id) {
         active = selected;
         render();
       }
@@ -368,7 +367,7 @@ export function createScale(root: HTMLElement): () => void {
       const zoomFactor = 10 ** (depth / 10);
       const ringDiameter = referenceDiameter * zoomFactor;
       const radius = ringDiameter / 2;
-      const angle = landmarkAngles.get(item.displayId)!;
+      const angle = landmarkAngles.get(item.id)!;
       const x = width / 2 + Math.cos(angle) * radius;
       const y = height / 2 + Math.sin(angle) * radius;
       const artSize = item.size * zoomFactor * compactArtScale;
@@ -377,15 +376,15 @@ export function createScale(root: HTMLElement): () => void {
       return [{ item, depth, zoomFactor, ringDiameter, x, y, artSize }];
     });
     const visible = projected.map(({ item }) => item);
-    const visibleIds = new Set(visible.map(item => item.displayId));
+    const visibleIds = new Set<string>(visible.map(item => item.id));
     for (const [id, button] of landmarkNodes) {
       if (!visibleIds.has(id)) {
         button.remove();
       }
     }
     for (const { item, zoomFactor, ringDiameter, x, y, artSize } of projected) {
-      const button = landmarkNodes.get(item.displayId) ?? makeLandmark(item);
-      landmarkNodes.set(item.displayId, button);
+      const button = landmarkNodes.get(item.id) ?? makeLandmark(item);
+      landmarkNodes.set(item.id, button);
       const title = button.querySelector<HTMLElement>(".landmark-title")!;
       const isReadable = artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7);
       if (button.dataset.locale !== locale.code) {
@@ -409,7 +408,7 @@ export function createScale(root: HTMLElement): () => void {
       button.style.zIndex = String(Math.max(1, Math.min(99, Math.round(zoomFactor * 10))));
       button.dataset.receded = String(!isReadable);
       title.hidden = !isReadable;
-      const titleOffset = width <= 640 ? compactTitleOffsets[item.displayId] : undefined;
+      const titleOffset = width <= 640 ? compactTitleOffsets[item.id] : undefined;
       title.style.transform = titleOffset ? `translate(${titleOffset.x}px, ${titleOffset.y}px)` : "";
     }
     currentDepthRing.style.width = `${referenceDiameter}px`;
@@ -572,20 +571,20 @@ export function createScale(root: HTMLElement): () => void {
       const target = landmarksById.get(translated.advice.relatedId)!;
       const link = document.createElement("button");
       link.className = "inline-related-landmark";
-      link.dataset.adviceRelated = target.displayId;
+      link.dataset.adviceRelated = target.id;
       link.textContent = translated.advice.relatedLabel;
       link.addEventListener("click", () => travelToRelated(target));
       advice.append(translated.advice.before, link, translated.advice.after);
     }
     const relatedSection = dialog.querySelector<HTMLElement>("[data-detail-related]")!;
     const relatedLinks = dialog.querySelector<HTMLElement>("[data-detail-related-links]")!;
-    const related = (relatedLandmarkIds[item.displayId] ?? []).map(id => landmarksById.get(id)!).filter(landmarkIsAvailable);
+    const related = (relatedLandmarkIds[item.id] ?? []).map(id => landmarksById.get(id)!).filter(landmarkIsAvailable);
     const buttons = related.map(target => {
       const translatedTarget = localized(target);
       const difference = target.position - item.position;
       const button = document.createElement("button");
       button.className = "related-landmark";
-      button.dataset.relatedLandmark = target.displayId;
+      button.dataset.relatedLandmark = target.id;
       const formattedDifference = formatDecibans(difference, locale.code);
       const direction = difference > 0 ? "right" : difference < 0 ? "left" : "neutral";
       const arrow = direction === "right" ? "⟶" : direction === "left" ? "⟵" : "↔";
@@ -818,7 +817,7 @@ export function createScale(root: HTMLElement): () => void {
     const exponent = distance / 10;
     const factor = exponent <= 6
       ? oddsFactor(exponent, locale)
-      : `10<sup>${trimDecimal(exponent).replace(".", locale.code === "fr" ? "," : ".")}</sup>`;
+      : `10<sup>${trimDecimal(exponent).replace(".", locale.decimalSeparator)}</sup>`;
     gapCaption.innerHTML = `<span>${formatDecibans(target - start, locale.code)}</span> · ${locale.ui.oddsWord} ${direction > 0 ? "×" : "÷"}<span>${factor}</span>`;
     gapCaption.hidden = false;
     const startedAt = performance.now();

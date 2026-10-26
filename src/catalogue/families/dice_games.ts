@@ -3,9 +3,9 @@ import { lowerRatio, upperRatio, oneIn, exact } from "../helpers";
 import type { LandmarkModel } from "../types";
 
 export const dice_gamesModels = [
-  { id: "rps-win", chance: lowerRatio(1, 3), size: 88, art: artwork("hand", "#e9855e"), sourceIds: ["uniform-three-outcome-model"], classification: exact, opening: true },
-  { id: "four-dice-any-six", chance: lowerRatio(671, 1296), size: 78, art: diceOutcomeArtwork([6, 2, 3, 1], "#b96b62", "#fff0de"), sourceIds: ["fair-independent-dice-model"], classification: exact, opening: true },
-  { id: "three-dice-sum-ten", chance: lowerRatio(135, 216), size: 78, art: diceOutcomeArtwork([4, 3, 3], "#6c7fa4", "#eef2ff"), sourceIds: ["fair-independent-dice-model"], classification: exact, opening: true },
+  { id: "rps-win", chance: lowerRatio(1, 3), size: 88, art: artwork("hand", "#e9855e"), sourceIds: ["uniform-three-outcome-model"], classification: exact },
+  { id: "four-dice-any-six", chance: lowerRatio(671, 1296), size: 78, art: diceOutcomeArtwork([6, 2, 3, 1], "#b96b62", "#fff0de"), sourceIds: ["fair-independent-dice-model"], classification: exact },
+  { id: "three-dice-sum-ten", chance: lowerRatio(135, 216), size: 78, art: diceOutcomeArtwork([4, 3, 3], "#6c7fa4", "#eef2ff"), sourceIds: ["fair-independent-dice-model"], classification: exact },
   { id: "die-six", chance: lowerRatio(1, 6), size: 78, art: artwork("die-six", "#d56f61"), sourceIds: ["fair-die-model"], classification: exact },
   { id: "die-d4-highest", chance: lowerRatio(1, 4), size: 82, art: polyhedralDieArtwork(4, "#b7655f", "#ffe9d0"), sourceIds: ["dnd-dice"], classification: exact },
   { id: "die-d12-highest", chance: lowerRatio(1, 12), size: 84, art: polyhedralDieArtwork(12, "#8a668e", "#f4e5ff"), sourceIds: ["dnd-dice"], classification: exact },

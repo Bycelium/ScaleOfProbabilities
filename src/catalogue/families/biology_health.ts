@@ -35,8 +35,8 @@ const covidDiagnosticModel: BinaryTestModel = {
 };
 
 export const biology_healthModels = [
-  { id: "green-pea", chance: lowerRatio(1, 4), size: 82, art: artwork("pea", "#72bd50", "#bdf27a"), sourceIds: ["nhgri-mendel-peas"], classification: exact, opening: true },
-  { id: "yellow-pea", chance: upperRatio(1, 4), size: 82, art: artwork("pea", "#d7c743", "#fff29d"), sourceIds: ["nhgri-mendel-peas"], classification: exact, opening: true },
+  { id: "green-pea", chance: lowerRatio(1, 4), size: 82, art: artwork("pea", "#72bd50", "#bdf27a"), sourceIds: ["nhgri-mendel-peas"], classification: exact },
+  { id: "yellow-pea", chance: upperRatio(1, 4), size: 82, art: artwork("pea", "#d7c743", "#fff29d"), sourceIds: ["nhgri-mendel-peas"], classification: exact },
   { id: "double-yolk-young-hens", chance: lower(0.02), size: 90, art: doubleYolkArtwork("#c99d54"), sourceIds: ["flock-cavero-and-simons-double-yolk-eggs-in-laying-hens", "lohmann-breeders-double-yolk-eggs"], classification: "Historical estimate" },
   { id: "dna-nucleotide-copied-correctly", chance: upper(1e-9), size: 94, art: dnaCopyArtwork("correct", "#5794b1"), sourceIds: ["dna-fidelity"], classification: "Estimate" },
   {

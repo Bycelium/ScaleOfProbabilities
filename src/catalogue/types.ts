@@ -36,5 +36,4 @@ export type LandmarkModel = Readonly<{
   advice?: Readonly<{ relatedId: LandmarkId }>;
   diagnostic?: LandmarkDiagnostic;
   classification?: "Exact model" | "Estimate" | "Historical estimate" | "Defined model";
-  opening?: true;
 }>;

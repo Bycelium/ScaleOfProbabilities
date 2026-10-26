@@ -88,7 +88,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector("h1")?.textContent).toBe("The Scale of Probability");
     const currentRingDiameter = Number.parseFloat(document.querySelector<HTMLElement>("[data-current-depth-ring]")!.style.width);
     for (const landmark of document.querySelectorAll<HTMLElement>("[data-landmark]")) {
-      const item = displayLandmarks.find(candidate => candidate.displayId === landmark.dataset.landmark)!;
+      const item = displayLandmarks.find(candidate => candidate.id === landmark.dataset.landmark)!;
       expect(Number(landmark.dataset.depthScale)).toBeCloseTo(10 ** (item.position / 10), 10);
       expect(Number.parseFloat(landmark.dataset.ringSize!) / currentRingDiameter).toBeCloseTo(10 ** (item.position / 10), 10);
     }
@@ -571,7 +571,7 @@ describe("public probability exploration", () => {
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
     render();
     const scale = document.querySelector<HTMLElement>(".scale")!;
-    const target = displayLandmarks.find(item => item.displayId === "holdem-one-pair")!;
+    const target = displayLandmarks.find(item => item.id === "holdem-one-pair")!;
     document.querySelector<HTMLButtonElement>('[data-landmark="holdem-one-pair"]')!.click();
 
     const positions: number[] = [];
@@ -667,7 +667,6 @@ describe("public probability exploration", () => {
     };
     for (const [id, position] of Object.entries(nearbyPositions)) {
       const landmark = document.querySelector<HTMLButtonElement>(`[data-landmark="${id}"]`)!;
-      expect(landmark.dataset.openingLandmark).toBe("");
       expect(landmark.getAttribute("aria-label")).toContain(position);
     }
 
@@ -780,7 +779,7 @@ describe("public probability exploration", () => {
   });
 
   it("keeps every declared and advice relation reciprocal and valid", () => {
-    const ids = new Set(displayLandmarks.map(item => item.displayId));
+    const ids = new Set<string>(displayLandmarks.map(item => item.id));
     for (const [source, targets] of Object.entries(relatedLandmarkIds)) {
       expect(ids.has(source)).toBe(true);
       expect(new Set(targets).size).toBe(targets.length);
@@ -793,7 +792,7 @@ describe("public probability exploration", () => {
   });
 
   it("includes the new astronomy, nature, game, and food models as explorable landmarks", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const newIds = [
       "solar-terrestrial",
       "full-moon-15-days",
@@ -820,7 +819,7 @@ describe("public probability exploration", () => {
   });
 
   it("includes sourced weather and completed-season sports estimates", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const estimateIds = [
       "rain-hilo",
       "sunshine-phoenix",
@@ -837,7 +836,7 @@ describe("public probability exploration", () => {
   });
 
   it("compares dated everyday reliability and an exact d20 advantage", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const reliabilityIds = [
       "fr-letter-green-j3-2025",
       "fr-letter-green-j5-2025",
@@ -892,7 +891,7 @@ describe("public probability exploration", () => {
   });
 
   it("separates distance-modelled road collisions from annual breakdown reports", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const ratePerKm = 484 / (1_000_000_000 * 1.609344);
     const collision20 = -Math.expm1(-ratePerKm * 20);
     const collision500 = -Math.expm1(-ratePerKm * 500);
@@ -907,7 +906,7 @@ describe("public probability exploration", () => {
   });
 
   it("compares observed Pokémon Destined Rivals rarity pulls from one booster", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const doubleRare = byId.get("pokemon-destined-rivals-double-rare");
     const illustrationRare = byId.get("pokemon-destined-rivals-illustration-rare");
     const specialIllustrationRare = byId.get("pokemon-destined-rivals-special-illustration-rare");
@@ -938,7 +937,7 @@ describe("public probability exploration", () => {
   });
 
   it("distinguishes French household television and personal mobile equipment estimates", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const television = byId.get("fr-household-television-2025");
     const smartphone = byId.get("fr-person-smartphone-2025");
     const mobile = byId.get("fr-person-mobile-phone-2025");
@@ -967,7 +966,7 @@ describe("public probability exploration", () => {
   });
 
   it("explores Bayesian test updates from one explicit prevalence", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const covidPrior = byId.get("covid-scenario-prior")!;
     const covidPositive = byId.get("covid-scenario-positive")!;
     const covidNegative = byId.get("covid-scenario-negative")!;
@@ -1011,7 +1010,7 @@ describe("public probability exploration", () => {
   });
 
   it("compares a four-leaf clover, French roulette bets, and a six-deck natural blackjack", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const roulette = [
       ["roulette-straight-up", 1],
       ["roulette-split", 2],
@@ -1039,13 +1038,13 @@ describe("public probability exploration", () => {
     expect(clover.classification).toBe("Estimate");
     expect(clover.explanation).toContain("four leaflets");
     expect(clover.assumptions).toContain("three- or four-leaf white clovers");
-    expect(relatedLandmarkIds[clover.displayId]).toEqual(expect.arrayContaining(["green-pea", "double-yolk-young-hens"]));
+    expect(relatedLandmarkIds[clover.id]).toEqual(expect.arrayContaining(["green-pea", "double-yolk-young-hens"]));
 
     const blackjack = byId.get("blackjack-natural-six-deck")!;
     expect(blackjack.position).toBeCloseTo(-13.022722899191814, 10);
     expect(blackjack.explanation).toContain("ace and a ten, jack, queen, or king");
     expect(blackjack.assumptions).toContain("does not mean winning against the dealer");
-    expect(relatedLandmarkIds[blackjack.displayId]).toContain("any-ace");
+    expect(relatedLandmarkIds[blackjack.id]).toContain("any-ace");
 
     localStorage.setItem("probability-scale-locale", "fr");
     history.replaceState(null, "", `#d=${byId.get("roulette-even-money")!.position}`);
@@ -1059,7 +1058,7 @@ describe("public probability exploration", () => {
   });
 
   it("shows Enigma configuration differences on reciprocal family travel", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const removedIds = ["banburismus-rotor-order-336", "banburismus-rotor-order-20", "banburismus-alignment-3-to-2", "banburismus-alignment-5-to-1", "banburismus-alignment-15-to-1", "banburismus-alignment-100-to-1"];
 
     expect(removedIds.every(id => !byId.has(id))).toBe(true);
@@ -1094,7 +1093,7 @@ describe("public probability exploration", () => {
   });
 
   it("distinguishes a local eclipse estimate and a December rain normal", () => {
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
 
     expect(byId.get("solar-eclipse-local-year")?.position).toBeCloseTo(10 * Math.log10(1 / 374), 10);
     expect(byId.get("solar-eclipse-local-year")?.classification).toBe("Estimate");
@@ -1316,7 +1315,7 @@ describe("public probability exploration", () => {
       expect(landmark.getAttribute("aria-label")).toContain(label);
       expect(landmark.querySelector(".polyhedral-die")).not.toBeNull();
     }
-    const byId = new Map(displayLandmarks.map(item => [item.displayId, item]));
+    const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     expect(byId.get("die-d20-no-critical-failure")?.position).toBeCloseTo(10 * Math.log10(19), 10);
     expect(relatedLandmarkIds["die-d20-highest"]).toContain("die-d20-no-critical-failure");
     history.replaceState(null, "", "#d=-12.8");
@@ -1567,7 +1566,7 @@ describe("public probability exploration", () => {
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
     vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
-    const target = displayLandmarks.find(item => item.displayId === "die-d20-highest")!;
+    const target = displayLandmarks.find(item => item.id === "die-d20-highest")!;
 
     for (const [distance, factor] of [[0.3, "1.07"], [10, "10"], [20.1, "102"]] as const) {
       history.replaceState(null, "", `#d=${target.position + distance}`);

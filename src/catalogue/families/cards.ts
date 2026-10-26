@@ -3,9 +3,9 @@ import { lowerRatio, exact } from "../helpers";
 import type { LandmarkModel } from "../types";
 
 export const cardsModels = [
-  { id: "ace-in-five-cards", chance: lowerRatio(886656, 2598960), size: 96, art: artwork("cards", "#dd5b5b"), sourceIds: ["five-card-hand-combinatorics"], classification: exact, opening: true },
-  { id: "holdem-one-pair", chance: lowerRatio(58627800, 133784560), size: 94, art: pokerArtwork([["K", "♠"], ["K", "♥"], ["9", "♣"], ["5", "♦"], ["2", "♠"]], "#9d6ab2"), sourceIds: ["brian-alspach-seven-card-poker-frequencies", "pokerstars-texas-hold-em-rules"], classification: exact, opening: true },
-  { id: "numbered-card", chance: lowerRatio(9, 13), size: 80, art: numberCardArtwork(7, "#c55d69"), sourceIds: ["standard-deck-model"], classification: exact, opening: true },
+  { id: "ace-in-five-cards", chance: lowerRatio(886656, 2598960), size: 96, art: artwork("cards", "#dd5b5b"), sourceIds: ["five-card-hand-combinatorics"], classification: exact },
+  { id: "holdem-one-pair", chance: lowerRatio(58627800, 133784560), size: 94, art: pokerArtwork([["K", "♠"], ["K", "♥"], ["9", "♣"], ["5", "♦"], ["2", "♠"]], "#9d6ab2"), sourceIds: ["brian-alspach-seven-card-poker-frequencies", "pokerstars-texas-hold-em-rules"], classification: exact },
+  { id: "numbered-card", chance: lowerRatio(9, 13), size: 80, art: numberCardArtwork(7, "#c55d69"), sourceIds: ["standard-deck-model"], classification: exact },
   { id: "any-ace", chance: lowerRatio(1, 13), size: 80, art: artwork("cards", "#c9515b"), sourceIds: ["standard-deck-model"], classification: exact },
   { id: "ace-of-spades", chance: lowerRatio(1, 52), size: 80, art: artwork("spade", "#343a56"), sourceIds: ["standard-deck-model"], classification: exact },
   { id: "holdem-high-card", chance: lowerRatio(23294460, 133784560), size: 94, art: pokerArtwork([["A", "♠"], ["J", "♥"], ["8", "♣"], ["5", "♦"], ["2", "♠"]], "#557c9d"), sourceIds: ["brian-alspach-seven-card-poker-frequencies", "pokerstars-texas-hold-em-rules"], classification: exact },
