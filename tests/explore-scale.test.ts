@@ -340,6 +340,13 @@ describe("public probability exploration", () => {
     expect(document.activeElement).toBe(summaries[0]);
     intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(introLanguage);
+    const explore = intro.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!;
+    const credit = intro.querySelector<HTMLAnchorElement>(".intro-credit a")!;
+    explore.focus();
+    intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(credit);
+    intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(explore);
     const ordinary = new KeyboardEvent("keydown", { key: "a", bubbles: true, cancelable: true });
     intro.dispatchEvent(ordinary);
     expect(ordinary.defaultPrevented).toBe(false);

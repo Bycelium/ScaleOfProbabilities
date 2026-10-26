@@ -155,9 +155,8 @@ export function createScale(root: HTMLElement): () => void {
       <details class="math-disclosure"><summary data-odds-to-decibans>${locale.ui.oddsToDecibans}</summary><p class="equation" data-decibans-equation aria-label="${locale.ui.decibansEquationAria}"><var>d</var> = 10 log<sub>10</sub>(<var>o</var>)</p></details>
       <h2 data-how-to-use>${locale.ui.howToUse}</h2>
       <p data-intro-navigation>${locale.ui.introNavigation}</p>
-      <p class="intro-credit"><span data-credit-prefix>${locale.ui.creditPrefix}</span> <a href="https://www.htwins.net/scale2/" data-credit-title>${locale.ui.creditTitle}</a>, <span data-credit-by>${locale.ui.creditBy}</span></p>
     </div>
-    <footer class="intro-actions"><button data-dismiss-intro>${locale.ui.explore}</button></footer>
+    <footer class="intro-actions"><button data-dismiss-intro>${locale.ui.explore}</button><p class="intro-credit"><span data-credit-prefix>${locale.ui.creditPrefix}</span> <a href="https://www.htwins.net/scale2/" data-credit-title>${locale.ui.creditTitle}</a>, <span data-credit-by>${locale.ui.creditBy}</span></p></footer>
   </dialog>
   <dialog data-detail-panel aria-labelledby="detail-heading"><button data-close-detail aria-label="${locale.ui.closeDetails}">×</button><div data-detail-content><div data-detail-art></div><p class="eyebrow" data-detail-kind></p><h2 id="detail-heading" data-detail-title></h2><p data-detail-explanation></p><section class="detail-related" data-detail-related hidden><h3 data-explore-on-scale>${locale.ui.exploreOnScale}</h3><div data-detail-related-links></div></section><dl><div><dt data-calculation-label>${locale.ui.calculation}</dt><dd data-detail-calculation></dd></div><div data-detail-diagnostic-section hidden><dt data-diagnostic-label></dt><dd data-detail-diagnostic hidden></dd></div><div><dt data-assumptions-label>${locale.ui.assumptions}</dt><dd data-detail-assumptions></dd></div><div data-detail-advice-section hidden><dt data-advice-label>${locale.ui.securityAdvice}</dt><dd data-detail-advice></dd></div><div><dt data-sources-label>${locale.ui.sources}</dt><dd data-detail-sources></dd></div></dl></div></dialog></div>`;
 
