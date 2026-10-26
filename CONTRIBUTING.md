@@ -50,6 +50,8 @@ Use the browser journey for changes to navigation, details, language controls, o
 pnpm test:browser
 ```
 
+Run automated browser checks and visual reviews headlessly. Use a visible browser only for an explicitly requested interactive review or a browser-specific investigation agreed with the user.
+
 Review source links and dates manually when adding or changing an estimate. Keep each shell command on one line in documentation.
 
 For prose-only changes, inspect the rendered Markdown and links, then run `git diff --check`. The coverage suite is unnecessary when executable behavior has not changed.
