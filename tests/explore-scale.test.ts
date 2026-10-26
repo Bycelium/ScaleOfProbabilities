@@ -690,6 +690,48 @@ describe("public probability exploration", () => {
     expect(Number(scale.dataset.depth)).toBeCloseTo(target.position, 10);
   });
 
+  it("coalesces a desktop wheel burst into one frame without restarting or persisting each event", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+
+    for (let index = 0; index < 8; index += 1) {
+      scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 12, cancelable: true }));
+    }
+    expect(Number(scale.dataset.depth)).toBe(0);
+    expect(clock.pendingFrames).toBe(1);
+    expect(clock.cancelled).toHaveLength(0);
+    expect(writes.mock.calls.filter(([key]) => key === "probability-scale-view-v1")).toHaveLength(0);
+
+    clock.advanceTo(16);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(0);
+    expect(clock.pendingFrames).toBe(1);
+    expect(clock.cancelled).toHaveLength(0);
+  });
+
+  it("spreads a dense wheel arrival across several frames with progressively smaller final steps", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const target = displayLandmarks.filter(item => item.position > 1.044).sort((first, second) => first.position - second.position)[0].position;
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    const positions: number[] = [];
+    for (const timestamp of [16, 48, 80, 112, 144, 176, 208]) {
+      clock.advanceTo(timestamp);
+      positions.push(Number(scale.dataset.depth));
+    }
+    expect(positions[3]).toBeLessThan(target);
+    const increments = positions.slice(1).map((position, index) => position - positions[index]);
+    expect(increments.every(increment => increment > 0)).toBe(true);
+    expect(increments[3]).toBeGreaterThan(increments[4]);
+    expect(increments[4]).toBeGreaterThan(increments[5]);
+    clock.advanceTo(1000);
+    expect(Number(scale.dataset.depth)).toBeCloseTo(target, 10);
+  });
+
   it("carries dense wheel momentum through repeated input and reverses from the current position", () => {
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
