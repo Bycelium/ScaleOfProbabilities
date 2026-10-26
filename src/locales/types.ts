@@ -26,6 +26,9 @@ export type UiTranslation = Readonly<{
   scaleAria: string;
   howToUse: string;
   allReferences: string;
+  allReferencesHelp: string;
+  introDirectionRarer: string;
+  introDirectionLikely: string;
   introNavigation: string;
   probabilityExplanation: string;
   oddsExplanation: string;

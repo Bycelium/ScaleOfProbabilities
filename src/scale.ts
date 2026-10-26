@@ -138,7 +138,7 @@ export function createScale(root: HTMLElement): () => void {
   const languageChoices = (context: "intro" | "menu"): string => localeChoices.map(choice => `<button type="button" data-locale-choice="${choice.code}" data-locale-context="${context}" aria-pressed="${choice.code === locale.code}">${choice.nativeName}</button>`).join("");
 
   root.innerHTML = `<div class="atlas"><div data-page-content>
-    <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker" data-language-picker><button class="language-toggle" data-language-toggle aria-label="${locale.ui.language}" aria-expanded="false">🌐</button><div class="language-menu" data-language-menu role="group" aria-label="${locale.ui.language}" hidden>${languageChoices("menu")}</div></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
+    <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><button class="reference-toggle" data-all-references aria-label="${locale.ui.allReferences}" aria-describedby="all-references-help" aria-pressed="${allReferences}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"/><path d="M9 3v15m6-12v15" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span class="toolbar-tooltip" id="all-references-help" data-all-references-help role="tooltip">${locale.ui.allReferencesHelp}</span></button><div class="language-picker" data-language-picker><button class="language-toggle" data-language-toggle aria-label="${locale.ui.language}" aria-expanded="false">🌐</button><div class="language-menu" data-language-menu role="group" aria-label="${locale.ui.language}" hidden>${languageChoices("menu")}</div></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
     <section class="scale" tabindex="0" aria-label="${locale.ui.scaleAria}">
       <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
     </section>
@@ -147,6 +147,7 @@ export function createScale(root: HTMLElement): () => void {
     <div class="intro-language" role="group" aria-label="${locale.ui.language}" data-intro-language>${languageChoices("intro")}</div>
     <div class="intro-scroll">
       <h1 id="scale-intro-heading" tabindex="-1" data-intro-title>${locale.ui.title}</h1>
+      <div class="intro-directions"><svg viewBox="0 0 120 88" aria-hidden="true"><circle cx="60" cy="44" r="8"/><circle cx="60" cy="44" r="20"/><circle cx="60" cy="44" r="33"/><path class="intro-inward" d="m100 58-28-9m0 0 8-4m-8 4 6 5"/><path class="intro-outward" d="m48 27-28-9m0 0 8-4m-8 4 6 5"/></svg><p><span class="rarer" data-intro-direction-rarer>${locale.ui.introDirectionRarer}</span><span class="likely" data-intro-direction-likely>${locale.ui.introDirectionLikely}</span></p></div>
       <p data-intro-probability>${locale.ui.probabilityExplanation}</p>
       <p data-intro-odds>${locale.ui.oddsExplanation}</p>
       <details><summary data-probability-to-odds>${locale.ui.probabilityToOdds}</summary><p class="equation" data-odds-equation aria-label="${locale.ui.oddsEquationAria}"><var>o</var> = <var>p</var> / (1 − <var>p</var>)</p><p data-probability-definition>${locale.ui.probabilityDefinition}</p></details>
@@ -154,7 +155,6 @@ export function createScale(root: HTMLElement): () => void {
       <details><summary data-odds-to-decibans>${locale.ui.oddsToDecibans}</summary><p class="equation" data-decibans-equation aria-label="${locale.ui.decibansEquationAria}"><var>d</var> = 10 log<sub>10</sub>(<var>o</var>)</p></details>
       <h2 data-how-to-use>${locale.ui.howToUse}</h2>
       <p data-intro-navigation>${locale.ui.introNavigation}</p>
-      <label class="reference-choice"><input type="checkbox" data-all-references${allReferences ? " checked" : ""}><span data-all-references-label>${locale.ui.allReferences}</span></label>
       <p class="intro-credit"><span data-credit-prefix>${locale.ui.creditPrefix}</span> <a href="https://www.htwins.net/scale2/" data-credit-title>${locale.ui.creditTitle}</a>, <span data-credit-by>${locale.ui.creditBy}</span></p>
     </div>
     <footer class="intro-actions"><button data-dismiss-intro>${locale.ui.explore}</button></footer>
@@ -176,7 +176,7 @@ export function createScale(root: HTMLElement): () => void {
   const languageMenu = root.querySelector<HTMLElement>("[data-language-menu]")!;
   const languagePicker = root.querySelector<HTMLElement>("[data-language-picker]")!;
   const returnButton = root.querySelector<HTMLButtonElement>("[data-return-zero]")!;
-  const allReferencesInput = root.querySelector<HTMLInputElement>("[data-all-references]")!;
+  const allReferencesToggle = root.querySelector<HTMLButtonElement>("[data-all-references]")!;
   const gapCaption = root.querySelector<HTMLElement>("[data-gap-caption]")!;
   const hyperspace = root.querySelector<HTMLElement>("[data-hyperspace]")!;
   const landmarkNodes = new Map<string, LandmarkNode>();
@@ -790,8 +790,11 @@ export function createScale(root: HTMLElement): () => void {
     introDialog.querySelector<HTMLElement>("[data-intro-title]")!.textContent = locale.ui.title;
     introDialog.querySelector<HTMLElement>("[data-how-to-use]")!.textContent = locale.ui.howToUse;
     introDialog.querySelector<HTMLElement>("[data-intro-navigation]")!.textContent = locale.ui.introNavigation;
-    introDialog.querySelector<HTMLElement>("[data-all-references-label]")!.textContent = locale.ui.allReferences;
-    allReferencesInput.checked = allReferences;
+    allReferencesToggle.setAttribute("aria-label", locale.ui.allReferences);
+    allReferencesToggle.setAttribute("aria-pressed", String(allReferences));
+    root.querySelector<HTMLElement>("[data-all-references-help]")!.textContent = locale.ui.allReferencesHelp;
+    introDialog.querySelector<HTMLElement>("[data-intro-direction-rarer]")!.textContent = locale.ui.introDirectionRarer;
+    introDialog.querySelector<HTMLElement>("[data-intro-direction-likely]")!.textContent = locale.ui.introDirectionLikely;
     introDialog.querySelector<HTMLElement>("[data-intro-probability]")!.innerHTML = locale.ui.probabilityExplanation;
     introDialog.querySelector<HTMLElement>("[data-intro-odds]")!.innerHTML = locale.ui.oddsExplanation;
     introDialog.querySelector<HTMLElement>("[data-probability-to-odds]")!.textContent = locale.ui.probabilityToOdds;
@@ -850,14 +853,16 @@ export function createScale(root: HTMLElement): () => void {
   languagePicker.addEventListener("keydown", onLanguagePickerKeydown);
   root.addEventListener("click", onRootClick);
 
-  const onAllReferencesChange = (): void => {
-    allReferences = allReferencesInput.checked;
+  const onAllReferencesToggle = (): void => {
+    cancelTravel();
+    allReferences = !allReferences;
     saveAllReferences(allReferences);
+    allReferencesToggle.setAttribute("aria-pressed", String(allReferences));
     if (active && !landmarkIsAvailable(active)) active = selected;
     sceneOrigin = undefined;
     render();
   };
-  allReferencesInput.addEventListener("change", onAllReferencesChange);
+  allReferencesToggle.addEventListener("click", onAllReferencesToggle);
 
   const clearTravelPresentation = (): void => {
     gapCaption.hidden = true;
@@ -1162,7 +1167,7 @@ export function createScale(root: HTMLElement): () => void {
     languageToggle.removeEventListener("click", onLanguageToggle);
     languagePicker.removeEventListener("keydown", onLanguagePickerKeydown);
     root.removeEventListener("click", onRootClick);
-    allReferencesInput.removeEventListener("change", onAllReferencesChange);
+    allReferencesToggle.removeEventListener("click", onAllReferencesToggle);
     scale.removeEventListener("wheel", onWheel);
     document.removeEventListener("keydown", onKeydown);
     window.removeEventListener("pagehide", persistOnPageHide);

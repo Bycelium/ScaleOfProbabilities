@@ -18,7 +18,7 @@ Add the language's native name and number-formatting metadata to `src/locales/me
 
 Translate every visible field, accessibility label, source label or note, and text embedded in artwork. Keep source IDs, landmark IDs, probabilities, positions, artwork structure, relationships, and navigation behavior shared across languages. Complete every named copy field for every landmark in every registered locale. Integrity checks require complete landmark and source key coverage, stable source IDs, and valid relationships.
 
-Regional metadata controls the default language filter; the All references choice exposes the full catalogue. Filtering preserves full-catalogue angles and current depth, while motion, snapping, bounds, rings, and related links use the visible subset.
+Regional metadata controls the default language filter; the All references map control beside the language picker exposes the full catalogue. Filtering preserves full-catalogue angles and current depth, while motion, snapping, bounds, rings, and related links use the visible subset.
 
 ## Navigation behavior
 

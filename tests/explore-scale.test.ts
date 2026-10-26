@@ -426,8 +426,8 @@ describe("public probability exploration", () => {
 
     const all = document.querySelector<HTMLButtonElement>("[data-all-references]")!;
     expect(all.getAttribute("aria-pressed")).toBe("false");
-    expect(all.getAttribute("aria-label")).toBe("All references");
-    expect(all.querySelector("[data-all-references-help]")?.textContent).toBe("Include local references from every language");
+    expect(all.getAttribute("aria-label")).toBe("Toutes les références");
+    expect(all.querySelector("[data-all-references-help]")?.textContent).toBe("Inclure les références locales de toutes les langues");
     all.click();
     expect(all.getAttribute("aria-pressed")).toBe("true");
     expect(localStorage.getItem("probability-scale-all-references")).toBe("true");
@@ -446,6 +446,24 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLButtonElement>("[data-all-references]")?.getAttribute("aria-pressed")).toBe("true");
     expect(document.querySelector('[data-landmark="rain-hilo"]')).not.toBeNull();
     expect(document.querySelector('[data-landmark="rain-brest-december"]')).not.toBeNull();
+  });
+
+  it("cancels a filtered reference journey at its current depth", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render(1200, true, true);
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    document.querySelector<HTMLButtonElement>('[data-landmark="rain-brest-december"]')!.click();
+    clock.advanceTo(16);
+    const depth = scale.dataset.depth;
+
+    document.querySelector<HTMLButtonElement>("[data-all-references]")!.click();
+
+    expect(scale.dataset.depth).toBe(depth);
+    expect(document.querySelector('[data-landmark="rain-brest-december"]')).toBeNull();
+    clock.advanceTo(4000);
+    expect(scale.dataset.depth).toBe(depth);
+    expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
   });
 
   it("falls back after unsupported browser preferences and reads navigator language when needed", () => {
@@ -505,10 +523,14 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-center-marker] .probability")?.textContent).toContain("Probabilité :");
     expect(document.querySelector("[data-center-marker] .odds")?.textContent).toContain("Cote :");
     expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("P");
+    expect(document.querySelector("[data-all-references-help]")?.textContent).toBe("Inclure les références locales de toutes les langues");
+    expect(document.querySelector("[data-intro-direction-rarer]")?.textContent).toBe("Plus rare / vers le centre");
+    expect(document.querySelector("[data-intro-direction-likely]")?.textContent).toBe("Plus probable / vers l’extérieur");
     expect(localStorage.getItem("probability-scale-locale")).toBe("fr");
     document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.click();
     document.querySelector<HTMLButtonElement>('[data-language-menu] [data-locale-choice="en"]')!.click();
     expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("H");
+    expect(document.querySelector("[data-intro-direction-rarer]")?.textContent).toBe("Rarer / toward the center");
     document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.click();
     document.querySelector<HTMLButtonElement>('[data-language-menu] [data-locale-choice="fr"]')!.click();
     expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("P");

@@ -6,7 +6,7 @@ The Scale of Probability is a bilingual, interactive atlas of sourced probabilit
 
 Use the mouse wheel or trackpad on a desktop, the arrow keys when the scene has focus, or a one-finger swipe or pinch on a touch screen. Movement begins immediately and continues to the next landmark in the latest input direction. Long gaps accelerate and then brake into arrival. Any travel closes open details. Selecting an illustration or related example sets an exact destination and opens its details on arrival. The Return to 0 dBan control appears after the opening position.
 
-The explorer supports English and French. A saved choice takes precedence over the browser's ordered language preferences, with English as the fallback. The language picker is in the opening About dialog and beside About in the main view. The persisted **All references** option includes examples associated with every region instead of the selected language's default set.
+The explorer supports English and French. A saved choice takes precedence over the browser's ordered language preferences, with English as the fallback. The language picker is in the opening About dialog and beside About in the main view. The map control beside the language picker persists **All references**, including examples associated with every region instead of the selected language's default set.
 
 ## Development
 
