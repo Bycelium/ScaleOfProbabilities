@@ -24,7 +24,7 @@ const REFERENCES_STORAGE_KEY = "probability-scale-all-references";
 const NEUTRAL = [134, 147, 140] as const;
 const NEGATIVE = [226, 105, 112] as const;
 const POSITIVE = [74, 185, 137] as const;
-const SCENE_REBASE_DECIBANS = 1;
+const SCENE_REBASE_DECIBANS = 5;
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.max(minimum, Math.min(maximum, value));
 const trimDecimal = (value: number): string => value.toFixed(1).replace(/\.0$/, "");
