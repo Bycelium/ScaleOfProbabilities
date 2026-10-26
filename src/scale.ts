@@ -8,7 +8,7 @@ type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter:
 type TravelOptions = Readonly<{ onArrival?: () => void; initialVelocity?: number }>;
 type LandmarkNode = Readonly<{
   button: HTMLButtonElement;
-  art: HTMLElement;
+  image: HTMLImageElement;
   title: HTMLElement;
   item: DisplayLandmark;
   baseX: number;
@@ -24,7 +24,7 @@ const REFERENCES_STORAGE_KEY = "probability-scale-all-references";
 const NEUTRAL = [134, 147, 140] as const;
 const NEGATIVE = [226, 105, 112] as const;
 const POSITIVE = [74, 185, 137] as const;
-const SCENE_REBASE_DECIBANS = 5;
+const SCENE_REBASE_DECIBANS = 2;
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.max(minimum, Math.min(maximum, value));
 const trimDecimal = (value: number): string => value.toFixed(1).replace(/\.0$/, "");
@@ -173,6 +173,7 @@ export function createScale(root: HTMLElement): () => void {
   const tickRingNodes = new Map<number, RingNode>();
   const eventRingNodes = new Map<number, RingNode>();
   const rulerTickNodes = new Map<number, RulerTickNode>();
+  const artworkImageSources = new Map<string, string>();
   const landmarksById = new Map<string, DisplayLandmark>(displayLandmarks.map(item => [item.id, item]));
   const localized = (item: DisplayLandmark): DisplayLandmark => localizeLandmark(item, locale);
   const landmarkIsAvailable = (item: DisplayLandmark): boolean => {
@@ -234,6 +235,20 @@ export function createScale(root: HTMLElement): () => void {
     "mensik-first-serve-miami-2025": { x: -12, y: 0 },
     "rain-hilo": { x: -45, y: 12 },
     "pokemon-destined-rivals-double-rare": { x: 30, y: 0 },
+  };
+
+  const artworkImageSource = (item: DisplayLandmark): string => {
+    const key = `${locale.code}:${item.id}`;
+    const cached = artworkImageSources.get(key);
+    if (cached) return cached;
+    const template = document.createElement("template");
+    template.innerHTML = item.art.trim();
+    translateArtwork(template.content, locale);
+    const svg = template.content.querySelector("svg")!;
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const source = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.outerHTML)}`;
+    artworkImageSources.set(key, source);
+    return source;
   };
 
   ruler.innerHTML = `<div class="depth-gauge"><div class="depth-readout" data-depth-readout data-center-marker><span class="probability"><small class="readout-label" data-probability-label></small> <span data-probability-value></span></span><span class="odds"><small class="readout-label" data-odds-label></small> <span data-odds-value></span></span><span class="visually-hidden" data-readout-decibans></span></div><i class="depth-spoke" data-depth-spoke></i><span class="current-depth-marker" data-current-depth-marker><i></i><strong></strong></span></div>`;
@@ -367,11 +382,11 @@ export function createScale(root: HTMLElement): () => void {
     if (scale.dataset.depth !== depth) scale.dataset.depth = depth;
   };
 
-  const makeLandmark = (item: DisplayLandmark): Pick<LandmarkNode, "button" | "art" | "title" | "item"> => {
+  const makeLandmark = (item: DisplayLandmark): Pick<LandmarkNode, "button" | "image" | "title" | "item"> => {
     const button = document.createElement("button");
     button.className = "landmark";
     button.dataset.landmark = item.id;
-    button.innerHTML = `<span class="art">${item.art}</span><span class="landmark-title"></span>`;
+    button.innerHTML = '<span class="art"><img alt="" draggable="false"></span><span class="landmark-title"></span>';
     const showMarker = () => { active = item; render(); };
     button.addEventListener("mouseenter", showMarker);
     button.addEventListener("focus", showMarker);
@@ -391,7 +406,7 @@ export function createScale(root: HTMLElement): () => void {
     layer.append(button);
     return {
       button,
-      art: button.querySelector<HTMLElement>(".art")!,
+      image: button.querySelector<HTMLImageElement>("img")!,
       title: button.querySelector<HTMLElement>(".landmark-title")!,
       item,
     };
@@ -430,7 +445,7 @@ export function createScale(root: HTMLElement): () => void {
       const y = centerY + Math.sin(angle) * radius;
       const artSize = item.size * zoomFactor * compactArtScale;
       if (artSize * maximumSceneZoom < 0.5 || !sceneIntersectsAtSomeZoom(x, y, artSize, nextMetrics)) return [];
-      return [{ item, depth, zoomFactor, ringDiameter, x, y, artSize }];
+      return [{ item, zoomFactor, ringDiameter, x, y, artSize }];
     });
     const projectedIds = new Set<string>(projected.map(({ item }) => item.id));
     for (const [id, node] of landmarkNodes) {
@@ -441,12 +456,12 @@ export function createScale(root: HTMLElement): () => void {
     }
     for (const { item, zoomFactor, ringDiameter, x, y, artSize } of projected) {
       const existing = landmarkNodes.get(item.id) ?? makeLandmark(item);
-      const { button, title } = existing;
+      const { button, image, title } = existing;
       if (button.dataset.locale !== locale.code) {
         const translated = localized(item);
         setText(title, translated.shortTitle);
         button.setAttribute("aria-label", `${translated.title}, ${formatProbability(item.chance, locale.code)}, ${formatDecibans(item.position, locale.code)}`);
-        translateArtwork(button, locale);
+        image.src = artworkImageSource(item);
         button.dataset.locale = locale.code;
       }
       if (button.parentElement !== layer) layer.append(button);
@@ -543,18 +558,18 @@ export function createScale(root: HTMLElement): () => void {
       if (button.dataset.receded !== receded) button.dataset.receded = receded;
     }
     const maximumRingDiameter = Math.hypot(width, height);
-    const updateRingVisibility = (nodes: ReadonlyMap<number, RingNode>, hideCurrent: boolean): void => {
+    const updateRingVisibility = (nodes: ReadonlyMap<number, RingNode>): void => {
       for (const [position, node] of nodes) {
         const diameter = node.baseDiameter * sceneZoom;
-        const hidden = diameter < 0.75 || diameter > maximumRingDiameter || (hideCurrent && Math.abs(position - view.center) < 1e-8);
+        const hidden = diameter < 0.75 || diameter > maximumRingDiameter || Math.abs(position - view.center) < 1e-8;
         if (hidden !== node.element.hasAttribute("hidden")) {
           if (hidden) node.element.setAttribute("hidden", "");
           else node.element.removeAttribute("hidden");
         }
       }
     };
-    updateRingVisibility(tickRingNodes, true);
-    updateRingVisibility(eventRingNodes, true);
+    updateRingVisibility(tickRingNodes);
+    updateRingVisibility(eventRingNodes);
     setStyle(currentDepthRing, "width", `${referenceDiameter}px`);
     setStyle(currentDepthRing, "height", `${referenceDiameter}px`);
     setStyle(currentDepthRing, "--ring-color", axisColor(view.center));

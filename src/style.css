@@ -60,7 +60,7 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .landmark[data-receded="false"]::before { content: ""; inset: -.4rem; position: absolute; }
 .landmark[data-receded="true"] { gap: 0; max-width: none; padding: 0; }
 .landmark .art { filter: drop-shadow(0 12px 9px #020b12aa); height: calc(var(--size) * var(--depth-scale, 1)); transition: transform .18s ease, filter .18s ease; width: calc(var(--size) * var(--depth-scale, 1)); }
-.landmark svg { display: block; height: 100%; pointer-events: visiblePainted; width: 100%; }
+.landmark .art img { display: block; height: 100%; pointer-events: auto; width: 100%; }
 .landmark-title { pointer-events: auto; }
 .landmark:hover .art, .landmark:focus-visible .art { filter: drop-shadow(0 15px 10px #020b12dd); transform: scale(1.04); }
 .landmark-title { font-family: Georgia, serif; font-size: .92rem; line-height: 1.05; max-width: 10rem; transform: translate(var(--title-x, 0), var(--title-y, 0)); transform-origin: top center; }

@@ -8,6 +8,12 @@ const capture = async (page: Page, testInfo: TestInfo, name: string) => {
   await testInfo.attach(name, { path, contentType: "image/png" });
 };
 
+const sceneArtworkText = (page: Page, id: string, key: string) => page.locator(`[data-landmark="${id}"] .art img`).evaluate((image, artworkKey) => {
+  const source = (image as HTMLImageElement).getAttribute("src")!;
+  const artwork = new DOMParser().parseFromString(decodeURIComponent(source.slice(source.indexOf(",") + 1)), "image/svg+xml");
+  return artwork.querySelector(`[data-art-text="${artworkKey}"]`)?.textContent;
+}, key);
+
 test("explores radial depth and switches an open explanation to French", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.evaluate(() => {
@@ -134,8 +140,8 @@ test("keeps French depth exploration readable and tappable on mobile", async ({ 
   await capture(page, testInfo, "mobile-french-tiny-landmark-details");
 
   await page.goto("/?weekday#d=4");
-  await expect(page.locator('[data-landmark="weekday"] [data-art-text="weekdayMonday"]')).toHaveText("L");
-  await expect(page.locator('[data-landmark="weekday"] [data-art-text="weekdayWeekend"]')).toHaveText("S D");
+  expect(await sceneArtworkText(page, "weekday", "weekdayMonday")).toBe("L");
+  expect(await sceneArtworkText(page, "weekday", "weekdayWeekend")).toBe("S D");
 
   await page.goto("/?needle#d=-80.27101362442018");
   const currentBadge = page.locator("[data-current-depth-marker] strong");

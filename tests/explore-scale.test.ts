@@ -66,6 +66,11 @@ const render = (width = 1200, introSeen = true, allReferences = true) => {
   return { dispose };
 };
 
+const sceneArtwork = (id: string): Document => {
+  const source = document.querySelector<HTMLImageElement>(`[data-landmark="${id}"] .art img`)!.getAttribute("src")!;
+  return new DOMParser().parseFromString(decodeURIComponent(source.slice(source.indexOf(",") + 1)), "image/svg+xml");
+};
+
 describe("public probability exploration", () => {
   beforeEach(() => {
     TestResizeObserver.instances = [];
@@ -415,6 +420,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-current-depth-marker]")?.textContent).toContain("−4,8 dBan");
     expect(document.querySelector("[data-center-marker] .probability")?.textContent).toContain("Probabilité :");
     expect(document.querySelector("[data-center-marker] .odds")?.textContent).toContain("Cote :");
+    expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("P");
     expect(localStorage.getItem("probability-scale-locale")).toBe("fr");
     document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
@@ -435,7 +441,7 @@ describe("public probability exploration", () => {
     ] as const) {
       history.replaceState(null, "", `#d=${depth}`);
       const rendered = render();
-      expect(document.querySelector(`[data-landmark="${id}"] [data-art-text="${artKey}"]`)?.textContent).toBe(expected);
+      expect(sceneArtwork(id).querySelector(`[data-art-text="${artKey}"]`)?.textContent).toBe(expected);
       rendered.dispose();
     }
   });
@@ -576,7 +582,7 @@ describe("public probability exploration", () => {
     const target = document.querySelector<HTMLButtonElement>('[data-landmark="die-d4-highest"]')!;
     expect(target.querySelector<HTMLElement>(".landmark-title")?.hidden).toBe(true);
     expect(target.style.pointerEvents).toBe("none");
-    expect(target.querySelector("svg")).not.toBeNull();
+    expect(target.querySelector("img")?.src).toMatch(/^data:image\/svg\+xml/);
     const pointer = (type: string, clientY: number) => {
       const event = new Event(type, { bubbles: true, cancelable: true });
       Object.defineProperties(event, { clientX: { value: 180 }, clientY: { value: clientY }, pointerId: { value: 12 }, pointerType: { value: "touch" } });
@@ -930,7 +936,7 @@ describe("public probability exploration", () => {
     localStorage.setItem("probability-scale-locale", "fr");
     history.replaceState(null, "", `#d=${byId.get("fr-letter-green-j3-2025")!.position}`);
     const french = render(1200, true, false);
-    expect(document.querySelector('[data-landmark="fr-letter-green-j3-2025"] [data-art-text="postalThreeDays"]')?.textContent).toBe("3 jours");
+    expect(sceneArtwork("fr-letter-green-j3-2025").querySelector('[data-art-text="postalThreeDays"]')?.textContent).toBe("3 jours");
     french.dispose();
 
     history.replaceState(null, "", `#d=${byId.get("idf-electricity-available-2024")!.position}`);
@@ -1345,7 +1351,7 @@ describe("public probability exploration", () => {
     render();
     const hash = document.querySelector<HTMLButtonElement>('[data-landmark="exact-hash-day"]')!;
     expect(hash.querySelector(".landmark-title")?.textContent).toBe("exact Bitcoin hash in a day");
-    expect(hash.querySelector("svg")?.textContent).toContain("₿");
+    expect(sceneArtwork("exact-hash-day").documentElement.textContent).toContain("₿");
     hash.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toBe("A preselected Bitcoin hash appears within one day");
     expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("specific 256-bit hash chosen in advance");
@@ -1381,7 +1387,7 @@ describe("public probability exploration", () => {
       render();
       const landmark = document.querySelector<HTMLButtonElement>(`[data-landmark="${id}"]`)!;
       expect(landmark.getAttribute("aria-label")).toContain(label);
-      expect(landmark.querySelector(".polyhedral-die")).not.toBeNull();
+      expect(sceneArtwork(id).querySelector(".polyhedral-die")).not.toBeNull();
     }
     const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     expect(byId.get("die-d20-no-critical-failure")?.position).toBeCloseTo(10 * Math.log10(19), 10);
@@ -1394,7 +1400,7 @@ describe("public probability exploration", () => {
 
     history.replaceState(null, "", "#d=-20");
     render();
-    expect([...document.querySelectorAll('[data-landmark="die-d100-highest"] svg text')].map(node => node.textContent)).toEqual(["00", "0"]);
+    expect([...sceneArtwork("die-d100-highest").querySelectorAll("text")].map(node => node.textContent)).toEqual(["00", "0"]);
     document.querySelector<HTMLButtonElement>('[data-landmark="die-d100-highest"]')!.click();
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("designated as tens");
     expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a')?.href).toContain("dndbeyond.com");
@@ -1433,7 +1439,7 @@ describe("public probability exploration", () => {
     const lotoPrize = document.querySelector<HTMLButtonElement>('[data-landmark="france-loto-main-prize"]')!;
 
     expect(rollSix).not.toBeNull();
-    expect(matchingDice.querySelector('.dice-set[data-face="4"]')).not.toBeNull();
+    expect(sceneArtwork("two-dice-any-double").querySelector('.dice-set[data-face="4"]')).not.toBeNull();
     expect(lotoPrize).not.toBeNull();
     expect(rollSix.dataset.ringSize).toBe(matchingDice.dataset.ringSize);
     expect([rollSix.style.left, rollSix.style.top]).not.toEqual([matchingDice.style.left, matchingDice.style.top]);
