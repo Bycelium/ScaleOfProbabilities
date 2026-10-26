@@ -531,13 +531,13 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-center-marker] .odds")?.textContent).toContain("Cote :");
     expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("P");
     expect(document.querySelector("[data-all-references-help]")?.textContent).toBe("Afficher aussi les exemples propres à d’autres pays.");
-    expect(document.querySelector("[data-intro-direction-rarer]")?.textContent).toBe("Plus rare / vers le centre");
-    expect(document.querySelector("[data-intro-direction-likely]")?.textContent).toBe("Plus probable / vers l’extérieur");
+    expect(document.querySelector("[data-intro-direction-rarer]")?.textContent).toBe("− dBan : plus rare, vers le centre");
+    expect(document.querySelector("[data-intro-direction-likely]")?.textContent).toBe("+ dBan : plus probable, vers l’extérieur");
     expect(localStorage.getItem("probability-scale-locale")).toBe("fr");
     document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.click();
     document.querySelector<HTMLButtonElement>('[data-language-menu] [data-locale-choice="en"]')!.click();
     expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("H");
-    expect(document.querySelector("[data-intro-direction-rarer]")?.textContent).toBe("Rarer / toward the center");
+    expect(document.querySelector("[data-intro-direction-rarer]")?.textContent).toBe("− dBan: rarer, toward the center");
     document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.click();
     document.querySelector<HTMLButtonElement>('[data-language-menu] [data-locale-choice="fr"]')!.click();
     expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("P");
