@@ -10,6 +10,14 @@ The explorer supports English and French. A saved choice takes precedence over t
 
 Use Node 24 and pnpm 11.20.0. The pinned Nix development shell provides both tools. Run every command from the repository root.
 
+With direnv's shell integration installed, allow the repository environment once:
+
+```sh
+direnv allow
+```
+
+Otherwise, enter the development shell directly:
+
 ```sh
 nix develop
 ```
