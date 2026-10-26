@@ -933,6 +933,7 @@ export function createScale(root: HTMLElement): () => void {
       travelVelocity = 0;
       setStyle(hyperspace, "--hyperspace-opacity", "0");
       if (!onArrival) active = nearestLandmark(target);
+      sceneOrigin = undefined;
       moveTo(target);
       onArrival?.();
     };
