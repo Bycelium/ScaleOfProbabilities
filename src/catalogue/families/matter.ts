@@ -1,6 +1,10 @@
-import { artwork, atomArtwork, glacierArtwork, moleculeArtwork } from "../../artwork";
+import { artwork, atomArtwork, glacierArtwork, moleculeArtwork, poolArtwork } from "../../artwork";
 import { lower, upper, oneIn } from "../helpers";
 import type { LandmarkModel } from "../types";
+
+const faucetDropLitres = 0.25 / 1000;
+const competitionPoolLitres = 50 * 25 * 3 * 1000;
+const gardenPoolLitres = 6 * 3 * 1.5 * 1000;
 
 export const matterModels = [
   { id: "nitrogen-molecule", chance: upper(0.2192), size: 89, art: moleculeArtwork("N₂", "#5c82c4", "#89ace4"), sourceIds: ["nasa-earth-fact-sheet"], classification: "Estimate" },
@@ -15,4 +19,6 @@ export const matterModels = [
   { id: "carbon-14-decay", chance: upper(2.9122197472011283e-53), size: 92, art: atomArtwork("¹⁴C", "#737373", "#3d3d3d", "#f1f1f1"), sourceIds: ["ciaaw-carbon-isotopic-data"], classification: "Defined model" },
   { id: "needle-haystack", chance: lower(9.39504e-9), size: 94, art: artwork("needle-hay", "#c99742", "#f3d889"), sourceIds: ["john-james-needle-guide-sharps-size-7", "new-holland-roll-bar-125"], classification: "Defined model" },
   { id: "frozen-freshwater", chance: lower(0.687), size: 92, art: glacierArtwork("#78b7c8"), sourceIds: ["usgs-water-science-school-ice-snow-glaciers-and-the-water-cycle"], classification: "Estimate" },
+  { id: "drop-olympic-pool", chance: oneIn(competitionPoolLitres / faucetDropLitres), size: 94, art: poolArtwork("competition"), sourceIds: ["london-aquatics-centre", "usgs-faucet-drop"], classification: "Defined model" },
+  { id: "drop-garden-pool", chance: oneIn(gardenPoolLitres / faucetDropLitres), size: 94, art: poolArtwork("garden"), sourceIds: ["usgs-faucet-drop", "geometric-example-model"], classification: "Defined model" },
 ] satisfies readonly LandmarkModel[];

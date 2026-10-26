@@ -32,6 +32,8 @@ const declaredRelatedLandmarkIds = {
   "aes-256-key": ["aes-128-key", "exact-hash-day"],
   "exact-hash-day": ["aes-128-key", "aes-256-key"],
   "needle-haystack": ["beach-grain", "sahara-grain"],
+  "drop-olympic-pool": ["drop-garden-pool", "needle-haystack", "beach-grain"],
+  "drop-garden-pool": ["needle-haystack", "beach-grain"],
   "solar-terrestrial": ["planet-with-moon", "sun-mass"],
   "planet-with-moon": ["solar-terrestrial", "sun-mass", "lunar-eclipse-year"],
   "sun-mass": ["solar-terrestrial", "planet-with-moon", "red-dwarf-star"],

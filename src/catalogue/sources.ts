@@ -95,6 +95,8 @@ export const sourceReferences = {
   "roulette-rules": { href: "https://www.legifrance.gouv.fr/codes/section_lc/JORFTEXT000000278899/LEGISCTA000006138053/" },
   "roulette-operator": { href: "https://www.casino-annecy.com/roulette-anglaise-1171" },
   "blackjack-rules": { href: "https://www.legifrance.gouv.fr/codes/id/LEGISCTA000006138051/" },
+  "london-aquatics-centre": { href: "https://www.queenelizabetholympicpark.co.uk/venues/london-aquatics-centre" },
+  "usgs-faucet-drop": { href: "https://www.usgs.gov/water-science-school/science/water-qa-does-a-little-leak-my-house-really-waste-water" },
 } as const;
 
 export type SourceId = keyof typeof sourceReferences;

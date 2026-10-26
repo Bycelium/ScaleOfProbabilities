@@ -97,4 +97,6 @@ export const frSources = {
   "roulette-rules": { label: "Règles des casinos français : paiements de la roulette anglaise", note: "article 55-12, texte en vigueur vérifié le 26 octobre 2026" },
   "roulette-operator": { label: "Casino d’Annecy : règles de la roulette anglaise", note: "37 cases, paiements et demi-perte sur le zéro vérifiés le 26 octobre 2026" },
   "blackjack-rules": { label: "Règles des casinos français : blackjack", note: "article 55-4, texte en vigueur vérifié le 26 octobre 2026" },
+  "london-aquatics-centre": { label: "Queen Elizabeth Olympic Park : London Aquatics Centre", note: "Bassin de compétition de Londres 2012 : 50 m de long, 25 m de large et 3 m de profondeur" },
+  "usgs-faucet-drop": { label: "USGS Water Science School : combien d’eau perd un robinet qui goutte ?", note: "Estimation de 2019 pour une goutte de robinet : 0,25 mL, dans un intervalle annoncé de 0,2 à 0,333 mL" },
 } satisfies SourceTranslationRegistry;

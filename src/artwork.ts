@@ -168,6 +168,16 @@ export const moleculeArtwork = (formula: string, color: string, light: string, a
   return `<svg viewBox="0 0 100 100" aria-hidden="true" style="--art:${color};--light:${light}">${circles}<text x="50" y="94" text-anchor="middle" fill="#e9f4f0" font-size="15" font-family="system-ui">${formula}</text></svg>`;
 };
 
+export const poolArtwork = (kind: "competition" | "garden"): string => {
+  const surroundings = kind === "competition"
+    ? '<rect x="4" y="27" width="92" height="65" rx="3" fill="#dce3df"/><path d="M12 86h76" stroke="#788e96" stroke-width="4"/>'
+    : '<rect x="2" y="25" width="96" height="70" rx="12" fill="#638b4d"/><rect x="7" y="31" width="86" height="58" rx="9" fill="#d5b184"/><path d="M9 87h82" stroke="#9b7957" stroke-width="3"/>';
+  const waterMarks = kind === "competition"
+    ? '<path d="M14 45h72M14 57h72M14 69h72" stroke="#153b70" stroke-width="2.5"/><path d="M14 39h72M14 51h72M14 63h72M14 75h72" stroke="#f1db8a" stroke-width="1.5" stroke-dasharray="3 2"/>'
+    : '<path d="M20 49q8-5 16 0t16 0M44 69q8-5 16 0t16 0" fill="none" stroke="#8ad4e5" stroke-width="2.5"/><path d="M20 34v15m8-15v15m-8-10h8m-8 6h8" stroke="#f0f3e9" stroke-width="2.5"/>';
+  return `<svg class="pool-art" data-pool="${kind}" viewBox="0 0 100 100" aria-hidden="true">${surroundings}<rect x="11" y="34" width="78" height="47" rx="4" fill="#298db4" stroke="#f0f3e9" stroke-width="3"/>${waterMarks}<g data-water-drop><path d="M76 3C71 13 63 20 63 27a13 13 0 0 0 26 0C89 20 81 13 76 3Z" fill="#36aede" stroke="#c4f1ff" stroke-width="2"/><path d="M69 24q-3 8 4 10" fill="none" stroke="#d9f6ff" stroke-width="3" stroke-linecap="round"/></g></svg>`;
+};
+
 export const solarSystemArtwork = (kind: "terrestrial" | "moon" | "sun-mass", color: string): string => {
   if (kind === "terrestrial") return `<svg class="solar-system-art" data-kind="terrestrial" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="10" fill="#f4c65d"/><g fill="none" stroke="#a9c5d0" stroke-width="1.5"><circle cx="50" cy="50" r="18"/><circle cx="50" cy="50" r="28"/><circle cx="50" cy="50" r="38"/></g><g fill="${color}"><circle cx="68" cy="50" r="4"/><circle cx="31" cy="30" r="5"/><circle cx="24" cy="72" r="5"/><circle cx="83" cy="69" r="4"/></g></svg>`;
   if (kind === "moon") return `<svg class="solar-system-art" data-kind="moon" viewBox="0 0 100 100" aria-hidden="true"><circle cx="45" cy="53" r="28" fill="${color}"/><path d="M18 53a27 27 0 0 0 54 0" fill="none" stroke="#8bd2de" stroke-width="3"/><circle cx="77" cy="31" r="9" fill="#e7e3d1"/><path d="M67 35c-17 12-18 31-5 43" fill="none" stroke="#a9c5d0" stroke-width="2"/></svg>`;

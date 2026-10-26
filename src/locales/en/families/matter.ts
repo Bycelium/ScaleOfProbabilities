@@ -85,4 +85,18 @@ export const matterEN = {
     calculation: "p ≈ 68.7% of Earth’s freshwater volume",
     assumptions: "The denominator excludes oceans. The percentage is an estimate of reservoir volumes in water-equivalent units.",
   },
+  "drop-olympic-pool": {
+    title: "A drop in an Olympic pool",
+    shortTitle: "a drop in an Olympic pool",
+    explanation: "This pool holds the equivalent of 15 billion drops of 0.25 mL. A portion chosen uniformly from those equal volumes has a 1 in 15 billion chance of being one specified portion.",
+    calculation: "V = 50 × 25 × 3 × 1,000 = 3,750,000 L; drop volume = 0.25 mL = 0.00025 L; p = 0.00025 / 3,750,000 = 1 / 15,000,000,000",
+    assumptions: "The rectangular volume model uses the London Aquatics Centre competition pool’s published 50 × 25 × 3 m dimensions. The adopted 0.25 mL faucet-drop estimate comes from USGS. The water volume is partitioned conceptually into equal drop-sized portions, and one is selected uniformly. One portion is designated in advance.",
+  },
+  "drop-garden-pool": {
+    title: "A drop in a garden pool",
+    shortTitle: "a drop in a garden pool",
+    explanation: "A 6 by 3 m pool with 1.5 m of water holds the equivalent of 108 million drops of 0.25 mL. A uniformly chosen portion has a 1 in 108 million chance of being one specified portion.",
+    calculation: "V = 6 × 3 × 1.5 × 1,000 = 27,000 L; drop volume = 0.25 mL = 0.00025 L; p = 0.00025 / 27,000 = 1 / 108,000,000",
+    assumptions: "The garden pool is an illustrative rectangular model, 6 m long and 3 m wide, with a water depth of 1.5 m. The adopted 0.25 mL faucet-drop estimate comes from USGS. The water volume is partitioned conceptually into equal drop-sized portions, and one is selected uniformly. One portion is designated in advance.",
+  },
 } satisfies LandmarkCopyFamily;

@@ -85,4 +85,18 @@ export const matterFR = {
     calculation: "p ≈ 68,7 % du volume d’eau douce terrestre",
     assumptions: "Le dénominateur exclut les océans. Le pourcentage estime les volumes des réserves en équivalent eau.",
   },
+  "drop-olympic-pool": {
+    title: "Une goutte dans une piscine olympique",
+    shortTitle: "une goutte dans une piscine olympique",
+    explanation: "Ce bassin contient l’équivalent de 15 milliards de gouttes de 0,25 mL. Une portion choisie au hasard parmi ces volumes égaux a une chance sur 15 milliards d’être celle désignée à l’avance.",
+    calculation: "V = 50 × 25 × 3 × 1 000 = 3 750 000 L ; volume d’une goutte = 0,25 mL = 0,00025 L ; p = 0,00025 / 3 750 000 = 1 / 15 000 000 000",
+    assumptions: "Le modèle de volume rectangulaire reprend les dimensions publiées du bassin de compétition du London Aquatics Centre : 50 × 25 × 3 m. Le volume retenu de 0,25 mL par goutte de robinet vient de l’USGS. Le volume d’eau est divisé conceptuellement en portions égales de cette taille. Chaque portion a la même chance d’être tirée. Une seule est désignée à l’avance.",
+  },
+  "drop-garden-pool": {
+    title: "Une goutte dans une piscine de jardin",
+    shortTitle: "une goutte dans une piscine de jardin",
+    explanation: "Un bassin de 6 m sur 3 m rempli d’eau sur 1,5 m contient l’équivalent de 108 millions de gouttes de 0,25 mL. Une portion choisie au hasard parmi ces volumes égaux a une chance sur 108 millions d’être celle désignée à l’avance.",
+    calculation: "V = 6 × 3 × 1,5 × 1 000 = 27 000 L ; volume d’une goutte = 0,25 mL = 0,00025 L ; p = 0,00025 / 27 000 = 1 / 108 000 000",
+    assumptions: "La piscine de jardin est un modèle rectangulaire illustratif de 6 m de long sur 3 m de large, avec une profondeur d’eau de 1,5 m. Le volume retenu de 0,25 mL par goutte de robinet vient de l’USGS. Le volume d’eau est divisé conceptuellement en portions égales de cette taille. Chaque portion a la même chance d’être tirée. Une seule est désignée à l’avance.",
+  },
 } satisfies LandmarkCopyFamily;

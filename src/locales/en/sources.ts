@@ -97,4 +97,6 @@ export const enSources = {
   "roulette-rules": { label: "French casino rules: English roulette payouts", note: "Article 55-12, current text checked 26 October 2026" },
   "roulette-operator": { label: "Casino d’Annecy: English roulette rules", note: "37 pockets, payouts, and half-loss on zero checked 26 October 2026" },
   "blackjack-rules": { label: "French casino rules: blackjack", note: "Article 55-4, current text checked 26 October 2026" },
+  "london-aquatics-centre": { label: "Queen Elizabeth Olympic Park: London Aquatics Centre", note: "London 2012 competition pool: 50 m long, 25 m wide and 3 m deep" },
+  "usgs-faucet-drop": { label: "USGS Water Science School: how much water does a dripping faucet waste?", note: "2019 faucet-drop estimate: 0.25 mL per drop, within a stated 0.2–0.333 mL range" },
 } satisfies SourceTranslationRegistry;

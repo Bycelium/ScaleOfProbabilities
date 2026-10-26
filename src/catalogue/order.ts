@@ -133,6 +133,8 @@ export const catalogueSlots = {
   "roulette-even-money": 131,
   "roulette-two-dozens-columns": 132,
   "blackjack-natural-six-deck": 133,
+  "drop-olympic-pool": 134,
+  "drop-garden-pool": 135,
 } as const;
 
 export type LandmarkId = keyof typeof catalogueSlots;
