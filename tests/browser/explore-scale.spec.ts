@@ -14,6 +14,49 @@ const sceneArtworkText = (page: Page, id: string, key: string) => page.locator(`
   return artwork.querySelector(`[data-art-text="${artworkKey}"]`)?.textContent;
 }, key);
 
+test("keeps illustration centers at their exact projected positions through arrival", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/?arrival#d=0");
+  await page.evaluate(() => {
+    sessionStorage.setItem("probability-scale-intro-seen", "true");
+    localStorage.setItem("probability-scale-all-references", "true");
+  });
+  await page.reload();
+
+  const samples = await page.evaluate(async () => {
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const scene = document.querySelector<HTMLElement>("[data-depth-scene]")!;
+    const details = document.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
+    const inspect = () => {
+      const bounds = scale.getBoundingClientRect();
+      const zoom = Number(scene.dataset.sceneZoom);
+      const offsets = [...document.querySelectorAll<HTMLButtonElement>("[data-landmark]")]
+        .filter(button => !button.hidden)
+        .map(button => {
+          const art = button.querySelector<HTMLImageElement>(".art img")!.getBoundingClientRect();
+          const expectedX = bounds.left + bounds.width / 2 + (Number.parseFloat(button.style.left) - bounds.width / 2) * zoom;
+          return { id: button.dataset.landmark, error: Math.abs(art.left + art.width / 2 - expectedX) };
+        });
+      return { depth: Number(scale.dataset.depth), zoom, worst: offsets.sort((first, second) => second.error - first.error)[0] };
+    };
+    const positions = [inspect()];
+    document.querySelector<HTMLButtonElement>('[data-landmark="die-six"]')!.click();
+    return new Promise<typeof positions>(resolve => {
+      const sample = () => {
+        positions.push(inspect());
+        if (details.open) resolve(positions);
+        else requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    });
+  });
+  expect(samples.length).toBeGreaterThan(3);
+  expect(samples.some(sample => sample.zoom !== 1)).toBe(true);
+  expect(samples.at(-1)!.depth).toBeCloseTo(-6.989700043360188, 10);
+  expect(samples.at(-1)!.zoom).toBe(1);
+  expect(samples.filter(sample => sample.worst.error > 0.6)).toEqual([]);
+});
+
 test("explores radial depth and switches an open explanation to French", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.evaluate(() => {
