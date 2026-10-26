@@ -1527,6 +1527,41 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("below a target threshold");
   });
 
+  it("compares one drop-sized portion in Olympic and garden pools with explicit volume models", () => {
+    history.replaceState(null, "", "#d=-101.8");
+    render();
+    const olympic = document.querySelector<HTMLButtonElement>('[data-landmark="drop-olympic-pool"]');
+    expect(olympic).not.toBeNull();
+    olympic!.click();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    expect(Number(scale.dataset.depth)).toBeCloseTo(-10 * Math.log10(15_000_000_000 - 1), 10);
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("3,750,000 L");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("15,000,000,000");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("0.25 mL");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("uniformly");
+    expect(document.querySelector('[data-detail-sources] a[href*="queenelizabetholympicpark.co.uk"]')).not.toBeNull();
+    expect(document.querySelector('[data-detail-sources] a[href*="usgs.gov"]')).not.toBeNull();
+    expect(sceneArtwork("drop-olympic-pool").querySelector('[data-pool="competition"] [data-water-drop]')).not.toBeNull();
+    const garden = document.querySelector<HTMLButtonElement>('[data-related-landmark="drop-garden-pool"]')!;
+    expect(garden.textContent).toContain("+21.4 dBan");
+    garden.click();
+    expect(Number(scale.dataset.depth)).toBeCloseTo(-10 * Math.log10(108_000_000 - 1), 10);
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("27,000 L");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("108,000,000");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("illustrative");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("water depth");
+    expect(document.querySelector('[data-related-landmark="needle-haystack"]')).not.toBeNull();
+    expect(document.querySelector('[data-related-landmark="beach-grain"]')).not.toBeNull();
+    expect(sceneArtwork("drop-garden-pool").querySelector('[data-pool="garden"] [data-water-drop]')).not.toBeNull();
+    document.querySelector<HTMLButtonElement>('[data-locale-context="menu"][data-locale-choice="fr"]')!.click();
+    expect(document.querySelector("[data-detail-title]")?.textContent).toContain("piscine de jardin");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("108 000 000");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("0,25 mL");
+    document.querySelector<HTMLButtonElement>('[data-related-landmark="drop-olympic-pool"]')!.click();
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("15 milliards");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("3 750 000 L");
+  });
+
   it("models a needle in one round hay bale by volume", () => {
     history.replaceState(null, "", "#d=-80.3");
     render();
