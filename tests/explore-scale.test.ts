@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { catalogueOrder, displayLandmarks, landmarkModels, relatedLandmarkIds, sourceReferences } from "../src/catalogue";
-import { localizeLandmark } from "../src/locales";
-import { en } from "../src/locales/en";
-import { fr } from "../src/locales/fr";
+import { localeChoices } from "../src/locales";
 import { createScale } from "../src/scale";
 
 class TestResizeObserver {
@@ -167,7 +165,7 @@ describe("public probability exploration", () => {
 
     const intro = document.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
     expect(intro.open).toBe(true);
-    expect(intro.textContent).toContain("Probability expresses how likely an event is");
+    expect(intro.textContent).toContain("Probability ranges from 0 for an impossible event to 1 for a certain event");
     expect(intro.textContent).toContain("75% gives odds of 3 to 1");
     expect(intro.textContent).toContain("introduced by Alan Turing");
     expect(intro.textContent).toContain("Each additional 10 dBan multiplies the odds by ten");
@@ -316,22 +314,20 @@ describe("public probability exploration", () => {
     expect(document.documentElement.lang).toBe("fr");
   });
 
-  it("provides French copy for every landmark while retaining safe English fallback", () => {
+  it("provides complete copy for every registered locale", () => {
     const orderedIds = [...catalogueOrder];
     const modelIds = landmarkModels.map(item => item.id);
     expect(displayLandmarks.map(item => item.id)).toEqual(orderedIds);
     expect(new Set(modelIds).size).toBe(orderedIds.length);
     expect(new Set(modelIds)).toEqual(new Set(orderedIds));
-    expect(new Set(Object.keys(en.landmarks))).toEqual(new Set(orderedIds));
-    expect(new Set(Object.keys(fr.landmarks))).toEqual(new Set(orderedIds));
-    expect(new Set(Object.keys(en.sources))).toEqual(new Set(Object.keys(sourceReferences)));
-    expect(new Set(Object.keys(fr.sources))).toEqual(new Set(Object.keys(sourceReferences)));
-    expect(landmarkModels.flatMap(item => item.sourceIds).every(id => Object.hasOwn(sourceReferences, id))).toBe(true);
-
-    const item = displayLandmarks[0];
-    const localized = localizeLandmark(item, { ...fr, landmarks: {}, sources: {} });
-    expect(localized.title).toBe(item.title);
-    expect(localized.sources).toEqual(item.sources);
+    for (const locale of localeChoices) {
+      expect(new Set(Object.keys(locale.landmarks))).toEqual(new Set(orderedIds));
+      expect(new Set(Object.keys(locale.sources))).toEqual(new Set(Object.keys(sourceReferences)));
+      for (const model of landmarkModels.filter(item => item.advice)) {
+        expect(locale.landmarks[model.id].advice).toBeDefined();
+      }
+    }
+    expect(new Set(landmarkModels.flatMap(item => item.sourceIds))).toEqual(new Set(Object.keys(sourceReferences)));
   });
 
   it("switches language without losing the current depth or open details", () => {
@@ -987,7 +983,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLElement>("[data-detail-kind]")?.hidden).toBe(true);
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("0.586");
     expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("Suppose 500 people out of 100,000 are infected, or 0.5%.");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("597 are not infected: they are the false positives.");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("The other 597 are the false positives.");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("0.5% prevalence");
     expect(document.querySelector('[data-related-landmark="covid-scenario-prior"]')).not.toBeNull();
     const evidence = document.querySelector<HTMLElement>("[data-detail-diagnostic]")!;
@@ -1189,10 +1185,10 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-landmark="password-qwerty"]')!.click();
     clock.advanceTo(4000);
     expect(document.querySelector("[data-detail-kind]")?.textContent).toBe("Historical estimate");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("13,456 of 32,603,388");
-    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("does not estimate current universal account-compromise risk");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("13,456 times among 32,603,388");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("does not represent every present-day password");
     expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a[href*="ab068333d7d44a9376e2037b0ed7d2e8ca5c6610"]')).not.toBeNull();
-    expect(document.querySelector("[data-detail-advice]")?.textContent).toContain("azerty");
+    expect(document.querySelector("[data-detail-advice]")?.textContent).toContain("keyboard runs");
     expect(document.querySelector("[data-detail-advice]")?.textContent).toContain("passkey");
     const managerLink = document.querySelector<HTMLButtonElement>('[data-advice-related="manager-password-16"]')!;
     expect(managerLink.textContent).toBe("password generated by a password manager");
@@ -1216,7 +1212,7 @@ describe("public probability exploration", () => {
     history.replaceState(null, "", "#d=-40");
     render();
     document.querySelector<HTMLButtonElement>('[data-landmark="four-digit-pin"]')!.click();
-    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("retry limits");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("limit repeated attempts");
     expect(document.querySelector('[data-related-landmark="manager-password-16"]')).not.toBeNull();
   });
 
@@ -1227,7 +1223,7 @@ describe("public probability exploration", () => {
     const password = document.querySelector<HTMLButtonElement>('[data-landmark="password-password"]')!;
     expect(password.querySelector("svg text")?.textContent).toBe("password");
     password.click();
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("59,462 of 32,603,388");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("59,462 times among 32,603,388");
     expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a[href*="ab068333d7d44a9376e2037b0ed7d2e8ca5c6610"]')).not.toBeNull();
     expect(document.querySelector('[data-related-landmark="manager-password-16"]')).not.toBeNull();
     expect(document.querySelector('[data-related-landmark="eff-passphrase-six"]')).not.toBeNull();
@@ -1262,7 +1258,7 @@ describe("public probability exploration", () => {
     history.replaceState(null, "", "#d=-385.3");
     const aes128 = render();
     const landmark = document.querySelector<HTMLButtonElement>('[data-landmark="aes-128-key"]')!;
-    expect(landmark.querySelector(".landmark-title")?.textContent).toBe("128-bit encryption");
+    expect(landmark.querySelector(".landmark-title")?.textContent).toBe("128-bit AES key");
     expect(landmark.getAttribute("aria-label")).toContain("1 in 3.4 × 10³⁸");
     landmark.click();
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("2¹²⁸");
@@ -1275,17 +1271,17 @@ describe("public probability exploration", () => {
     history.replaceState(null, "", "#d=-770.6");
     render();
     const aes256 = document.querySelector<HTMLButtonElement>('[data-landmark="aes-256-key"]')!;
-    expect(aes256.querySelector(".landmark-title")?.textContent).toBe("256-bit encryption");
+    expect(aes256.querySelector(".landmark-title")?.textContent).toBe("256-bit AES key");
     expect(aes256.getAttribute("aria-label")).toContain("1 in 1.16 × 10⁷⁷");
 
     history.replaceState(null, "", "#d=-511.3");
     render();
     const hash = document.querySelector<HTMLButtonElement>('[data-landmark="exact-hash-day"]')!;
-    expect(hash.querySelector(".landmark-title")?.textContent).toBe("one exact Bitcoin hash");
+    expect(hash.querySelector(".landmark-title")?.textContent).toBe("exact Bitcoin hash in a day");
     expect(hash.querySelector("svg")?.textContent).toContain("₿");
     hash.click();
-    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("One exact Bitcoin hash in a day");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("All Bitcoin miners collectively");
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("A preselected Bitcoin hash appears within one day");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("specific 256-bit hash chosen in advance");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("below a target threshold");
   });
 
@@ -1296,10 +1292,10 @@ describe("public probability exploration", () => {
     expect(needle.getAttribute("aria-label")).toContain("−80.3 dBan");
     needle.click();
 
-    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("A needle in a hay bale");
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("A needle in a haystack");
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("(0.00069 / 1.25)² × (0.037 / 1.20)");
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("1 in 106 million");
-    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("random point");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("uniformly sampled point");
     expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a[href*="jjneedles.com"]')).not.toBeNull();
     expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a[href*="newholland.com"]')).not.toBeNull();
     expect(document.querySelector('[data-related-landmark="beach-grain"]')).not.toBeNull();
@@ -1341,8 +1337,8 @@ describe("public probability exploration", () => {
     const passphrase = document.querySelector<HTMLButtonElement>('[data-landmark="eff-passphrase-six"]')!;
     expect(passphrase.getAttribute("aria-label")).toContain("1 in 2.21 × 10²³");
     passphrase.click();
-    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("7776⁶");
-    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("repeated words are allowed");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("7,776⁶");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("words may repeat");
     expect(document.querySelectorAll('[data-detail-sources] a[href*="eff.org"]')).toHaveLength(3);
     expect(document.querySelector('[data-related-landmark="eff-word-one"]')).not.toBeNull();
 

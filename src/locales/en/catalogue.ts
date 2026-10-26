@@ -11,20 +11,20 @@ import { weather_sportsEN } from "./families/weather_sports";
 import { servicesEN } from "./families/services";
 import { transportEN } from "./families/transport";
 import { collectiblesEN } from "./families/collectibles";
-import type { LandmarkTranslationRegistry } from "../types";
+import { assembleLandmarkTranslations } from "../helpers";
 
-export const enLandmarks = {
-  ...basicsEN,
-  ...dice_gamesEN,
-  ...cardsEN,
-  ...casinoEN,
-  ...lotteriesEN,
-  ...securityEN,
-  ...matterEN,
-  ...astronomyEN,
-  ...biology_healthEN,
-  ...weather_sportsEN,
-  ...servicesEN,
-  ...transportEN,
-  ...collectiblesEN,
-} satisfies LandmarkTranslationRegistry;
+export const enLandmarks = assembleLandmarkTranslations([
+  basicsEN,
+  dice_gamesEN,
+  cardsEN,
+  casinoEN,
+  lotteriesEN,
+  securityEN,
+  matterEN,
+  astronomyEN,
+  biology_healthEN,
+  weather_sportsEN,
+  servicesEN,
+  transportEN,
+  collectiblesEN,
+]);

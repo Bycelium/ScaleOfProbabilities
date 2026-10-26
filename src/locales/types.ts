@@ -74,6 +74,6 @@ export type LocaleDefinition = Readonly<{
   code: LocaleCode;
 } & LocaleMetadata & {
   ui: UiTranslation;
-  landmarks: Readonly<Partial<Record<LandmarkId, LandmarkTranslation>>>;
-  sources: Readonly<Partial<Record<SourceId, SourceTranslation>>>;
+  landmarks: LandmarkTranslationRegistry;
+  sources: SourceTranslationRegistry;
 }>;
