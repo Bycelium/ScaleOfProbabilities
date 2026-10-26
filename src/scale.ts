@@ -102,7 +102,6 @@ export function createScale(root: HTMLElement): () => void {
   let dragY: number | undefined;
   let touchOriginY: number | undefined;
   let animationFrame: number | undefined;
-  let returnFrame: number | undefined;
   let fastForwardFrame: number | undefined;
   let settleTimer: number | undefined;
   let gestureFastForwardDirection = 0;
@@ -801,12 +800,6 @@ export function createScale(root: HTMLElement): () => void {
   };
   allReferencesInput.addEventListener("change", onAllReferencesChange);
 
-  const cancelReturn = (): void => {
-    if (returnFrame === undefined) return;
-    cancelAnimationFrame(returnFrame);
-    returnFrame = undefined;
-  };
-
   const cancelFastForward = (): void => {
     if (fastForwardFrame !== undefined) cancelAnimationFrame(fastForwardFrame);
     fastForwardFrame = undefined;
@@ -825,42 +818,9 @@ export function createScale(root: HTMLElement): () => void {
   };
 
   const cancelMotion = (): void => {
-    cancelReturn();
     cancelFastForward();
     cancelSnapFeedback();
   };
-
-  const returnToZero = (): void => {
-    cancelMotion();
-    const start = view.center;
-    const restoreScaleFocus = document.activeElement === returnButton;
-    const finish = () => {
-      moveTo(0);
-      if (restoreScaleFocus) scale.focus();
-      scheduleSettle(Math.sign(-start));
-    };
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      finish();
-      return;
-    }
-    let startedAt: number | undefined;
-    const animate = (timestamp: number) => {
-      startedAt ??= timestamp;
-      const progress = clamp((timestamp - startedAt) / 600, 0, 1);
-      const eased = 1 - (1 - progress) ** 3;
-      view.center = start * (1 - eased);
-      saveView(view);
-      render();
-      if (progress < 1) {
-        returnFrame = requestAnimationFrame(animate);
-      } else {
-        returnFrame = undefined;
-        if (restoreScaleFocus) scale.focus();
-      }
-    };
-    returnFrame = requestAnimationFrame(animate);
-  };
-  returnButton.addEventListener("click", returnToZero);
 
   const startFastForward = (target: number, direction: number, onArrival: (() => void) | undefined = undefined, announce = true): void => {
     const start = view.center;
@@ -913,6 +873,21 @@ export function createScale(root: HTMLElement): () => void {
     };
     fastForwardFrame = requestAnimationFrame(animate);
   };
+
+  const returnToZero = (): void => {
+    cancelMotion();
+    const restoreScaleFocus = document.activeElement === returnButton;
+    const direction = Math.sign(-view.center);
+    if (direction === 0) {
+      moveTo(0);
+      if (restoreScaleFocus) scale.focus();
+      return;
+    }
+    startFastForward(0, direction, () => {
+      if (restoreScaleFocus) scale.focus();
+    });
+  };
+  returnButton.addEventListener("click", returnToZero);
 
   const moveThroughTouchGap = (delta: number, rebase: () => void): void => {
     const direction = Math.sign(delta);
@@ -974,7 +949,6 @@ export function createScale(root: HTMLElement): () => void {
   const onWheel = (event: WheelEvent): void => {
     cancelSnapFeedback();
     event.preventDefault();
-    cancelReturn();
     const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
     if (delta === 0) return;
     const direction = Math.sign(delta);
@@ -1105,7 +1079,6 @@ export function createScale(root: HTMLElement): () => void {
     document.removeEventListener("keydown", onKeydown);
     /* v8 ignore next -- disposal may fall between scheduled render frames. */
     if (animationFrame !== undefined) cancelAnimationFrame(animationFrame);
-    if (returnFrame !== undefined) cancelAnimationFrame(returnFrame);
     if (fastForwardFrame !== undefined) cancelFastForward();
     if (settleTimer !== undefined) window.clearTimeout(settleTimer);
     pointers.clear();
