@@ -1,9 +1,11 @@
 import type { LocaleDefinition } from "./types";
+import { localeMetadata } from "./metadata";
+import { enLandmarks } from "./en/catalogue";
+import { enSources } from "./en/sources";
 
 export const en: LocaleDefinition = {
   code: "en",
-  nativeName: "English",
-  numberLocale: "en-US",
+  ...localeMetadata.en,
   ui: {
     title: "The Scale of Probability",
     about: "About",
@@ -55,7 +57,6 @@ export const en: LocaleDefinition = {
     classification: { "Exact model": "Exact model", Estimate: "Estimate", "Historical estimate": "Historical estimate", "Defined model": "Defined model" },
     art: { coinSide: "H", weekdayMonday: "M", weekdayTuesday: "T", weekdayWednesday: "W", weekdayThursday: "T", weekdayFriday: "F", weekdayWeekend: "S S", sixWords: "6 WORDS", wordList: "7,776 words", postalTwoDays: "2 days", postalThreeDays: "3 days", postalFiveDays: "5 days" },
   },
-  landmarks: {},
-  sourceLabels: {},
-  sourceNotes: {},
+  landmarks: enLandmarks,
+  sources: enSources,
 };

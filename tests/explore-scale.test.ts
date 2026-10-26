@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { displayLandmarks, relatedLandmarkIds } from "../src/catalogue";
+import { catalogueOrder, displayLandmarks, landmarkModels, relatedLandmarkIds, sourceReferences } from "../src/catalogue";
 import { localizeLandmark } from "../src/locales";
+import { en } from "../src/locales/en";
 import { fr } from "../src/locales/fr";
 import { createScale } from "../src/scale";
 
@@ -284,11 +285,21 @@ describe("public probability exploration", () => {
   });
 
   it("provides French copy for every landmark while retaining safe English fallback", () => {
-    expect(displayLandmarks.every(item => fr.landmarks[item.id])).toBe(true);
-    expect(Object.keys(fr.landmarks)).toHaveLength(new Set(displayLandmarks.map(item => item.id)).size);
+    const orderedIds = [...catalogueOrder];
+    const modelIds = landmarkModels.map(item => item.id);
+    expect(displayLandmarks.map(item => item.id)).toEqual(orderedIds);
+    expect(new Set(modelIds).size).toBe(orderedIds.length);
+    expect(new Set(modelIds)).toEqual(new Set(orderedIds));
+    expect(new Set(Object.keys(en.landmarks))).toEqual(new Set(orderedIds));
+    expect(new Set(Object.keys(fr.landmarks))).toEqual(new Set(orderedIds));
+    expect(new Set(Object.keys(en.sources))).toEqual(new Set(Object.keys(sourceReferences)));
+    expect(new Set(Object.keys(fr.sources))).toEqual(new Set(Object.keys(sourceReferences)));
+    expect(landmarkModels.flatMap(item => item.sourceIds).every(id => Object.hasOwn(sourceReferences, id))).toBe(true);
+
     const item = displayLandmarks[0];
-    const localized = localizeLandmark({ ...item, sources: [{ label: "Proper publication title", note: "original source note" }] }, fr);
-    expect(localized.sources[0]).toMatchObject({ label: "Proper publication title", note: "original source note" });
+    const localized = localizeLandmark(item, { ...fr, landmarks: {}, sources: {} });
+    expect(localized.title).toBe(item.title);
+    expect(localized.sources).toEqual(item.sources);
   });
 
   it("switches language without losing the current depth or open details", () => {

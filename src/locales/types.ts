@@ -1,4 +1,8 @@
-export type LocaleCode = "en" | "fr";
+import type { LandmarkId } from "../catalogue/order";
+import type { SourceId } from "../catalogue/sources";
+import type { LocaleCode, LocaleMetadata } from "./metadata";
+
+export type { LocaleCode } from "./metadata";
 
 export type LandmarkTranslation = Readonly<{
   title: string;
@@ -8,6 +12,11 @@ export type LandmarkTranslation = Readonly<{
   assumptions: string;
   advice?: Readonly<{ before: string; relatedLabel: string; after: string }>;
 }>;
+
+export type LandmarkCopyFamily = Readonly<Partial<Record<LandmarkId, LandmarkTranslation>>>;
+export type LandmarkTranslationRegistry = Readonly<Record<LandmarkId, LandmarkTranslation>>;
+export type SourceTranslation = Readonly<{ label: string; note?: string }>;
+export type SourceTranslationRegistry = Readonly<Record<SourceId, SourceTranslation>>;
 
 export type UiTranslation = Readonly<{
   title: string;
@@ -63,10 +72,8 @@ export type UiTranslation = Readonly<{
 
 export type LocaleDefinition = Readonly<{
   code: LocaleCode;
-  nativeName: string;
-  numberLocale: string;
+} & LocaleMetadata & {
   ui: UiTranslation;
-  landmarks: Readonly<Record<string, LandmarkTranslation>>;
-  sourceLabels: Readonly<Record<string, string>>;
-  sourceNotes: Readonly<Record<string, string>>;
+  landmarks: Readonly<Partial<Record<LandmarkId, LandmarkTranslation>>>;
+  sources: Readonly<Partial<Record<SourceId, SourceTranslation>>>;
 }>;

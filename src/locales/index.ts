@@ -1,5 +1,7 @@
 import type { DisplayLandmark, Landmark, Source } from "../catalogue";
 import { en } from "./en";
+import { enLandmarks } from "./en/catalogue";
+import { enSources } from "./en/sources";
 import { fr } from "./fr";
 import type { LocaleCode, LocaleDefinition } from "./types";
 
@@ -37,14 +39,13 @@ export const saveLocale = (locale: LocaleDefinition): void => {
 };
 
 export const localizeLandmark = <T extends Landmark | DisplayLandmark>(item: T, locale: LocaleDefinition): T => {
-  const translated = locale.landmarks[item.id];
-  const local = translated ? { ...item, ...translated } : item;
+  const translated = locale.landmarks[item.id] ?? enLandmarks[item.id];
+  const local = { ...item, ...translated };
   const sources = item.sources.map((source): Source => ({
     ...source,
-    label: locale.sourceLabels[source.label] ?? source.label,
-    note: source.note ? locale.sourceNotes[source.note] ?? source.note : undefined,
+    ...(locale.sources[source.id] ?? enSources[source.id]),
   }));
-  const advice = item.advice && translated?.advice ? { ...item.advice, ...translated.advice } : item.advice;
+  const advice = item.advice && translated.advice ? { ...item.advice, ...translated.advice } : item.advice;
   let explanation = local.explanation;
   if (item.diagnostic?.kind === "binary-test") {
     const model = item.diagnostic.model;
