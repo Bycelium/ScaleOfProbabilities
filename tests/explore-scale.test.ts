@@ -314,7 +314,7 @@ describe("public probability exploration", () => {
     const intro = document.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
     expect(intro.open).toBe(true);
     expect(intro.textContent).toContain("Probability ranges from 0 for an impossible event to 1 for a certain event");
-    expect(intro.textContent).toContain("75% gives odds of 3 to 1");
+    expect(intro.textContent).toContain("Odds of 3 to 1 (75%) mean");
     expect(intro.textContent).toContain("introduced by Alan Turing");
     expect(intro.textContent).toContain("Each additional 10 dBan multiplies the odds by ten");
     expect(intro.querySelector("[data-how-to-use]")?.textContent).toBe("How to use");
@@ -375,7 +375,7 @@ describe("public probability exploration", () => {
     expect(document.title).toBe("L’échelle des probabilités");
     const intro = document.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
     expect(intro.textContent).toContain("La cote compare la probabilité");
-    expect(intro.textContent).toContain("75 % correspond à une cote de 3 pour 1");
+    expect(intro.textContent).toContain("Une cote de 3 pour 1 (75 %) signifie");
     expect(intro.querySelector("[data-how-to-use]")?.textContent).toBe("Comment utiliser l’échelle");
     expect(document.querySelector('[data-landmark="coin-heads"] .landmark-title')?.textContent).toBe("pile ou face");
     document.querySelector<HTMLButtonElement>('[data-landmark="coin-heads"]')!.click();
