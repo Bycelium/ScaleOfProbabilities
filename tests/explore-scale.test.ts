@@ -192,6 +192,10 @@ describe("public probability exploration", () => {
     clock.advanceTo(30);
     expect(Number(scene.dataset.sceneZoom)).not.toBe(sceneZoom);
     expect([coin.style.left, coin.style.top]).toEqual([initialLeft, initialTop]);
+
+    clock.advanceTo(4000);
+    expect(scene.style.transform).toBe("scale(1)");
+    expect(ringScene.style.transform).toBe("scale(1)");
   });
 
   it("persists an in-flight view at lifecycle boundaries instead of every animation frame", () => {
