@@ -2,7 +2,7 @@
 
 The Scale of Probability is a bilingual, interactive atlas of sourced probabilities expressed in decibans. It places each event at its exact depth on a continuous radial scale and provides the model, assumptions, calculations, and sources behind each example.
 
-Use the mouse wheel or trackpad on a desktop, the arrow keys when the scene has focus, or a one-finger swipe or pinch on a touch screen. Movement travels continuously through depth and settles on the next landmark in the latest movement direction when input becomes quiet. Select an illustration to travel to its exact depth and open its explanation. Related examples use the same travel path. The Return to 0 dBan control appears after the opening position.
+Use the mouse wheel or trackpad on a desktop, the arrow keys when the scene has focus, or a one-finger swipe or pinch on a touch screen. Movement begins immediately and continues to the next landmark in the latest input direction. Long gaps accelerate and then brake into arrival. Any travel closes open details. Selecting an illustration or related example sets an exact destination and opens its details on arrival. The Return to 0 dBan control appears after the opening position.
 
 The explorer supports English and French. A saved choice takes precedence over the browser's ordered language preferences, with English as the fallback. The language picker is in the opening About dialog and beside About in the main view. The persisted **All references** option includes examples associated with every region instead of the selected language's default set.
 
