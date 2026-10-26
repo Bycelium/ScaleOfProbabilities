@@ -2,7 +2,7 @@
 
 The Scale of Probability is a bilingual, interactive atlas of sourced probabilities expressed in decibans. It places each event at its exact depth on a continuous radial scale and provides the model, assumptions, calculations, and sources behind each example.
 
-[![Explore the Scale of Probability: illustrated examples arranged around the current deciban depth](docs/assets/scale-preview.png)](https://decibanscale.bycelium.com)
+[![Explore the Scale of Probability: illustrated examples arranged around the current deciban depth](docs/assets/scale-preview.png)](https://deciban.bycelium.com)
 
 Use the mouse wheel or trackpad on a desktop, the arrow keys when the scene has focus, or a one-finger swipe or pinch on a touch screen. Movement begins immediately and continues to the next landmark in the latest input direction. Long gaps accelerate and then brake into arrival. Any travel closes open details. Selecting an illustration or related example sets an exact destination and opens its details on arrival. The Return to 0 dBan control appears after the opening position.
 
