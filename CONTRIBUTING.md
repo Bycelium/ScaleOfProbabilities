@@ -24,6 +24,8 @@ Regional metadata controls the default language filter; the All references choic
 
 Directional wheel, trackpad, keyboard, swipe, and pinch input starts continuous travel immediately toward the next visible landmark in the latest direction. Long gaps accelerate and then brake as the landmark approaches. Starting any travel closes open details. Selecting an illustration or related example sets that landmark as the explicit destination; its details open only after arrival. Directional travel stops at the landmark without opening details.
 
+Combine gesture events within one animation frame and preserve elapsed motion and velocity when continuing a journey. Directional destinations must leave enough room for visible braking; explicit illustration and return destinations remain exact. Normalize wheel pixel, line, and page units so desktop Firefox wheels and trackpads follow the same travel model.
+
 ## Checks
 
 Run the focused checks after a catalogue or translation change:

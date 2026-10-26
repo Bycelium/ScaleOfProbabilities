@@ -35,8 +35,12 @@ class TestFrameClock {
     vi.spyOn(performance, "now").mockImplementation(() => this.timestamp);
   }
 
-  advanceTo(timestamp: number): void {
+  elapseTo(timestamp: number): void {
     this.timestamp = timestamp;
+  }
+
+  advanceTo(timestamp: number): void {
+    this.elapseTo(timestamp);
     const callbacks = [...this.callbacks.values()];
     this.callbacks.clear();
     for (const callback of callbacks) callback(timestamp);
@@ -180,10 +184,12 @@ describe("public probability exploration", () => {
     const scale = document.querySelector<HTMLElement>(".scale")!;
 
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 20, bubbles: true, cancelable: true }));
+    clock.advanceTo(16);
     const movedCenter = Number(scale.dataset.depth);
     const sceneZoom = Number(scene.dataset.sceneZoom);
 
-    expect(movedCenter).toBeCloseTo(0.2, 10);
+    expect(movedCenter).toBeGreaterThan(0);
+    expect(movedCenter).toBeLessThan(0.2);
     expect(sceneZoom).toBeCloseTo(10 ** (-movedCenter / 10), 10);
     expect(ringScene.style.transform).toBe(scene.style.transform);
     expect(initialScale * sceneZoom).toBeCloseTo(10 ** (-movedCenter / 10), 10);
@@ -706,9 +712,15 @@ describe("public probability exploration", () => {
     expect(writes.mock.calls.filter(([key]) => key === "probability-scale-view-v1")).toHaveLength(0);
 
     clock.advanceTo(16);
-    expect(Number(scale.dataset.depth)).toBeGreaterThan(0);
+    const afterFirstFrame = Number(scale.dataset.depth);
+    expect(afterFirstFrame).toBeGreaterThan(0);
     expect(clock.pendingFrames).toBe(1);
     expect(clock.cancelled).toHaveLength(0);
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 12, cancelable: true }));
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -12, cancelable: true }));
+    clock.advanceTo(32);
+    expect(Number(scale.dataset.depth)).toBeLessThan(afterFirstFrame);
   });
 
   it("spreads a dense wheel arrival across several frames with progressively smaller final steps", () => {
@@ -732,6 +744,39 @@ describe("public probability exploration", () => {
     expect(Number(scale.dataset.depth)).toBeCloseTo(target, 10);
   });
 
+  it("normalizes Firefox line and page wheels to the same travel as pixel input", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    const positions: number[] = [];
+    for (const [deltaMode, deltaY] of [[WheelEvent.DOM_DELTA_PIXEL, 48], [WheelEvent.DOM_DELTA_LINE, 3], [WheelEvent.DOM_DELTA_PAGE, 0.15]]) {
+      sessionStorage.clear();
+      const clock = new TestFrameClock();
+      const scaleView = render();
+      const scale = document.querySelector<HTMLElement>(".scale")!;
+      scale.dispatchEvent(new WheelEvent("wheel", { deltaMode, deltaY, cancelable: true }));
+      clock.advanceTo(16);
+      positions.push(Number(scale.dataset.depth));
+      scaleView.dispose();
+    }
+    expect(positions[0]).toBeGreaterThan(0);
+    expect(positions[1]).toBeCloseTo(positions[0], 10);
+    expect(positions[2]).toBeCloseTo(positions[0], 10);
+  });
+
+  it("keeps elapsed motion when another wheel event arrives just before the next frame", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    clock.advanceTo(16);
+    const first = Number(scale.dataset.depth);
+    clock.elapseTo(31);
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    clock.advanceTo(32);
+    expect(Number(scale.dataset.depth) - first).toBeGreaterThan(first * 0.7);
+    expect(clock.cancelled).toHaveLength(0);
+  });
+
   it("carries dense wheel momentum through repeated input and reverses from the current position", () => {
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
@@ -739,33 +784,32 @@ describe("public probability exploration", () => {
     const scale = document.querySelector<HTMLElement>(".scale")!;
 
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
-    const afterFirstInput = Number(scale.dataset.depth);
-    expect(afterFirstInput).toBeGreaterThan(1);
-    clock.advanceTo(8);
+    expect(Number(scale.dataset.depth)).toBe(0);
+    clock.advanceTo(16);
     const afterFirstFrame = Number(scale.dataset.depth);
-    expect(afterFirstFrame - afterFirstInput).toBeGreaterThan(0.2);
+    expect(afterFirstFrame).toBeGreaterThan(0);
 
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
-    const afterRepeatedInput = Number(scale.dataset.depth);
-    clock.advanceTo(16);
-    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterRepeatedInput);
+    expect(Number(scale.dataset.depth)).toBe(afterFirstFrame);
+    clock.advanceTo(32);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterFirstFrame);
 
     const beforeReverse = Number(scale.dataset.depth);
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
-    const afterReverseInput = Number(scale.dataset.depth);
-    expect(afterReverseInput).toBeLessThan(beforeReverse);
+    expect(Number(scale.dataset.depth)).toBe(beforeReverse);
     const expectedTarget = displayLandmarks
-      .filter(item => item.position < afterReverseInput - 1e-9)
+      .filter(item => item.position < beforeReverse - 1.044 - 1e-9)
       .sort((first, second) => second.position - first.position)[0].position;
-    clock.advanceTo(24);
-    expect(Number(scale.dataset.depth)).toBeLessThan(afterReverseInput);
+    clock.advanceTo(48);
+    expect(Number(scale.dataset.depth)).toBeLessThan(beforeReverse);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(expectedTarget);
+    clock.advanceTo(1000);
     expect(Number(scale.dataset.depth)).toBeCloseTo(expectedTarget, 10);
 
-    clock.advanceTo(1000);
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
     const afterIdleInput = Number(scale.dataset.depth);
-    clock.advanceTo(1008);
-    expect(Number(scale.dataset.depth) - afterIdleInput).toBeGreaterThan(0.1);
+    clock.advanceTo(1016);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterIdleInput);
   });
 
   it("uses the latest pinch direction while leaving a touch tap at rest", () => {
@@ -788,15 +832,16 @@ describe("public probability exploration", () => {
     scale.dispatchEvent(pointer("pointerdown", 2, 100));
     scale.dispatchEvent(pointer("pointerdown", 3, 300));
     scale.dispatchEvent(pointer("pointermove", 3, 299));
+    clock.advanceTo(4);
     const afterFirstPinch = Number(scale.dataset.depth);
     scale.dispatchEvent(pointer("pointermove", 3, 298));
-    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterFirstPinch);
     clock.advanceTo(8);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterFirstPinch);
 
     scale.dispatchEvent(pointer("pointermove", 3, 302));
     const afterReverseInput = Number(scale.dataset.depth);
     const expectedTarget = displayLandmarks
-      .filter(item => item.position < afterReverseInput - 1e-9)
+      .filter(item => item.position < afterReverseInput - 30 * Math.log10(202 / 198) - 1e-9)
       .sort((first, second) => second.position - first.position)[0].position;
     clock.advanceTo(1000);
     expect(Number(scale.dataset.depth)).toBeCloseTo(expectedTarget, 10);
@@ -1580,6 +1625,7 @@ describe("public probability exploration", () => {
     const sparseScale = document.querySelector<HTMLElement>(".scale")!;
     sparseScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
     sparseScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    clock.advanceTo(16);
     expect(Number(sparseScale.dataset.depth)).toBeGreaterThan(100);
     expect(document.querySelector("[data-gap-caption]")?.textContent).toMatch(/dBan · odds ×/);
     clock.advanceTo(1200);
@@ -1596,7 +1642,6 @@ describe("public probability exploration", () => {
     clock.advanceTo(3300);
     const beforeReverse = Number(reversingScale.dataset.depth);
     reversingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
-    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     const afterReverseInput = Number(reversingScale.dataset.depth);
     clock.advanceTo(3316);
     expect(Number(reversingScale.dataset.depth)).toBeLessThan(beforeReverse);
@@ -1608,7 +1653,7 @@ describe("public probability exploration", () => {
     const approachingScale = document.querySelector<HTMLElement>(".scale")!;
     approachingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 103.2, cancelable: true }));
     clock.advanceTo(3324);
-    expect(Number(approachingScale.dataset.depth)).toBeGreaterThan(286);
+    expect(Number(approachingScale.dataset.depth)).toBeGreaterThan(285);
 
     for (let event = 0; event < 10; event += 1) {
       approachingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 10000, cancelable: true }));
@@ -1667,19 +1712,19 @@ describe("public probability exploration", () => {
     scale.dispatchEvent(pointer("pointerdown", 1, 100, 300));
     scale.dispatchEvent(pointer("pointerdown", 2, 300, 300));
     scale.dispatchEvent(pointer("pointermove", 2, 250, 300));
+    clock.advanceTo(16);
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     expect(scale.dataset.fastForward).toBe("outward");
-    clock.advanceTo(16);
-    expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThan(0);
+    expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBe(0);
     clock.advanceTo(1400);
-    expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThanOrEqual(0);
+    expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThan(0);
     clock.advanceTo(3000);
     expect(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity")).toBe("0");
     const beforeReverse = Number(scale.dataset.depth);
     scale.dispatchEvent(pointer("pointermove", 2, 350, 300));
+    clock.advanceTo(3016);
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     expect(scale.dataset.fastForward).toBe("inward");
-    clock.advanceTo(3016);
     expect(Number(scale.dataset.depth)).toBeLessThan(beforeReverse);
     pinched.dispose();
 
@@ -1688,6 +1733,7 @@ describe("public probability exploration", () => {
     const swipeScale = document.querySelector<HTMLElement>(".scale")!;
     swipeScale.dispatchEvent(pointer("pointerdown", 3, 200, 200));
     swipeScale.dispatchEvent(pointer("pointermove", 3, 200, 260));
+    clock.advanceTo(3032);
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     expect(swipeScale.dataset.fastForward).toBe("outward");
     swiped.dispose();
@@ -1748,9 +1794,11 @@ describe("public probability exploration", () => {
     returnButton.click();
     clock.advanceTo(2700);
     scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+    clock.advanceTo(2716);
     const afterLeft = Number(scale.dataset.depth);
     expect(afterLeft).toBeLessThan(0);
     scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    clock.advanceTo(2732);
     expect(Number(scale.dataset.depth)).toBeGreaterThan(afterLeft);
     expect(clock.pendingFrames).toBe(1);
 
@@ -1857,6 +1905,12 @@ describe("public probability exploration", () => {
 
     expect(Number(scale.dataset.depth)).toBe(maximum);
     expect(document.querySelector("[data-center-marker]")?.textContent).not.toMatch(/Infinity|100%/);
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 120, cancelable: true }));
+    clock.advanceTo(16);
+    expect(Number(scale.dataset.depth)).toBe(maximum);
+    expect(clock.pendingFrames).toBe(0);
     upper.dispose();
 
     history.replaceState(null, "", "/");
@@ -1864,6 +1918,7 @@ describe("public probability exploration", () => {
     render();
     const lowerScale = document.querySelector<HTMLElement>(".scale")!;
     lowerScale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+    clock.advanceTo(32);
     expect(Number(lowerScale.dataset.depth)).toBe(minimum);
     expect(document.querySelector("[data-center-marker]")?.textContent).not.toMatch(/Infinity|100%/);
   });

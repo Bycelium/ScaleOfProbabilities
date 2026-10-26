@@ -5,7 +5,13 @@ import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabil
 
 type View = { center: number };
 type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter: number; centerX: number; centerY: number }>;
-type TravelOptions = Readonly<{ onArrival?: () => void; initialVelocity?: number }>;
+type TravelOptions = Readonly<{ onArrival?: () => void; initialVelocity?: number; startedAt?: number }>;
+type Travel = Readonly<{
+  start: number; target: number; direction: number; distance: number;
+  duration: number; startedAt: number; initialSlope: number; peakSlope: number;
+  onArrival?: () => void;
+}>;
+type DirectionalInput = { direction: number; delta: number; velocity: number; startedAt: number };
 type LandmarkNode = Readonly<{
   button: HTMLButtonElement;
   image: HTMLImageElement;
@@ -25,6 +31,7 @@ const NEUTRAL = [134, 147, 140] as const;
 const NEGATIVE = [226, 105, 112] as const;
 const POSITIVE = [74, 185, 137] as const;
 const SCENE_REBASE_DECIBANS = 2;
+const MIN_TRAVEL_DURATION = 220;
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.max(minimum, Math.min(maximum, value));
 const trimDecimal = (value: number): string => value.toFixed(1).replace(/\.0$/, "");
@@ -115,6 +122,8 @@ export function createScale(root: HTMLElement): () => void {
   let dragY: number | undefined;
   let touchOriginY: number | undefined;
   let travelFrame: number | undefined;
+  let travel: Travel | undefined;
+  let pendingInput: DirectionalInput | undefined;
   let travelDirection = 0;
   let travelVelocity = 0;
   let lastTravelInputAt: number | undefined;
@@ -885,21 +894,27 @@ export function createScale(root: HTMLElement): () => void {
   };
   allReferencesInput.addEventListener("change", onAllReferencesChange);
 
-  const cancelTravel = (): void => {
-    if (travelFrame !== undefined) cancelAnimationFrame(travelFrame);
-    travelFrame = undefined;
-    travelDirection = 0;
-    travelVelocity = 0;
+  const clearTravelPresentation = (): void => {
     gapCaption.hidden = true;
     delete scale.dataset.fastForward;
     setStyle(hyperspace, "--hyperspace-opacity", "0");
+  };
+
+  const cancelTravel = (): void => {
+    if (travelFrame !== undefined) cancelAnimationFrame(travelFrame);
+    travelFrame = undefined;
+    travel = undefined;
+    pendingInput = undefined;
+    travelDirection = 0;
+    travelVelocity = 0;
+    clearTravelPresentation();
     persistView();
   };
 
-  const nextLandmarkPosition = (direction: number): number | undefined => {
+  const nextLandmarkPosition = (direction: number, position: number): number | undefined => {
     const candidates = availableLandmarks()
       .map(item => item.position)
-      .filter(position => direction > 0 ? position > view.center + 1e-9 : position < view.center - 1e-9)
+      .filter(candidate => direction > 0 ? candidate > position + 1e-9 : candidate < position - 1e-9)
       .sort((first, second) => direction > 0 ? first - second : second - first);
     return candidates[0];
   };
@@ -914,77 +929,111 @@ export function createScale(root: HTMLElement): () => void {
     return velocity;
   };
 
-  const startTravel = (target: number, direction: number, { onArrival, initialVelocity = 0 }: TravelOptions = {}, alreadyCancelled = false): void => {
-    if (!alreadyCancelled) cancelTravel();
+  const finishTravel = (target: number, onArrival?: () => void): void => {
+    travel = undefined;
+    travelDirection = 0;
+    travelVelocity = 0;
+    clearTravelPresentation();
+    if (!onArrival) active = nearestLandmark(target);
+    sceneOrigin = undefined;
+    moveTo(target);
+    onArrival?.();
+  };
+
+  const slopeAt = (initialSlope: number, progress: number): number => 3 * (initialSlope - 2) * progress ** 2 + 2 * (3 - 2 * initialSlope) * progress + initialSlope;
+
+  const travelAt = ({ start, target, distance, duration, startedAt, initialSlope }: Travel, timestamp: number) => {
+    const progress = clamp((timestamp - startedAt) / duration, 0, 1);
+    const eased = (initialSlope - 2) * progress ** 3 + (3 - 2 * initialSlope) * progress ** 2 + initialSlope * progress;
+    const slope = slopeAt(initialSlope, progress);
+    return { progress, position: start + (target - start) * eased, slope, speed: distance / (duration / 1000) * Math.max(0, slope) };
+  };
+
+  const animateTravel = (timestamp: number): void => {
+    travelFrame = undefined;
+    if (pendingInput) {
+      const { direction, delta, velocity, startedAt } = pendingInput;
+      pendingInput = undefined;
+      if (travel) {
+        const previous = travelAt(travel, startedAt);
+        view.center = previous.position;
+        travelVelocity = travel.direction * previous.speed;
+      }
+      const carriedSpeed = direction === travelDirection ? Math.abs(travelVelocity) : 0;
+      // Input requests motion; only the frame controller changes the displayed depth.
+      // Preserve enough forward distance to brake the actual carried speed smoothly.
+      const initialSpeed = travel && direction === travelDirection
+        ? carriedSpeed
+        : Math.min(Math.abs(velocity), Math.max(8, Math.abs(delta) * 2000 / MIN_TRAVEL_DURATION));
+      const distance = Math.max(Math.abs(delta), carriedSpeed * MIN_TRAVEL_DURATION / 3000);
+      const intended = clampToCatalogue(view.center + direction * distance);
+      const target = nextLandmarkPosition(direction, intended) ?? intended;
+      startTravel(target, direction, { initialVelocity: initialSpeed, startedAt }, true);
+    }
+    if (!travel) return;
+    const { target, direction, distance, peakSlope, onArrival } = travel;
+    const { progress, position, slope, speed } = travelAt(travel, timestamp);
+    travelVelocity = direction * speed;
+    const speedAmplitude = clamp((speed - 18) / 42, 0, 1);
+    const nearPeak = clamp((slope / peakSlope - 0.55) / 0.35, 0, 1);
+    const substantialJourney = clamp((distance - 5) / 15, 0, 1);
+    setStyle(hyperspace, "--hyperspace-opacity", (substantialJourney * speedAmplitude * nearPeak).toFixed(3));
+    view.center = position;
+    if (progress < 1) {
+      render();
+      travelFrame = requestAnimationFrame(animateTravel);
+    } else {
+      finishTravel(target, onArrival);
+    }
+  };
+
+  const startTravel = (target: number, direction: number, { onArrival, initialVelocity = 0, startedAt = performance.now() }: TravelOptions = {}, retargeting = false): void => {
+    if (!retargeting) cancelTravel();
     if (dialog.open) closeDetails(false);
     restoreFocus = undefined;
     const start = view.center;
     const distance = Math.abs(target - start);
-    const naturalDuration = clamp(140 + Math.sqrt(distance) * 180, 160, 3800);
+    const naturalDuration = clamp(140 + Math.sqrt(distance) * 180, MIN_TRAVEL_DURATION, 3800);
     const initialSpeed = Math.abs(initialVelocity);
     const duration = initialSpeed > 0
-      ? Math.min(naturalDuration, 3 * distance / initialSpeed * 1000)
+      ? Math.max(MIN_TRAVEL_DURATION, Math.min(naturalDuration, 3 * distance / initialSpeed * 1000))
       : naturalDuration;
-    const finish = () => {
-      travelFrame = undefined;
-      gapCaption.hidden = true;
-      delete scale.dataset.fastForward;
-      travelDirection = 0;
-      travelVelocity = 0;
-      setStyle(hyperspace, "--hyperspace-opacity", "0");
-      if (!onArrival) active = nearestLandmark(target);
-      sceneOrigin = undefined;
-      moveTo(target);
-      onArrival?.();
-    };
     if (distance < 0.001 || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      finish();
+      finishTravel(target, onArrival);
       return;
     }
     travelDirection = direction;
-    scale.dataset.fastForward = direction > 0 ? "outward" : "inward";
+    const fastForward = direction > 0 ? "outward" : "inward";
+    if (scale.dataset.fastForward !== fastForward) scale.dataset.fastForward = fastForward;
     const exponent = distance / 10;
     const factor = exponent <= 6
       ? oddsFactor(exponent, locale)
       : `10<sup>${trimDecimal(exponent).replace(".", locale.decimalSeparator)}</sup>`;
-    gapCaption.innerHTML = `<span>${formatDecibans(target - start, locale.code)}</span> · ${locale.ui.oddsWord} ${direction > 0 ? "×" : "÷"}<span>${factor}</span>`;
+    const caption = `<span>${formatDecibans(target - start, locale.code)}</span> · ${locale.ui.oddsWord} ${direction > 0 ? "×" : "÷"}<span>${factor}</span>`;
+    if (gapCaption.innerHTML !== caption) gapCaption.innerHTML = caption;
     gapCaption.hidden = false;
-    const startedAt = performance.now();
     const initialSlope = clamp(initialSpeed * (duration / 1000) / distance, 0, 3);
-    const slopeAt = (progress: number): number => 3 * (initialSlope - 2) * progress ** 2 + 2 * (3 - 2 * initialSlope) * progress + initialSlope;
-    const peakSlope = Math.max(...Array.from({ length: 33 }, (_, index) => slopeAt(index / 32)));
-    const animate = (timestamp: number) => {
-      const progress = clamp((timestamp - startedAt) / duration, 0, 1);
-      const eased = (initialSlope - 2) * progress ** 3 + (3 - 2 * initialSlope) * progress ** 2 + initialSlope * progress;
-      const speed = distance / (duration / 1000) * Math.max(0, slopeAt(progress));
-      travelVelocity = direction * speed;
-      const speedAmplitude = clamp((speed - 18) / 42, 0, 1);
-      const nearPeak = clamp((slopeAt(progress) / peakSlope - 0.55) / 0.35, 0, 1);
-      const substantialJourney = clamp((distance - 5) / 15, 0, 1);
-      const streakOpacity = substantialJourney * speedAmplitude * nearPeak;
-      setStyle(hyperspace, "--hyperspace-opacity", streakOpacity.toFixed(3));
-      view.center = start + (target - start) * eased;
-      render();
-      if (progress < 1) {
-        travelFrame = requestAnimationFrame(animate);
-      } else {
-        finish();
-      }
-    };
-    travelFrame = requestAnimationFrame(animate);
+    const peakSlope = Math.max(...Array.from({ length: 33 }, (_, index) => slopeAt(initialSlope, index / 32)));
+    travel = { start, target, direction, distance, duration, startedAt, initialSlope, peakSlope, onArrival };
+    if (!retargeting) travelFrame = requestAnimationFrame(animateTravel);
   };
 
   const travelInDirection = (direction: number, directDelta: number, inputVelocity: number): void => {
-    const carriedVelocity = travelFrame !== undefined && direction === travelDirection
-      ? Math.abs(travelVelocity)
-      : 0;
-    cancelTravel();
-    if (directDelta !== 0) {
-      view.center = clampToCatalogue(view.center + directDelta);
-      render();
+    if (dialog.open) closeDetails(false);
+    restoreFocus = undefined;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      const intended = clampToCatalogue(view.center + directDelta);
+      startTravel(nextLandmarkPosition(direction, intended) ?? intended, direction);
+      return;
     }
-    const target = nextLandmarkPosition(direction);
-    startTravel(target ?? view.center, direction, { initialVelocity: direction * Math.max(Math.abs(inputVelocity), carriedVelocity) }, true);
+    const previous = pendingInput;
+    pendingInput = {
+      direction,
+      delta: previous?.direction === direction ? previous.delta + directDelta : directDelta,
+      velocity: inputVelocity,
+      startedAt: previous?.direction === direction ? previous.startedAt : performance.now(),
+    };
+    if (travelFrame === undefined) travelFrame = requestAnimationFrame(animateTravel);
   };
 
   const returnToZero = (): void => {
@@ -1025,7 +1074,9 @@ export function createScale(root: HTMLElement): () => void {
     const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
     if (delta === 0) return;
     const direction = Math.sign(delta);
-    const depthDelta = clamp(delta * 0.01, -1.2, 1.2);
+    const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16
+      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? sceneMetrics().height : 1;
+    const depthDelta = clamp(delta * unit * 0.01, -1.2, 1.2);
     const velocity = rememberTravelVelocity(depthDelta, performance.now());
     travelInDirection(direction, depthDelta, velocity);
   };
