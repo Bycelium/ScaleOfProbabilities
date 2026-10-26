@@ -39,8 +39,9 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .current-depth-marker strong { color: var(--axis-color); font: 1.55rem/1 Georgia, serif; left: 18px; position: absolute; top: 0; transform: translateY(calc(-100% - .35rem)); }
 .spoke-event-marker i { border-top-style: dashed; width: 18px; }
 .spoke-event-marker small { background: #0b202de8; border-radius: .25rem; padding: .1rem .25rem; }
-.depth-rings, .landmarks { inset: 0; overflow: hidden; position: absolute; }
-.depth-rings { overflow: hidden; pointer-events: none; }
+.depth-scene, .depth-rings, .landmarks { inset: 0; position: absolute; }
+.depth-scene { transform-origin: 50% 50%; will-change: transform; }
+.depth-rings { pointer-events: none; }
 .hyperspace { inset: 0; opacity: 0; overflow: hidden; pointer-events: none; position: absolute; transition: opacity .18s ease; z-index: 0; }
 .hyperspace i { animation: hyperspace-out .72s linear infinite; animation-delay: var(--delay); animation-play-state: paused; background: linear-gradient(90deg, transparent, #c7f6ffb8 45%, #fff); height: 2px; left: 50%; opacity: 0; position: absolute; top: 50%; transform-origin: left center; width: clamp(2.5rem, 13vmin, 7rem); }
 .scale[data-fast-forward] .hyperspace { opacity: calc(var(--hyperspace-opacity, 0) * .68); }
@@ -49,18 +50,18 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .hyperspace i { rotate: var(--angle); }
 @keyframes hyperspace-in { 0% { opacity: 0; transform: translateX(2vmin) scaleX(.12); } 28% { opacity: .78; } 100% { opacity: 0; transform: translateX(68vmax) scaleX(1.8); } }
 @keyframes hyperspace-out { 0% { opacity: 0; transform: translateX(68vmax) scaleX(1.8); } 35% { opacity: .72; } 100% { opacity: 0; transform: translateX(2vmin) scaleX(.12); } }
-.depth-ring { border: 1px solid var(--ring-color); border-radius: 50%; left: 50%; opacity: .11; position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 1; }
+.depth-ring { border: calc(1px * var(--scene-inverse-zoom, 1)) solid var(--ring-color); border-radius: 50%; left: 50%; opacity: .11; position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 1; }
 .tick-depth-ring.major-depth-ring { opacity: .2; }
 .event-depth-ring { border-style: dashed; opacity: .16; }
-.current-depth-ring { border: 3px solid var(--ring-color); border-radius: 50%; left: 50%; opacity: .9; position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2; }
-.landmark { background: none; border: 0; display: grid; gap: .05rem; justify-items: center; max-width: 11rem; padding: 0; position: absolute; text-align: center; text-shadow: 0 2px 8px #03101b; transform: translateX(-50%); width: max-content; z-index: 1; }
+.current-depth-ring { border: 3px solid var(--ring-color); border-radius: 50%; left: 50%; opacity: .9; pointer-events: none; position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2; }
+.landmark { background: none; border: 0; display: grid; gap: .05rem; justify-items: center; max-width: 11rem; padding: 0; pointer-events: none; position: absolute; text-align: center; text-shadow: 0 2px 8px #03101b; transform: translateX(-50%); width: max-content; z-index: 1; }
 .landmark[data-receded="false"]::before { content: ""; inset: -.4rem; position: absolute; }
 .landmark[data-receded="true"] { gap: 0; max-width: none; padding: 0; }
 .landmark .art { filter: drop-shadow(0 12px 9px #020b12aa); height: calc(var(--size) * var(--depth-scale, 1)); transition: transform .18s ease, filter .18s ease; width: calc(var(--size) * var(--depth-scale, 1)); }
 .landmark svg { display: block; height: 100%; pointer-events: visiblePainted; width: 100%; }
 .landmark-title { pointer-events: auto; }
 .landmark:hover .art, .landmark:focus-visible .art { filter: drop-shadow(0 15px 10px #020b12dd); transform: scale(1.04); }
-.landmark-title { font-family: Georgia, serif; font-size: .92rem; line-height: 1.05; max-width: 10rem; }
+.landmark-title { font-family: Georgia, serif; font-size: .92rem; line-height: 1.05; max-width: 10rem; transform: scale(var(--scene-inverse-zoom, 1)) translate(var(--title-x, 0), var(--title-y, 0)); }
 .gap-caption { animation: gap-in .2s ease-out; background: #0b202de8; border: 1px solid #547984; border-radius: 999px; color: #cfe2df; font-size: .82rem; left: 50%; margin: 0; padding: .45rem .8rem; position: absolute; text-align: center; top: 4.3rem; transform: translateX(-50%); white-space: nowrap; z-index: 21; }
 .gap-caption span { color: #f6cf70; font-family: Georgia, serif; }
 .gap-caption sup { font-size: .7em; }

@@ -5,6 +5,17 @@ import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabil
 type View = { center: number };
 type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter: number; centerX: number; centerY: number }>;
 type TravelOptions = Readonly<{ onArrival?: () => void; initialVelocity?: number }>;
+type LandmarkNode = Readonly<{
+  button: HTMLButtonElement;
+  art: HTMLElement;
+  title: HTMLElement;
+  item: DisplayLandmark;
+  baseX: number;
+  baseY: number;
+  baseArtSize: number;
+}>;
+type RingNode = Readonly<{ element: HTMLElement; baseDiameter: number }>;
+type RulerTickNode = Readonly<{ element: HTMLElement; mark: HTMLElement; label: HTMLElement }>;
 
 const STORAGE_KEY = "probability-scale-view-v1";
 const INTRO_STORAGE_KEY = "probability-scale-intro-seen";
@@ -12,6 +23,7 @@ const REFERENCES_STORAGE_KEY = "probability-scale-all-references";
 const NEUTRAL = [134, 147, 140] as const;
 const NEGATIVE = [226, 105, 112] as const;
 const POSITIVE = [74, 185, 137] as const;
+const SCENE_REBASE_DECIBANS = 1;
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.max(minimum, Math.min(maximum, value));
 const trimDecimal = (value: number): string => value.toFixed(1).replace(/\.0$/, "");
@@ -111,13 +123,14 @@ export function createScale(root: HTMLElement): () => void {
   let pinchStart: { distance: number } | undefined;
   let introRestoreFocus: HTMLElement | undefined;
   let suppressLandmarkClick = false;
+  let lastPersistedCenter = view.center;
 
   const languageChoices = (context: "intro" | "menu"): string => localeChoices.map(choice => `<button type="button" data-locale-choice="${choice.code}" data-locale-context="${context}" aria-pressed="${choice.code === locale.code}">${choice.nativeName}</button>`).join("");
 
   root.innerHTML = `<div class="atlas"><div data-page-content>
     <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker" data-language-picker><button class="language-toggle" data-language-toggle aria-label="${locale.ui.language}" aria-expanded="false">🌐</button><div class="language-menu" data-language-menu role="group" aria-label="${locale.ui.language}" hidden>${languageChoices("menu")}</div></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
     <section class="scale" tabindex="0" aria-label="${locale.ui.scaleAria}">
-      <div class="ruler" data-ruler></div><div class="depth-rings" data-depth-rings aria-hidden="true"><i class="current-depth-ring" data-current-depth-ring></i></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><div class="landmarks" data-landmarks></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
+      <div class="ruler" data-ruler></div><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene aria-hidden="false"><div class="depth-rings" data-depth-rings aria-hidden="true"></div><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
     </section>
   </div>
   <dialog class="scale-intro" data-scale-intro aria-modal="true" aria-labelledby="scale-intro-heading">
@@ -141,6 +154,7 @@ export function createScale(root: HTMLElement): () => void {
   const page = root.querySelector<HTMLElement>("[data-page-content]")!;
   const scale = root.querySelector<HTMLElement>(".scale")!;
   const ruler = root.querySelector<HTMLElement>("[data-ruler]")!;
+  const depthScene = root.querySelector<HTMLElement>("[data-depth-scene]")!;
   const layer = root.querySelector<HTMLElement>("[data-landmarks]")!;
   const rings = root.querySelector<HTMLElement>("[data-depth-rings]")!;
   const currentDepthRing = root.querySelector<HTMLElement>("[data-current-depth-ring]")!;
@@ -153,10 +167,10 @@ export function createScale(root: HTMLElement): () => void {
   const returnButton = root.querySelector<HTMLButtonElement>("[data-return-zero]")!;
   const allReferencesInput = root.querySelector<HTMLInputElement>("[data-all-references]")!;
   const gapCaption = root.querySelector<HTMLElement>("[data-gap-caption]")!;
-  const landmarkNodes = new Map<string, HTMLButtonElement>();
-  const tickRingNodes = new Map<number, HTMLElement>();
-  const eventRingNodes = new Map<number, HTMLElement>();
-  const rulerTickNodes = new Map<number, HTMLElement>();
+  const landmarkNodes = new Map<string, LandmarkNode>();
+  const tickRingNodes = new Map<number, RingNode>();
+  const eventRingNodes = new Map<number, RingNode>();
+  const rulerTickNodes = new Map<number, RulerTickNode>();
   const landmarksById = new Map<string, DisplayLandmark>(displayLandmarks.map(item => [item.id, item]));
   const localized = (item: DisplayLandmark): DisplayLandmark => localizeLandmark(item, locale);
   const landmarkIsAvailable = (item: DisplayLandmark): boolean => {
@@ -230,24 +244,39 @@ export function createScale(root: HTMLElement): () => void {
   const readoutDecibans = ruler.querySelector<HTMLElement>("[data-readout-decibans]")!;
   const depthSpoke = ruler.querySelector<HTMLElement>("[data-depth-spoke]")!;
   const currentDepthMarker = ruler.querySelector<HTMLElement>("[data-current-depth-marker]")!;
+  const currentDepthValue = currentDepthMarker.querySelector<HTMLElement>("strong")!;
   const eventMarker = document.createElement("span");
   eventMarker.className = "spoke-event-marker";
   eventMarker.dataset.eventMarker = "";
   eventMarker.innerHTML = "<i></i><small></small>";
+  const eventMarkerLabel = eventMarker.querySelector<HTMLElement>("small")!;
   let rulerLocale: LocaleCode | undefined;
+  let metrics: SceneMetrics | undefined;
+  let sceneOrigin: Readonly<{ center: number; metrics: SceneMetrics }> | undefined;
+  let sceneCatalogue: readonly DisplayLandmark[] = [];
+  let sceneBounds: readonly [number, number] = [0, 0];
+
+  const setText = (element: HTMLElement, value: string): void => {
+    if (element.textContent !== value) element.textContent = value;
+  };
+  const setStyle = (element: HTMLElement, property: string, value: string): void => {
+    if (element.style.getPropertyValue(property) !== value) element.style.setProperty(property, value);
+  };
 
   const sceneMetrics = (): SceneMetrics => {
+    if (metrics) return metrics;
     const width = Math.max(scale.clientWidth, 320);
     const height = Math.max(layer.clientHeight, scale.clientHeight, 320);
     const diameter = Math.min(width, height);
     const referenceDiameter = diameter * 0.78;
-    return { width, height, referenceDiameter, centerX: width / 2, centerY: height / 2 };
+    metrics = { width, height, referenceDiameter, centerX: width / 2, centerY: height / 2 };
+    return metrics;
   };
 
-  const visibleTickDepths = (referenceDiameter: number, maximumRingDiameter: number, bounds: readonly [number, number]): number[] => {
+  const visibleTickDepths = (referenceDiameter: number, maximumRingDiameter: number, bounds: readonly [number, number], center = view.center): number[] => {
     const [minimum, maximum] = bounds;
-    const first = Math.ceil(Math.max(minimum, view.center + 10 * Math.log10(0.75 / referenceDiameter)));
-    const last = Math.floor(Math.min(maximum, view.center + 10 * Math.log10(maximumRingDiameter / referenceDiameter)));
+    const first = Math.ceil(Math.max(minimum, center + 10 * Math.log10(0.75 / referenceDiameter)));
+    const last = Math.floor(Math.min(maximum, center + 10 * Math.log10(maximumRingDiameter / referenceDiameter)));
     return Array.from({ length: Math.max(0, last - first + 1) }, (_, index) => first + index);
   };
 
@@ -273,67 +302,69 @@ export function createScale(root: HTMLElement): () => void {
       visibleTicks.add(normalized);
       let tick = rulerTickNodes.get(normalized);
       if (!tick) {
-        tick = document.createElement("span");
-        tick.dataset.tick = String(normalized);
-        tick.innerHTML = "<i></i><small></small>";
+        const element = document.createElement("span");
+        element.dataset.tick = String(normalized);
+        element.innerHTML = "<i></i><small></small>";
+        tick = { element, mark: element.querySelector<HTMLElement>("i")!, label: element.querySelector<HTMLElement>("small")! };
         rulerTickNodes.set(normalized, tick);
       }
-      tick.className = `spoke-tick${isMajor ? " major" : ""}`;
-      tick.style.left = `${centerX}px`;
-      tick.style.top = `${y}px`;
-      tick.style.setProperty("--axis-color", axisColor(normalized));
-      tick.style.setProperty("--depth-factor", String(depthFactor));
-      tick.style.opacity = String(Math.min(1, depthFactor));
-      tick.querySelector<HTMLElement>("i")!.hidden = !markVisible;
-      const label = tick.querySelector<HTMLElement>("small")!;
+      const { element, mark, label } = tick;
+      element.className = `spoke-tick${isMajor ? " major" : ""}`;
+      setStyle(element, "left", `${centerX}px`);
+      setStyle(element, "top", `${y}px`);
+      setStyle(element, "--axis-color", axisColor(normalized));
+      setStyle(element, "--depth-factor", String(depthFactor));
+      setStyle(element, "opacity", String(Math.min(1, depthFactor)));
+      mark.hidden = !markVisible;
       label.hidden = !labelVisible;
-      if (tick.dataset.locale !== locale.code) {
-        label.textContent = formatDecibans(normalized, locale.code);
-        tick.dataset.locale = locale.code;
+      if (element.dataset.locale !== locale.code) {
+        setText(label, formatDecibans(normalized, locale.code));
+        element.dataset.locale = locale.code;
       }
-      if (tick.parentElement !== depthGauge) depthGauge.append(tick);
+      if (element.parentElement !== depthGauge) depthGauge.append(element);
     }
     for (const [position, tick] of rulerTickNodes) {
-      if (!visibleTicks.has(position)) tick.remove();
+      if (!visibleTicks.has(position)) tick.element.remove();
     }
-    currentDepthMarker.style.left = `${centerX}px`;
-    currentDepthMarker.style.top = `${currentY}px`;
-    currentDepthMarker.style.setProperty("--axis-color", axisColor(view.center));
-    currentDepthMarker.querySelector<HTMLElement>("strong")!.textContent = formatDecibans(view.center, locale.code);
+    setStyle(currentDepthMarker, "left", `${centerX}px`);
+    setStyle(currentDepthMarker, "top", `${currentY}px`);
+    setStyle(currentDepthMarker, "--axis-color", axisColor(view.center));
+    setText(currentDepthValue, formatDecibans(view.center, locale.code));
     const activeY = active ? projectedY(active.position) : 0;
     const activeFactor = active ? 10 ** ((active.position - view.center) / 10) : 0;
     const eventVisible = active && activeFactor >= 0.55 && activeY >= 0 && activeY <= height && Math.abs(activeY - currentY) >= 12 && Math.abs(activeY - currentLabelY) >= 24;
     if (eventVisible) {
-      eventMarker.style.left = `${centerX}px`;
-      eventMarker.style.top = `${activeY}px`;
-      eventMarker.style.setProperty("--depth-factor", String(activeFactor));
-      eventMarker.style.opacity = String(Math.min(1, activeFactor));
-      eventMarker.querySelector<HTMLElement>("small")!.textContent = formatDecibans(active!.position, locale.code);
+      setStyle(eventMarker, "left", `${centerX}px`);
+      setStyle(eventMarker, "top", `${activeY}px`);
+      setStyle(eventMarker, "--depth-factor", String(activeFactor));
+      setStyle(eventMarker, "opacity", String(Math.min(1, activeFactor)));
+      setText(eventMarkerLabel, formatDecibans(active!.position, locale.code));
       if (eventMarker.parentElement !== depthGauge) depthGauge.append(eventMarker);
     } else {
       eventMarker.remove();
     }
     const value = chanceAt(view.center);
     if (rulerLocale !== locale.code) {
-      probabilityLabel.textContent = locale.ui.probabilityLabel;
-      oddsLabel.textContent = locale.ui.oddsLabel;
+      setText(probabilityLabel, locale.ui.probabilityLabel);
+      setText(oddsLabel, locale.ui.oddsLabel);
       rulerLocale = locale.code;
     }
-    probabilityValue.textContent = formatProbabilityPercent(value, locale.code);
-    oddsValue.textContent = formatOdds(view.center, locale.code);
-    readoutDecibans.textContent = formatDecibans(view.center, locale.code);
+    setText(probabilityValue, formatProbabilityPercent(value, locale.code));
+    setText(oddsValue, formatOdds(view.center, locale.code));
+    setText(readoutDecibans, formatDecibans(view.center, locale.code));
     depthReadout.classList.toggle("extreme", Math.abs(view.center) >= 100);
-    depthReadout.style.top = `${currentY}px`;
-    depthReadout.style.setProperty("--axis-color", axisColor(view.center));
+    setStyle(depthReadout, "top", `${currentY}px`);
+    setStyle(depthReadout, "--axis-color", axisColor(view.center));
     const ropeTopWidth = 3 * centerY / (referenceDiameter / 2);
-    depthSpoke.style.left = `${centerX}px`;
-    depthSpoke.style.top = "0";
-    depthSpoke.style.height = `${centerY}px`;
-    depthSpoke.style.width = `${ropeTopWidth}px`;
-    scale.dataset.depth = String(view.center);
+    setStyle(depthSpoke, "left", `${centerX}px`);
+    setStyle(depthSpoke, "top", "0px");
+    setStyle(depthSpoke, "height", `${centerY}px`);
+    setStyle(depthSpoke, "width", `${ropeTopWidth}px`);
+    const depth = String(view.center);
+    if (scale.dataset.depth !== depth) scale.dataset.depth = depth;
   };
 
-  const makeLandmark = (item: DisplayLandmark): HTMLButtonElement => {
+  const makeLandmark = (item: DisplayLandmark): Pick<LandmarkNode, "button" | "art" | "title" | "item"> => {
     const button = document.createElement("button");
     button.className = "landmark";
     button.dataset.landmark = item.id;
@@ -355,119 +386,187 @@ export function createScale(root: HTMLElement): () => void {
       travelToLandmark(item);
     });
     layer.append(button);
-    return button;
+    return {
+      button,
+      art: button.querySelector<HTMLElement>(".art")!,
+      title: button.querySelector<HTMLElement>(".landmark-title")!,
+      item,
+    };
   };
 
-  const renderLandmarks = ({ width, height, referenceDiameter }: SceneMetrics, visibleCatalogue: readonly DisplayLandmark[], bounds: readonly [number, number]): void => {
+  const sceneIntersectsAtSomeZoom = (baseX: number, baseY: number, baseSize: number, { width, height, centerX, centerY }: SceneMetrics): boolean => {
+    const minimumZoom = 10 ** (-SCENE_REBASE_DECIBANS / 10);
+    const maximumZoom = 1 / minimumZoom;
+    const horizontal = [minimumZoom, maximumZoom].flatMap(zoom => {
+      const x = centerX + (baseX - centerX) * zoom;
+      const half = baseSize * zoom / 2;
+      return [x - half, x + half];
+    });
+    const vertical = [minimumZoom, maximumZoom].flatMap(zoom => {
+      const y = centerY + (baseY - centerY) * zoom;
+      const half = baseSize * zoom / 2;
+      return [y - half, y + half];
+    });
+    return Math.max(...horizontal) >= 0 && Math.min(...horizontal) <= width
+      && Math.max(...vertical) >= 0 && Math.min(...vertical) <= height;
+  };
+
+  const rebuildScene = (nextMetrics: SceneMetrics, visibleCatalogue: readonly DisplayLandmark[], bounds: readonly [number, number]): void => {
+    const { width, height, referenceDiameter, centerX, centerY } = nextMetrics;
     const compactArtScale = width <= 640 ? 0.76 : 1;
     const maximumRingDiameter = Math.hypot(width, height);
+    const originCenter = view.center;
+    const maximumSceneZoom = 10 ** (SCENE_REBASE_DECIBANS / 10);
     const projected = visibleCatalogue.flatMap(item => {
-      const depth = item.position - view.center;
-      if (depth < -40 || depth > 15) return [];
+      const depth = item.position - originCenter;
       const zoomFactor = 10 ** (depth / 10);
       const ringDiameter = referenceDiameter * zoomFactor;
       const radius = ringDiameter / 2;
       const angle = landmarkAngles.get(item.id)!;
-      const x = width / 2 + Math.cos(angle) * radius;
-      const y = height / 2 + Math.sin(angle) * radius;
+      const x = centerX + Math.cos(angle) * radius;
+      const y = centerY + Math.sin(angle) * radius;
       const artSize = item.size * zoomFactor * compactArtScale;
-      const artIntersectsScene = x + artSize / 2 >= 0 && x - artSize / 2 <= width && y + artSize / 2 >= 0 && y - artSize / 2 <= height;
-      if (artSize < 0.5 || !artIntersectsScene) return [];
+      if (artSize * maximumSceneZoom < 0.5 || !sceneIntersectsAtSomeZoom(x, y, artSize, nextMetrics)) return [];
       return [{ item, depth, zoomFactor, ringDiameter, x, y, artSize }];
     });
-    const visible = projected.map(({ item }) => item);
-    const visibleIds = new Set<string>(visible.map(item => item.id));
-    for (const [id, button] of landmarkNodes) {
-      if (!visibleIds.has(id)) {
-        button.remove();
+    const projectedIds = new Set<string>(projected.map(({ item }) => item.id));
+    for (const [id, node] of landmarkNodes) {
+      if (!projectedIds.has(id)) {
+        node.button.remove();
+        landmarkNodes.delete(id);
       }
     }
     for (const { item, zoomFactor, ringDiameter, x, y, artSize } of projected) {
-      const button = landmarkNodes.get(item.id) ?? makeLandmark(item);
-      landmarkNodes.set(item.id, button);
-      const title = button.querySelector<HTMLElement>(".landmark-title")!;
-      const isReadable = artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7);
+      const existing = landmarkNodes.get(item.id) ?? makeLandmark(item);
+      const { button, title } = existing;
       if (button.dataset.locale !== locale.code) {
         const translated = localized(item);
-        title.textContent = translated.shortTitle;
+        setText(title, translated.shortTitle);
         button.setAttribute("aria-label", `${translated.title}, ${formatProbability(item.chance, locale.code)}, ${formatDecibans(item.position, locale.code)}`);
         translateArtwork(button, locale);
         button.dataset.locale = locale.code;
       }
       if (button.parentElement !== layer) layer.append(button);
-      button.style.left = `${x}px`;
-      button.style.top = `${y - artSize / 2}px`;
-      button.style.opacity = "1";
-      button.style.setProperty("--size", `${item.size * compactArtScale}px`);
-      button.style.setProperty("--depth-scale", String(zoomFactor));
+      setStyle(button, "left", `${x}px`);
+      setStyle(button, "top", `${y - artSize / 2}px`);
+      setStyle(button, "--size", `${item.size * compactArtScale}px`);
+      setStyle(button, "--depth-scale", String(zoomFactor));
       button.dataset.ringSize = `${ringDiameter}px`;
       button.dataset.depthScale = String(zoomFactor);
-      button.hidden = false;
       button.tabIndex = 0;
-      button.style.pointerEvents = "none";
-      button.style.zIndex = String(Math.max(1, Math.min(99, Math.round(zoomFactor * 10))));
-      button.dataset.receded = String(!isReadable);
-      title.hidden = !isReadable;
+      setStyle(button, "pointer-events", "none");
+      setStyle(button, "z-index", String(Math.max(1, Math.min(99, Math.round(zoomFactor * 10)))));
       const titleOffset = width <= 640 ? compactTitleOffsets[item.id] : undefined;
-      title.style.transform = titleOffset ? `translate(${titleOffset.x}px, ${titleOffset.y}px)` : "";
+      setStyle(title, "--title-x", `${titleOffset?.x ?? 0}px`);
+      setStyle(title, "--title-y", `${titleOffset?.y ?? 0}px`);
+      landmarkNodes.set(item.id, { ...existing, baseX: x, baseY: y, baseArtSize: artSize });
     }
-    currentDepthRing.style.width = `${referenceDiameter}px`;
-    currentDepthRing.style.height = `${referenceDiameter}px`;
-    currentDepthRing.style.setProperty("--ring-color", axisColor(view.center));
-    const ringIsVisible = (position: number): boolean => {
-      if (Math.abs(position - view.center) < 1e-8) return false;
-      const ringDiameter = referenceDiameter * 10 ** ((position - view.center) / 10);
-      return ringDiameter >= 0.75 && ringDiameter <= maximumRingDiameter;
+    setStyle(currentDepthRing, "width", `${referenceDiameter}px`);
+    setStyle(currentDepthRing, "height", `${referenceDiameter}px`);
+    const ringCanEnterScene = (position: number): boolean => {
+      const baseDiameter = referenceDiameter * 10 ** ((position - originCenter) / 10);
+      return baseDiameter * maximumSceneZoom >= 0.75 && baseDiameter / maximumSceneZoom <= maximumRingDiameter;
     };
-    const updateRing = (nodes: Map<number, HTMLElement>, position: number, className: string): HTMLElement => {
-      const ringDiameter = referenceDiameter * 10 ** ((position - view.center) / 10);
-      let ring = nodes.get(position);
-      if (!ring) {
-        ring = document.createElement("i");
-        ring.style.setProperty("--ring-color", "rgb(126 142 145)");
-        nodes.set(position, ring);
+    const updateRing = (nodes: Map<number, RingNode>, position: number, className: string): RingNode => {
+      const baseDiameter = referenceDiameter * 10 ** ((position - originCenter) / 10);
+      let node = nodes.get(position);
+      if (!node) {
+        const element = document.createElement("i");
+        setStyle(element, "--ring-color", "rgb(126 142 145)");
+        node = { element, baseDiameter };
       }
-      ring.className = className;
-      ring.style.width = `${ringDiameter}px`;
-      ring.style.height = `${ringDiameter}px`;
-      if (ring.parentElement !== rings) rings.append(ring);
-      return ring;
+      const { element } = node;
+      element.className = className;
+      setStyle(element, "width", `${baseDiameter}px`);
+      setStyle(element, "height", `${baseDiameter}px`);
+      if (element.parentElement !== rings) rings.append(element);
+      const updated = { element, baseDiameter };
+      nodes.set(position, updated);
+      return updated;
     };
-    const visibleTickRings = new Set<number>();
-    for (const position of visibleTickDepths(referenceDiameter, maximumRingDiameter, bounds)) {
-      if (!ringIsVisible(position)) continue;
-      visibleTickRings.add(position);
+    const tickPositions = new Set([
+      ...visibleTickDepths(referenceDiameter, maximumRingDiameter, bounds, originCenter - SCENE_REBASE_DECIBANS),
+      ...visibleTickDepths(referenceDiameter, maximumRingDiameter, bounds, originCenter + SCENE_REBASE_DECIBANS),
+    ]);
+    for (const position of tickPositions) {
+      if (!ringCanEnterScene(position)) continue;
       const major = Math.abs(position / 5 - Math.round(position / 5)) < 1e-8;
-      const ring = updateRing(tickRingNodes, position, `depth-ring tick-depth-ring${major ? " major-depth-ring" : ""}`);
-      ring.dataset.tickDepthRing = trimDecimal(position);
+      updateRing(tickRingNodes, position, `depth-ring tick-depth-ring${major ? " major-depth-ring" : ""}`).element.dataset.tickDepthRing = trimDecimal(position);
     }
-    for (const [position, ring] of tickRingNodes) {
-      if (!visibleTickRings.has(position)) ring.remove();
+    for (const [position, node] of tickRingNodes) {
+      if (!tickPositions.has(position)) {
+        node.element.remove();
+        tickRingNodes.delete(position);
+      }
     }
-    const visibleEventRings = new Set<number>();
-    for (const position of [...new Set(visibleCatalogue.map(item => item.position))].filter(ringIsVisible)) {
-      visibleEventRings.add(position);
-      const ring = updateRing(eventRingNodes, position, "depth-ring event-depth-ring");
-      ring.dataset.depthRing = trimDecimal(position);
+    const eventPositions = new Set([...new Set(visibleCatalogue.map(item => item.position))].filter(ringCanEnterScene));
+    for (const position of eventPositions) {
+      updateRing(eventRingNodes, position, "depth-ring event-depth-ring").element.dataset.depthRing = trimDecimal(position);
     }
-    for (const [position, ring] of eventRingNodes) {
-      if (!visibleEventRings.has(position)) ring.remove();
+    for (const [position, node] of eventRingNodes) {
+      if (!eventPositions.has(position)) {
+        node.element.remove();
+        eventRingNodes.delete(position);
+      }
     }
+    sceneOrigin = { center: originCenter, metrics: nextMetrics };
+  };
+
+  const updateSceneProjection = (nextMetrics: SceneMetrics): void => {
+    if (!sceneOrigin || sceneOrigin.metrics !== nextMetrics || Math.abs(view.center - sceneOrigin.center) >= SCENE_REBASE_DECIBANS) {
+      sceneCatalogue = availableLandmarks();
+      sceneBounds = [Math.min(...sceneCatalogue.map(item => item.position)), Math.max(...sceneCatalogue.map(item => item.position))];
+      rebuildScene(nextMetrics, sceneCatalogue, sceneBounds);
+    }
+    const sceneZoom = 10 ** ((sceneOrigin!.center - view.center) / 10);
+    const inverseZoom = 1 / sceneZoom;
+    setStyle(depthScene, "transform", `scale(${sceneZoom})`);
+    setStyle(depthScene, "--scene-inverse-zoom", String(inverseZoom));
+    const sceneZoomText = String(sceneZoom);
+    if (depthScene.dataset.sceneZoom !== sceneZoomText) depthScene.dataset.sceneZoom = sceneZoomText;
+    const { width, height, centerX, centerY, referenceDiameter } = nextMetrics;
+    for (const { button, title, item, baseX, baseY, baseArtSize } of landmarkNodes.values()) {
+      const artSize = baseArtSize * sceneZoom;
+      const x = centerX + (baseX - centerX) * sceneZoom;
+      const y = centerY + (baseY - centerY) * sceneZoom;
+      const visible = artSize >= 0.5 && x + artSize / 2 >= 0 && x - artSize / 2 <= width && y + artSize / 2 >= 0 && y - artSize / 2 <= height;
+      button.hidden = !visible;
+      const readable = visible && artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7);
+      title.hidden = !readable;
+      const receded = String(!readable);
+      if (button.dataset.receded !== receded) button.dataset.receded = receded;
+    }
+    const maximumRingDiameter = Math.hypot(width, height);
+    const updateRingVisibility = (nodes: ReadonlyMap<number, RingNode>, hideCurrent: boolean): void => {
+      for (const [position, node] of nodes) {
+        const diameter = node.baseDiameter * sceneZoom;
+        node.element.hidden = diameter < 0.75 || diameter > maximumRingDiameter || (hideCurrent && Math.abs(position - view.center) < 1e-8);
+      }
+    };
+    updateRingVisibility(tickRingNodes, true);
+    updateRingVisibility(eventRingNodes, true);
+    setStyle(currentDepthRing, "width", `${referenceDiameter}px`);
+    setStyle(currentDepthRing, "height", `${referenceDiameter}px`);
+    setStyle(currentDepthRing, "--ring-color", axisColor(view.center));
   };
 
   const render = (): void => {
-    const metrics = sceneMetrics();
-    const visibleCatalogue = availableLandmarks();
-    const bounds: readonly [number, number] = [Math.min(...visibleCatalogue.map(item => item.position)), Math.max(...visibleCatalogue.map(item => item.position))];
-    renderLandmarks(metrics, visibleCatalogue, bounds);
-    renderRuler(metrics, bounds);
+    const nextMetrics = sceneMetrics();
+    updateSceneProjection(nextMetrics);
+    renderRuler(nextMetrics, sceneBounds);
     returnButton.hidden = Math.abs(view.center) <= 0.1;
+  };
+
+  const persistView = (): void => {
+    if (view.center === lastPersistedCenter) return;
+    saveView(view);
+    lastPersistedCenter = view.center;
   };
 
   const moveTo = (center: number, persist = true): void => {
     view.center = clampToCatalogue(center);
-    if (persist) saveView(view);
     render();
+    if (persist) persistView();
   };
 
   const nearestLandmark = (position = view.center): DisplayLandmark => availableLandmarks().reduce((best, item) => (
@@ -607,6 +706,7 @@ export function createScale(root: HTMLElement): () => void {
     restoreFocus = document.activeElement as HTMLElement;
     populateDetails(item);
     showDialog();
+    sceneOrigin = undefined;
     render();
     dialog.querySelector<HTMLButtonElement>("[data-close-detail]")!.focus();
   };
@@ -615,6 +715,7 @@ export function createScale(root: HTMLElement): () => void {
     dialog.removeAttribute("open");
     selected = undefined;
     if (active && !landmarkIsAvailable(active)) active = undefined;
+    sceneOrigin = undefined;
     render();
     if (!returnFocus) return;
     if (restoreFocus?.isConnected && !restoreFocus.hidden) restoreFocus.focus();
@@ -712,6 +813,7 @@ export function createScale(root: HTMLElement): () => void {
     dialog.querySelector<HTMLElement>("[data-advice-label]")!.textContent = locale.ui.securityAdvice;
     dialog.querySelector<HTMLElement>("[data-sources-label]")!.textContent = locale.ui.sources;
     for (const choice of root.querySelectorAll<HTMLButtonElement>("[data-locale-choice]")) choice.setAttribute("aria-pressed", String(choice.dataset.localeChoice === locale.code));
+    sceneOrigin = undefined;
     render();
     if (selected && dialog.open) populateDetails(selected);
   };
@@ -754,6 +856,7 @@ export function createScale(root: HTMLElement): () => void {
     allReferences = allReferencesInput.checked;
     saveAllReferences(allReferences);
     if (active && !landmarkIsAvailable(active)) active = selected;
+    sceneOrigin = undefined;
     render();
   };
   allReferencesInput.addEventListener("change", onAllReferencesChange);
@@ -766,6 +869,7 @@ export function createScale(root: HTMLElement): () => void {
     gapCaption.hidden = true;
     delete scale.dataset.fastForward;
     scale.style.setProperty("--hyperspace-opacity", "0");
+    persistView();
   };
 
   const nextLandmarkPosition = (direction: number): number | undefined => {
@@ -786,8 +890,8 @@ export function createScale(root: HTMLElement): () => void {
     return velocity;
   };
 
-  const startTravel = (target: number, direction: number, { onArrival, initialVelocity = 0 }: TravelOptions = {}): void => {
-    cancelTravel();
+  const startTravel = (target: number, direction: number, { onArrival, initialVelocity = 0 }: TravelOptions = {}, alreadyCancelled = false): void => {
+    if (!alreadyCancelled) cancelTravel();
     if (dialog.open) closeDetails(false);
     restoreFocus = undefined;
     const start = view.center;
@@ -835,7 +939,6 @@ export function createScale(root: HTMLElement): () => void {
       const streakOpacity = substantialJourney * speedAmplitude * nearPeak;
       scale.style.setProperty("--hyperspace-opacity", streakOpacity.toFixed(3));
       view.center = start + (target - start) * eased;
-      saveView(view);
       render();
       if (progress < 1) {
         travelFrame = requestAnimationFrame(animate);
@@ -853,11 +956,10 @@ export function createScale(root: HTMLElement): () => void {
     cancelTravel();
     if (directDelta !== 0) {
       view.center = clampToCatalogue(view.center + directDelta);
-      saveView(view);
       render();
     }
     const target = nextLandmarkPosition(direction);
-    startTravel(target ?? view.center, direction, { initialVelocity: direction * Math.max(Math.abs(inputVelocity), carriedVelocity) });
+    startTravel(target ?? view.center, direction, { initialVelocity: direction * Math.max(Math.abs(inputVelocity), carriedVelocity) }, true);
   };
 
   const returnToZero = (): void => {
@@ -988,8 +1090,19 @@ export function createScale(root: HTMLElement): () => void {
   scale.addEventListener("pointerup", endPointer);
   scale.addEventListener("pointercancel", endPointer);
 
-  const resizeObserver = new ResizeObserver(render);
+  const onResize = (): void => {
+    metrics = undefined;
+    sceneOrigin = undefined;
+    render();
+  };
+  const persistOnPageHide = (): void => persistView();
+  const persistWhenHidden = (): void => {
+    if (document.visibilityState === "hidden") persistView();
+  };
+  const resizeObserver = new ResizeObserver(onResize);
   resizeObserver.observe(scale);
+  window.addEventListener("pagehide", persistOnPageHide);
+  document.addEventListener("visibilitychange", persistWhenHidden);
   applyLocale();
   try {
     if (sessionStorage.getItem(INTRO_STORAGE_KEY) !== "true") openIntro();
@@ -1011,7 +1124,10 @@ export function createScale(root: HTMLElement): () => void {
     allReferencesInput.removeEventListener("change", onAllReferencesChange);
     scale.removeEventListener("wheel", onWheel);
     document.removeEventListener("keydown", onKeydown);
+    window.removeEventListener("pagehide", persistOnPageHide);
+    document.removeEventListener("visibilitychange", persistWhenHidden);
     if (travelFrame !== undefined) cancelTravel();
+    else persistView();
     pointers.clear();
   };
 }

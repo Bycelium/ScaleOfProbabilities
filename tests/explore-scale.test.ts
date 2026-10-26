@@ -191,12 +191,13 @@ describe("public probability exploration", () => {
     vi.useFakeTimers();
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    history.replaceState(null, "", "#d=100");
     render();
     const writes = vi.spyOn(Storage.prototype, "setItem");
-    writes.mockClear();
     const scale = document.querySelector<HTMLElement>(".scale")!;
 
-    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 20, bubbles: true, cancelable: true }));
+    document.querySelector<HTMLButtonElement>("[data-return-zero]")!.click();
+    writes.mockClear();
     clock.advanceTo(30);
     expect(writes.mock.calls.filter(([key]) => key === "probability-scale-view-v1")).toHaveLength(0);
 
