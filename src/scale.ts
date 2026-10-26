@@ -310,14 +310,15 @@ export function createScale(root: HTMLElement): () => void {
         rulerTickNodes.set(normalized, tick);
       }
       const { element, mark, label } = tick;
-      element.className = `spoke-tick${isMajor ? " major" : ""}`;
+      const className = `spoke-tick${isMajor ? " major" : ""}`;
+      if (element.className !== className) element.className = className;
       setStyle(element, "left", `${centerX}px`);
       setStyle(element, "top", `${y}px`);
       setStyle(element, "--axis-color", axisColor(normalized));
       setStyle(element, "--depth-factor", String(depthFactor));
       setStyle(element, "opacity", String(Math.min(1, depthFactor)));
-      mark.hidden = !markVisible;
-      label.hidden = !labelVisible;
+      if (mark.hidden === markVisible) mark.hidden = !markVisible;
+      if (label.hidden === labelVisible) label.hidden = !labelVisible;
       if (element.dataset.locale !== locale.code) {
         setText(label, formatDecibans(normalized, locale.code));
         element.dataset.locale = locale.code;
@@ -533,9 +534,9 @@ export function createScale(root: HTMLElement): () => void {
       const x = centerX + (baseX - centerX) * sceneZoom;
       const y = centerY + (baseY - centerY) * sceneZoom;
       const visible = artSize >= 0.5 && x + artSize / 2 >= 0 && x - artSize / 2 <= width && y + artSize / 2 >= 0 && y - artSize / 2 <= height;
-      button.hidden = !visible;
+      if (button.hidden === visible) button.hidden = !visible;
       const readable = visible && artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7);
-      title.hidden = !readable;
+      if (title.hidden === readable) title.hidden = !readable;
       if (readable) setStyle(title, "transform", `scale(${inverseZoom}) translate(var(--title-x), var(--title-y))`);
       const receded = String(!readable);
       if (button.dataset.receded !== receded) button.dataset.receded = receded;
@@ -545,8 +546,10 @@ export function createScale(root: HTMLElement): () => void {
       for (const [position, node] of nodes) {
         const diameter = node.baseDiameter * sceneZoom;
         const hidden = diameter < 0.75 || diameter > maximumRingDiameter || (hideCurrent && Math.abs(position - view.center) < 1e-8);
-        if (hidden) node.element.setAttribute("hidden", "");
-        else node.element.removeAttribute("hidden");
+        if (hidden !== node.element.hasAttribute("hidden")) {
+          if (hidden) node.element.setAttribute("hidden", "");
+          else node.element.removeAttribute("hidden");
+        }
       }
     };
     updateRingVisibility(tickRingNodes, true);
@@ -560,7 +563,8 @@ export function createScale(root: HTMLElement): () => void {
     const nextMetrics = sceneMetrics();
     updateSceneProjection(nextMetrics);
     renderRuler(nextMetrics, sceneBounds);
-    returnButton.hidden = Math.abs(view.center) <= 0.1;
+    const returnHidden = Math.abs(view.center) <= 0.1;
+    if (returnButton.hidden !== returnHidden) returnButton.hidden = returnHidden;
   };
 
   const persistView = (): void => {
