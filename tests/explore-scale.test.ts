@@ -1027,13 +1027,12 @@ describe("public probability exploration", () => {
     for (const [id, winningPockets] of roulette) {
       const item = byId.get(id)!;
       expect(item.position).toBeCloseTo(10 * Math.log10(winningPockets / (37 - winningPockets)), 10);
-      expect(item.explanation).toContain("€100 stake");
-      expect(item.explanation).toContain("average net return");
+      expect(item.explanation).toContain("average loss");
     }
-    expect(byId.get("roulette-straight-up")?.explanation).toContain("−€100/37 ≈ −€2.70 per €100 bet");
-    expect(byId.get("roulette-straight-up")?.explanation).toContain("An uncovered number loses the €100 stake");
-    expect(byId.get("roulette-even-money")?.explanation).toContain("−€100/74 ≈ −€1.35 per €100 bet");
-    expect(byId.get("roulette-even-money")?.explanation).toContain("half the €100 stake");
+    expect(byId.get("roulette-straight-up")?.explanation).toContain("average loss is €2.70 per €100 bet");
+    expect(byId.get("roulette-straight-up")?.explanation).toContain("the €100 stake is lost");
+    expect(byId.get("roulette-even-money")?.explanation).toContain("average loss is €1.35 per €100 bet");
+    expect(byId.get("roulette-even-money")?.explanation).toContain("Zero returns €50");
     expect(byId.get("roulette-two-dozens-columns")?.position).toBeGreaterThan(0);
 
     const clover = byId.get("four-leaf-clover")!;
@@ -1055,7 +1054,7 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-landmark="roulette-even-money"]')!.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("rouge");
     expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("chances simples équivalentes");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("rend la mise");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("mise est rendue");
     expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("perte moyenne");
     expect(document.querySelector('[data-related-landmark="roulette-dozen-column"]')).not.toBeNull();
   });
