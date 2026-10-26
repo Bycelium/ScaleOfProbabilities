@@ -14,7 +14,7 @@ export const en: LocaleDefinition = {
     scaleAria: "Probability scale. Use the mouse wheel or arrow keys on a desktop. Left and Down travel inward to the next rarer event. Right and Up travel outward to the next more likely event. Swipe or pinch on a touch screen.",
     howToUse: "How to use",
     allReferences: "All references",
-    allReferencesHelp: "Include local references from every language",
+    allReferencesHelp: "Include examples specific to other countries.",
     introDirectionRarer: "Rarer / toward the center",
     introDirectionLikely: "More likely / toward the outside",
     introNavigation: "Use the mouse wheel or arrow keys on a desktop. Each input travels to the next example: ← and ↓ move inward toward rarer events, while → and ↑ move outward toward more likely events. Swipe or pinch on a touch screen. Select an illustration to travel to it and open its explanation, assumptions, and calculation.",

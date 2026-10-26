@@ -14,7 +14,7 @@ export const fr: LocaleDefinition = {
     scaleAria: "Échelle des probabilités. Sur ordinateur, utilisez la molette ou les touches fléchées. Gauche et Bas vont vers l’intérieur jusqu’au prochain événement plus rare. Droite et Haut vont vers l’extérieur jusqu’au prochain événement plus probable. Sur écran tactile, balayez ou pincez.",
     howToUse: "Comment utiliser l’échelle",
     allReferences: "Toutes les références",
-    allReferencesHelp: "Inclure les références locales de toutes les langues",
+    allReferencesHelp: "Afficher aussi les exemples propres à d’autres pays.",
     introDirectionRarer: "Plus rare / vers le centre",
     introDirectionLikely: "Plus probable / vers l’extérieur",
     introNavigation: "Sur ordinateur, utilisez la molette ou les touches fléchées. Chaque action rejoint l’exemple suivant : ← et ↓ vont vers l’intérieur et les événements plus rares, tandis que → et ↑ vont vers l’extérieur et les événements plus probables. Sur écran tactile, balayez ou pincez. Sélectionnez une illustration pour la rejoindre et ouvrir son explication, ses hypothèses et son calcul.",

@@ -427,7 +427,7 @@ describe("public probability exploration", () => {
     const all = document.querySelector<HTMLButtonElement>("[data-all-references]")!;
     expect(all.getAttribute("aria-pressed")).toBe("false");
     expect(all.getAttribute("aria-label")).toBe("Toutes les références");
-    expect(all.querySelector("[data-all-references-help]")?.textContent).toBe("Inclure les références locales de toutes les langues");
+    expect(all.querySelector("[data-all-references-help]")?.textContent).toBe("Afficher aussi les exemples propres à d’autres pays.");
     all.click();
     expect(all.getAttribute("aria-pressed")).toBe("true");
     expect(localStorage.getItem("probability-scale-all-references")).toBe("true");
@@ -523,7 +523,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-center-marker] .probability")?.textContent).toContain("Probabilité :");
     expect(document.querySelector("[data-center-marker] .odds")?.textContent).toContain("Cote :");
     expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("P");
-    expect(document.querySelector("[data-all-references-help]")?.textContent).toBe("Inclure les références locales de toutes les langues");
+    expect(document.querySelector("[data-all-references-help]")?.textContent).toBe("Afficher aussi les exemples propres à d’autres pays.");
     expect(document.querySelector("[data-intro-direction-rarer]")?.textContent).toBe("Plus rare / vers le centre");
     expect(document.querySelector("[data-intro-direction-likely]")?.textContent).toBe("Plus probable / vers l’extérieur");
     expect(localStorage.getItem("probability-scale-locale")).toBe("fr");
