@@ -160,6 +160,64 @@ describe("public probability exploration", () => {
     expect(Number.parseFloat(coin.style.top) + 40).toBeGreaterThan(272);
   });
 
+  it("zooms the radial scene through one common transform between bounded geometry snapshots", () => {
+    vi.useFakeTimers();
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render();
+
+    const scene = document.querySelector<HTMLElement>("[data-depth-scene]")!;
+    const coin = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!;
+    const initialLeft = coin.style.left;
+    const initialTop = coin.style.top;
+    const initialScale = Number(coin.dataset.depthScale);
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 20, bubbles: true, cancelable: true }));
+    const movedCenter = Number(scale.dataset.depth);
+    const sceneZoom = Number(scene.dataset.sceneZoom);
+
+    expect(movedCenter).toBeCloseTo(0.2, 10);
+    expect(sceneZoom).toBeCloseTo(10 ** (-movedCenter / 10), 10);
+    expect(initialScale * sceneZoom).toBeCloseTo(10 ** (-movedCenter / 10), 10);
+    expect([coin.style.left, coin.style.top]).toEqual([initialLeft, initialTop]);
+
+    clock.advanceTo(30);
+    expect(Number(scene.dataset.sceneZoom)).not.toBe(sceneZoom);
+    expect([coin.style.left, coin.style.top]).toEqual([initialLeft, initialTop]);
+  });
+
+  it("persists an in-flight view at lifecycle boundaries instead of every animation frame", () => {
+    vi.useFakeTimers();
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render();
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    writes.mockClear();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 20, bubbles: true, cancelable: true }));
+    clock.advanceTo(30);
+    expect(writes.mock.calls.filter(([key]) => key === "probability-scale-view-v1")).toHaveLength(0);
+
+    window.dispatchEvent(new PageTransitionEvent("pagehide"));
+    const viewWrites = writes.mock.calls.filter(([key]) => key === "probability-scale-view-v1");
+    expect(viewWrites).toHaveLength(1);
+    expect(JSON.parse(String(viewWrites[0]![1])).center).toBeCloseTo(Number(scale.dataset.depth), 10);
+  });
+
+  it("keeps subpixel landmark art keyboard accessible down to its geometric visibility threshold", () => {
+    history.replaceState(null, "", "#d=20");
+    render();
+
+    const coin = document.querySelector<HTMLButtonElement>('[data-landmark="coin-heads"]')!;
+    expect(coin).not.toBeNull();
+    expect(80 * Number(coin.dataset.depthScale)).toBeCloseTo(0.8, 10);
+    expect(coin.hidden).toBe(false);
+    expect(coin.tabIndex).toBe(0);
+    expect(coin.getAttribute("aria-label")).toContain("A chosen side of a fair coin");
+  });
+
   it("introduces the scale once and reopens the guide from the header", () => {
     render(1200, false);
 
