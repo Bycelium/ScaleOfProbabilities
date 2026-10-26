@@ -14,7 +14,7 @@ export const enSources = {
   "uniform-seven-day-calendar-model": { label: "Uniform seven-day calendar model" },
   "noaa-ocean-service": { label: "NOAA Ocean Service", note: "coverage estimate" },
   "fair-die-model": { label: "Fair-die model" },
-  "dnd-dice": { label: "D&D Beyond: dice notation and percentile dice" },
+  "dnd-dice": { label: "D&D Beyond: dice notation" },
   "dnd-critical": { label: "D&D Basic Rules (2024): rolling 20 or 1" },
   "usgs-floods-and-recurrence-intervals": { label: "USGS: floods and recurrence intervals" },
   "five-dice-model": { label: "Five-dice model" },

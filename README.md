@@ -2,25 +2,15 @@
 
 The Scale of Probability is a bilingual, interactive atlas of sourced probabilities expressed in decibans. It places each event at its exact depth on a continuous radial scale and provides the model, assumptions, calculations, and sources behind each example.
 
+[![Explore the Scale of Probability: illustrated examples arranged around the current deciban depth](docs/assets/scale-preview.png)](https://decibanscale.bycelium.com)
+
 Use the mouse wheel or trackpad on a desktop, the arrow keys when the scene has focus, or a one-finger swipe or pinch on a touch screen. Movement begins immediately and continues to the next landmark in the latest input direction. Long gaps accelerate and then brake into arrival. Any travel closes open details. Selecting an illustration or related example sets an exact destination and opens its details on arrival. The Return to 0 dBan control appears after the opening position.
 
 The explorer supports English and French. A saved choice takes precedence over the browser's ordered language preferences, with English as the fallback. The language picker is in the opening About dialog and beside About in the main view. The persisted **All references** option includes examples associated with every region instead of the selected language's default set.
 
 ## Development
 
-Use Node 24 and pnpm 11.20.0. The Nix development shell provides both tools. Run every command from the repository root.
-
-With direnv's shell integration installed, allow the repository environment once:
-
-```sh
-direnv allow
-```
-
-Otherwise, enter the development shell directly:
-
-```sh
-nix develop
-```
+Use Node 24 and pnpm 11.20.0. Run every command from the repository root.
 
 Install the locked dependencies:
 
