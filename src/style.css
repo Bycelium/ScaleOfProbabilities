@@ -9,7 +9,6 @@ button { color: inherit; cursor: pointer; }
 button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #f6cf70; outline-offset: 3px; }
 .atlas { height: 100svh; min-height: 36rem; overflow: hidden; padding: 0 clamp(.6rem, 1vw, .9rem); position: relative; }
 [data-page-content] { height: 100%; position: relative; }
-.atlas:has(.scale-intro[open]) [data-page-content] { visibility: hidden; }
 .explorer-tools { align-items: center; bottom: clamp(.6rem, 1vw, .9rem); display: flex; gap: .4rem; position: absolute; right: clamp(.6rem, 1vw, .9rem); z-index: 110; }
 .read-scale, .return-zero, .language-toggle { background: #102b38e8; border: 1px solid #547984; border-radius: 999px; padding: .42rem .75rem; }
 .read-scale:hover, .return-zero:hover, .language-toggle:hover, dialog > button:first-child:hover { background: #25505c; }
@@ -70,6 +69,7 @@ dialog:not([open]) { display: none; }
 dialog > button:first-child { align-items: center; background: #102b38d9; border: 1px solid #547984; border-radius: 50%; display: inline-flex; float: right; font-size: 1.35rem; height: 2.25rem; justify-content: center; line-height: 1; padding: 0; width: 2.25rem; }
 dialog[data-detail-panel] { bottom: 4rem; left: auto; margin: 0; max-height: calc(100vh - 5rem); right: 1rem; top: auto; width: min(27rem, calc(100vw - 2rem)); }
 .scale-intro { inset: 50% auto auto 50%; margin: 0; max-height: calc(100vh - 2rem); overflow: hidden; transform: translate(-50%, -50%); width: min(48rem, calc(100vw - 2rem)); }
+.scale-intro::backdrop { background: rgb(2 9 18 / 20%); }
 .scale-intro[open] { display: flex; flex-direction: column; }
 .intro-scroll { min-height: 0; overflow-y: auto; padding-right: .2rem; }
 .intro-actions { border-top: 1px solid #426674; flex: none; margin-top: .55rem; padding-top: .65rem; }
@@ -133,7 +133,7 @@ dd a { color: #9ed6c8; }
   .spoke-tick small, .spoke-event-marker small { font-size: .62rem; }
   dialog[data-detail-panel] { border-radius: 1rem 1rem 0 0; bottom: 3.75rem; left: 0; max-height: min(72vh, calc(100vh - 4.25rem)); right: 0; width: 100%; }
   dialog [data-detail-art] { width: 4.5rem; }
-  .scale-intro { inset: .5rem; max-height: calc(100vh - 1rem); padding: 1rem; transform: none; width: auto; }
+  .scale-intro { inset: 6svh 1rem; max-height: calc(100svh - 12svh); padding: 1rem; transform: none; width: auto; }
   .gap-caption { font-size: .75rem; max-width: calc(100vw - 1.6rem); white-space: normal; width: max-content; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } .hyperspace { display: none; } }
