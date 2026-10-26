@@ -552,110 +552,6 @@ describe("public probability exploration", () => {
     expect(Number(scale.dataset.depth)).toBeCloseTo(target.position, 10);
   });
 
-  it("settles nearby depth motion forward and keeps a current ring at empty depths", () => {
-    vi.useFakeTimers();
-    const frames: FrameRequestCallback[] = [];
-    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.push(callback); return frames.length; });
-    vi.stubGlobal("cancelAnimationFrame", vi.fn());
-    vi.stubGlobal("matchMedia", () => ({ matches: false }));
-    history.replaceState(null, "", "#d=0.18");
-    render();
-    const scale = document.querySelector<HTMLElement>(".scale")!;
-    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 4, cancelable: true }));
-    frames.shift()?.(0);
-    vi.advanceTimersByTime(130);
-    frames.shift()?.(0);
-    frames.shift()?.(180);
-    expect(document.querySelector("[data-center-marker]")?.textContent).toContain("+0.3 dBan");
-
-    history.replaceState(null, "", "#d=150");
-    render();
-    const currentRing = document.querySelector<HTMLElement>("[data-current-depth-ring]")!;
-    expect(Number.parseFloat(currentRing.style.width)).toBeGreaterThan(200);
-    expect(currentRing.style.getPropertyValue("--ring-color")).toBe("rgb(74 185 137)");
-    expect(currentRing.textContent).toBe("");
-  });
-
-  it("settles wheel motion onto the next landmark in its latest direction", () => {
-    vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
-    const coin = displayLandmarks.find(item => item.displayId === "coin-heads")!;
-    const outward = displayLandmarks
-      .filter(item => item.position > coin.position)
-      .sort((first, second) => first.position - second.position)[0];
-    const inward = displayLandmarks
-      .filter(item => item.position < coin.position)
-      .sort((first, second) => second.position - first.position)[0];
-
-    history.replaceState(null, "", "#d=0.02");
-    let settled = render();
-    const scale = document.querySelector<HTMLElement>(".scale")!;
-    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 1, cancelable: true }));
-    vi.advanceTimersByTime(130);
-    expect(Number(scale.dataset.depth)).toBeCloseTo(outward.position, 10);
-    settled.dispose();
-
-    history.replaceState(null, "", "#d=-0.02");
-    settled = render();
-    const reversingScale = document.querySelector<HTMLElement>(".scale")!;
-    reversingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 1, cancelable: true }));
-    reversingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: -1, cancelable: true }));
-    vi.advanceTimersByTime(130);
-    expect(Number(reversingScale.dataset.depth)).toBeCloseTo(inward.position, 10);
-    settled.dispose();
-  });
-
-  it("settles pinch motion in its final direction and leaves a tap at rest", () => {
-    vi.useFakeTimers();
-    vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
-    const coin = displayLandmarks.find(item => item.displayId === "coin-heads")!;
-    const outward = displayLandmarks
-      .filter(item => item.position > coin.position)
-      .sort((first, second) => first.position - second.position)[0];
-    const inward = displayLandmarks
-      .filter(item => item.position < coin.position)
-      .sort((first, second) => second.position - first.position)[0];
-    const pointer = (type: string, pointerId: number, clientX: number) => {
-      const event = new Event(type, { bubbles: true, cancelable: true });
-      Object.defineProperties(event, { clientX: { value: clientX }, clientY: { value: 300 }, pointerId: { value: pointerId }, pointerType: { value: "touch" } });
-      return event;
-    };
-
-    history.replaceState(null, "", "#d=0.02");
-    let settled = render();
-    const scale = document.querySelector<HTMLElement>(".scale")!;
-    scale.dispatchEvent(pointer("pointerdown", 1, 100));
-    scale.dispatchEvent(pointer("pointerdown", 2, 300));
-    scale.dispatchEvent(pointer("pointermove", 2, 299));
-    scale.dispatchEvent(pointer("pointerup", 2, 299));
-    scale.dispatchEvent(pointer("pointerup", 1, 100));
-    vi.advanceTimersByTime(130);
-    expect(Number(scale.dataset.depth)).toBeCloseTo(outward.position, 10);
-    settled.dispose();
-
-    history.replaceState(null, "", "#d=0.02");
-    settled = render();
-    const reversingScale = document.querySelector<HTMLElement>(".scale")!;
-    reversingScale.dispatchEvent(pointer("pointerdown", 1, 100));
-    reversingScale.dispatchEvent(pointer("pointerdown", 2, 300));
-    reversingScale.dispatchEvent(pointer("pointermove", 2, 299));
-    reversingScale.dispatchEvent(pointer("pointermove", 2, 301));
-    reversingScale.dispatchEvent(pointer("pointerup", 2, 301));
-    reversingScale.dispatchEvent(pointer("pointerup", 1, 100));
-    vi.advanceTimersByTime(130);
-    expect(Number(reversingScale.dataset.depth)).toBeCloseTo(inward.position, 10);
-    settled.dispose();
-
-    history.replaceState(null, "", "#d=0.02");
-    settled = render();
-    const restingScale = document.querySelector<HTMLElement>(".scale")!;
-    restingScale.dispatchEvent(pointer("pointerdown", 3, 200));
-    restingScale.dispatchEvent(pointer("pointerup", 3, 200));
-    vi.advanceTimersByTime(130);
-    expect(Number(restingScale.dataset.depth)).toBeCloseTo(0.02, 10);
-    settled.dispose();
-  });
-
   it("adds five familiar exact outcomes across the positive opening range", () => {
     render();
 
@@ -1661,7 +1557,6 @@ describe("public probability exploration", () => {
     expect(scale.dataset.fastForward).toBe("outward");
     frames.shift()?.(0);
     frames.shift()?.(16);
-    expect(Number(scale.dataset.depth)).toBeGreaterThan(-6.8);
     frames.shift()?.(4000);
     expect(Number(scale.dataset.depth)).toBe(0);
     expect(document.activeElement).toBe(scale);
@@ -1677,6 +1572,26 @@ describe("public probability exploration", () => {
     frames.shift()?.(4000);
     expect(Number(wheelScale.dataset.depth)).toBeCloseTo(289.1, 1);
     wheelRendered.dispose();
+
+    frames.length = 0;
+    history.replaceState(null, "", "#d=100");
+    const pinchRendered = render(390);
+    const pinchScale = document.querySelector<HTMLElement>(".scale")!;
+    const pointer = (type: string, pointerId: number, clientX: number) => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, { clientX: { value: clientX }, clientY: { value: 300 }, pointerId: { value: pointerId }, pointerType: { value: "touch" } });
+      return event;
+    };
+    pinchScale.dispatchEvent(pointer("pointerdown", 1, 100));
+    pinchScale.dispatchEvent(pointer("pointerdown", 2, 300));
+    pinchScale.dispatchEvent(pointer("pointermove", 2, 250));
+    frames.shift()?.(0);
+    const beforeQuietInterval = Number(pinchScale.dataset.depth);
+    frames.shift()?.(80);
+    expect(Number(pinchScale.dataset.depth)).toBeGreaterThan(beforeQuietInterval);
+    frames.shift()?.(4000);
+    expect(Number(pinchScale.dataset.depth)).toBeCloseTo(289.1, 1);
+    pinchRendered.dispose();
   });
 
   it("keeps the current extreme readout authoritative on the spoke", () => {

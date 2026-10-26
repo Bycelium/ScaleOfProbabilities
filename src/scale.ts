@@ -4,8 +4,8 @@ import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabil
 
 type View = { center: number };
 type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter: number; centerX: number; centerY: number }>;
+type FastForwardOptions = Readonly<{ onArrival?: () => void; announce?: boolean; initialVelocity?: number }>;
 
-const VIEW_SPAN = 10;
 const STORAGE_KEY = "probability-scale-view-v1";
 const INTRO_STORAGE_KEY = "probability-scale-intro-seen";
 const REFERENCES_STORAGE_KEY = "probability-scale-all-references";
@@ -101,11 +101,10 @@ export function createScale(root: HTMLElement): () => void {
   let restoreFocus: HTMLElement | undefined;
   let dragY: number | undefined;
   let touchOriginY: number | undefined;
-  let animationFrame: number | undefined;
   let fastForwardFrame: number | undefined;
-  let settleTimer: number | undefined;
   let gestureFastForwardDirection = 0;
-  let touchSettleDirection = 0;
+  let travelVelocity = 0;
+  let lastTravelInput: { timestamp: number; velocity: number } | undefined;
   let travelToRelated: (target: DisplayLandmark) => void;
   let travelToLandmark: (target: DisplayLandmark) => void;
   const pointers = new Map<number, { x: number; y: number }>();
@@ -466,14 +465,6 @@ export function createScale(root: HTMLElement): () => void {
     returnButton.hidden = Math.abs(view.center) <= 0.1;
   };
 
-  const scheduleRender = (): void => {
-    if (animationFrame !== undefined) return;
-    animationFrame = requestAnimationFrame(() => {
-      animationFrame = undefined;
-      render();
-    });
-  };
-
   const moveTo = (center: number, persist = true): void => {
     view.center = clampToCatalogue(center);
     if (persist) saveView(view);
@@ -483,38 +474,6 @@ export function createScale(root: HTMLElement): () => void {
   const nearestLandmark = (position = view.center): DisplayLandmark => availableLandmarks().reduce((best, item) => (
     Math.abs(item.position - position) < Math.abs(best.position - position) ? item : best
   ));
-
-  const nextLandmarkInDirection = (direction: number, position = view.center): DisplayLandmark | undefined => {
-    const available = availableLandmarks();
-    const current = available.find(item => Math.abs(item.position - position) < 1e-9);
-    if (current) return current;
-    return available
-      .filter(item => direction > 0 ? item.position > position : item.position < position)
-      .sort((first, second) => direction > 0 ? first.position - second.position : second.position - first.position)[0];
-  };
-
-  const cancelSnapFeedback = (): void => {
-    if (settleTimer !== undefined) window.clearTimeout(settleTimer);
-    settleTimer = undefined;
-  };
-
-  const scheduleSettle = (direction: number): void => {
-    if (direction === 0) return;
-    settleTimer = window.setTimeout(() => {
-      settleTimer = undefined;
-      const target = nextLandmarkInDirection(direction);
-      if (!target) return;
-      const finish = () => {
-        active = target;
-        moveTo(target.position);
-      };
-      if (Math.abs(target.position - view.center) < 1e-9 || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-        finish();
-        return;
-      }
-      startFastForward(target.position, direction, finish, false);
-    }, 120);
-  };
 
   const showDialog = (): void => {
     dialog.setAttribute("open", "");
@@ -804,6 +763,7 @@ export function createScale(root: HTMLElement): () => void {
     if (fastForwardFrame !== undefined) cancelAnimationFrame(fastForwardFrame);
     fastForwardFrame = undefined;
     gestureFastForwardDirection = 0;
+    travelVelocity = 0;
     gapCaption.hidden = true;
     delete scale.dataset.fastForward;
     scale.style.setProperty("--hyperspace-opacity", "0");
@@ -819,14 +779,25 @@ export function createScale(root: HTMLElement): () => void {
 
   const cancelMotion = (): void => {
     cancelFastForward();
-    cancelSnapFeedback();
   };
 
-  const startFastForward = (target: number, direction: number, onArrival: (() => void) | undefined = undefined, announce = true): void => {
+  const rememberTravelVelocity = (delta: number, timestamp: number): number => {
+    const elapsed = lastTravelInput ? clamp(timestamp - lastTravelInput.timestamp, 8, 80) : 16;
+    const velocity = delta / (elapsed / 1000);
+    lastTravelInput = { timestamp, velocity };
+    return velocity;
+  };
+
+  const startFastForward = (target: number, direction: number, { onArrival, announce = true, initialVelocity = 0 }: FastForwardOptions = {}): void => {
+    cancelMotion();
+    if (dialog.open) closeDetails(false);
+    restoreFocus = undefined;
     const start = view.center;
     const distance = Math.abs(target - start);
     const duration = clamp(140 + Math.sqrt(distance) * 180, 160, 3800);
     const finish = () => {
+      fastForwardFrame = undefined;
+      gapCaption.hidden = true;
       delete scale.dataset.fastForward;
       gestureFastForwardDirection = 0;
       scale.style.setProperty("--hyperspace-opacity", "0");
@@ -834,10 +805,11 @@ export function createScale(root: HTMLElement): () => void {
       moveTo(target);
       onArrival?.();
     };
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    if (distance < 1e-9 || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       finish();
       return;
     }
+    gestureFastForwardDirection = direction;
     scale.dataset.fastForward = direction > 0 ? "outward" : "inward";
     const exponent = distance / 10;
     const factor = exponent <= 6
@@ -850,15 +822,18 @@ export function createScale(root: HTMLElement): () => void {
       gapCaption.hidden = true;
     }
     let startedAt: number | undefined;
+    const initialSlope = clamp(Math.abs(initialVelocity) * (duration / 1000) / distance, 0, 0.8);
+    const slopeAt = (progress: number): number => 3 * (initialSlope - 2) * progress ** 2 + 2 * (3 - 2 * initialSlope) * progress + initialSlope;
+    const peakSlope = Math.max(...Array.from({ length: 33 }, (_, index) => slopeAt(index / 32)));
     const animate = (timestamp: number) => {
       startedAt ??= timestamp;
       const progress = clamp((timestamp - startedAt) / duration, 0, 1);
-      const eased = progress ** 3 * (progress * (progress * 6 - 15) + 10);
-      const relativeSpeed = 16 * progress ** 2 * (1 - progress) ** 2;
-      const peakSpeed = distance / (duration / 1000) * 1.875;
-      const speedAmplitude = clamp((peakSpeed - 18) / 42, 0, 1);
-      const peakEnvelope = clamp((relativeSpeed - 0.55) / 0.35, 0, 1);
-      const streakOpacity = speedAmplitude * peakEnvelope;
+      const eased = (initialSlope - 2) * progress ** 3 + (3 - 2 * initialSlope) * progress ** 2 + initialSlope * progress;
+      const speed = distance / (duration / 1000) * slopeAt(progress);
+      travelVelocity = direction * speed;
+      const speedAmplitude = clamp((speed - 18) / 42, 0, 1);
+      const nearPeak = clamp((slopeAt(progress) / peakSlope - 0.55) / 0.35, 0, 1);
+      const streakOpacity = speedAmplitude * nearPeak;
       scale.style.setProperty("--hyperspace-opacity", streakOpacity.toFixed(3));
       view.center = start + (target - start) * eased;
       saveView(view);
@@ -866,102 +841,64 @@ export function createScale(root: HTMLElement): () => void {
       if (progress < 1) {
         fastForwardFrame = requestAnimationFrame(animate);
       } else {
-        fastForwardFrame = undefined;
-        gapCaption.hidden = true;
         finish();
       }
     };
     fastForwardFrame = requestAnimationFrame(animate);
   };
 
-  const returnToZero = (): void => {
+  const travelInDirection = (direction: number, directDelta: number, inputVelocity: number): void => {
+    const carriedVelocity = fastForwardFrame !== undefined && direction === gestureFastForwardDirection
+      ? Math.abs(travelVelocity)
+      : 0;
     cancelMotion();
+    if (directDelta !== 0) {
+      view.center = clampToCatalogue(view.center + directDelta);
+      saveView(view);
+      render();
+    }
+    const target = nextLandmarkPosition(direction);
+    if (target !== undefined) startFastForward(target, direction, { initialVelocity: direction * Math.max(Math.abs(inputVelocity), carriedVelocity) });
+  };
+
+  const returnToZero = (): void => {
     const restoreScaleFocus = document.activeElement === returnButton;
     const direction = Math.sign(-view.center);
-    if (direction === 0) {
-      moveTo(0);
+    startFastForward(0, direction, { onArrival: () => {
       if (restoreScaleFocus) scale.focus();
-      return;
-    }
-    startFastForward(0, direction, () => {
-      if (restoreScaleFocus) scale.focus();
-    });
+    } });
   };
   returnButton.addEventListener("click", returnToZero);
 
   const moveThroughTouchGap = (delta: number, rebase: () => void): void => {
     const direction = Math.sign(delta);
     if (direction === 0) return;
-    touchSettleDirection = direction;
-    let reversedFastForward = false;
-    if (fastForwardFrame !== undefined && gestureFastForwardDirection !== 0) {
-      if (direction === gestureFastForwardDirection) {
-        rebase();
-        return;
-      }
-      cancelFastForward();
-      reversedFastForward = true;
-    }
-    const target = nextLandmarkPosition(direction);
-    if (!reversedFastForward && target !== undefined && Math.abs(target - view.center) > VIEW_SPAN * 1.5) {
-      gestureFastForwardDirection = direction;
-      startFastForward(target, direction);
-      rebase();
-      return;
-    }
-    view.center = clampToCatalogue(view.center + delta);
-    saveView(view);
-    scheduleRender();
+    const velocity = rememberTravelVelocity(delta, performance.now());
     rebase();
+    travelInDirection(direction, delta, velocity);
   };
 
   travelToRelated = (target: DisplayLandmark): void => {
-    cancelMotion();
-    dialog.removeAttribute("open");
-    selected = undefined;
-    restoreFocus = undefined;
     scale.focus();
     const direction = Math.sign(target.position - view.center);
-    if (direction === 0 || Math.abs(target.position - view.center) < 0.001) {
-      moveTo(target.position);
-      openDetails(target);
-      return;
-    }
-    startFastForward(target.position, direction, () => openDetails(target));
+    startFastForward(target.position, direction, { onArrival: () => openDetails(target) });
   };
 
   travelToLandmark = (target: DisplayLandmark): void => {
-    cancelMotion();
-    /* v8 ignore next -- closed and open-card journeys share the tested one-click switching path. */
-    if (dialog.open) closeDetails(false);
-    selected = undefined;
     active = target;
     render();
     const direction = Math.sign(target.position - view.center);
-    if (direction === 0 || Math.abs(target.position - view.center) < 0.001) {
-      moveTo(target.position);
-      openDetails(target);
-      return;
-    }
-    startFastForward(target.position, direction, () => openDetails(target));
+    startFastForward(target.position, direction, { onArrival: () => openDetails(target) });
   };
 
   const onWheel = (event: WheelEvent): void => {
-    cancelSnapFeedback();
     event.preventDefault();
     const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
     if (delta === 0) return;
     const direction = Math.sign(delta);
-    cancelFastForward();
-    const target = nextLandmarkPosition(direction);
-    if (target !== undefined && Math.abs(target - view.center) > VIEW_SPAN * 1.5) {
-      startFastForward(target, direction);
-      return;
-    }
-    view.center = clampToCatalogue(view.center + clamp(delta * 0.01, -1.2, 1.2));
-    saveView(view);
-    scheduleRender();
-    scheduleSettle(direction);
+    const depthDelta = clamp(delta * 0.01, -1.2, 1.2);
+    const velocity = rememberTravelVelocity(depthDelta, performance.now());
+    travelInDirection(direction, depthDelta, velocity);
   };
   scale.addEventListener("wheel", onWheel, { passive: false });
 
@@ -980,10 +917,7 @@ export function createScale(root: HTMLElement): () => void {
       || (target instanceof Element && target.closest(".landmark") !== null);
     if (!navigatesScene) return;
     event.preventDefault();
-    cancelMotion();
-    if (dialog.open) closeDetails(false);
-    moveTo(view.center + direction);
-    scheduleSettle(direction);
+    travelInDirection(direction, direction, 16);
   };
   document.addEventListener("keydown", onKeydown);
 
@@ -992,7 +926,6 @@ export function createScale(root: HTMLElement): () => void {
     if (dialog.open) closeDetails(false);
     if (pointers.size === 0) {
       suppressLandmarkClick = false;
-      touchSettleDirection = 0;
     }
     if (event.pointerType === "mouse") return;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY || 0 });
@@ -1047,9 +980,6 @@ export function createScale(root: HTMLElement): () => void {
     }
     dragY = undefined;
     touchOriginY = undefined;
-    const direction = touchSettleDirection;
-    touchSettleDirection = 0;
-    if (fastForwardFrame === undefined) scheduleSettle(direction);
   };
   scale.addEventListener("pointerup", endPointer);
   scale.addEventListener("pointercancel", endPointer);
@@ -1077,10 +1007,7 @@ export function createScale(root: HTMLElement): () => void {
     allReferencesInput.removeEventListener("change", onAllReferencesChange);
     scale.removeEventListener("wheel", onWheel);
     document.removeEventListener("keydown", onKeydown);
-    /* v8 ignore next -- disposal may fall between scheduled render frames. */
-    if (animationFrame !== undefined) cancelAnimationFrame(animationFrame);
     if (fastForwardFrame !== undefined) cancelFastForward();
-    if (settleTimer !== undefined) window.clearTimeout(settleTimer);
     pointers.clear();
   };
 }
