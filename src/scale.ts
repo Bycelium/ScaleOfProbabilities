@@ -858,7 +858,7 @@ export function createScale(root: HTMLElement): () => void {
       render();
     }
     const target = nextLandmarkPosition(direction);
-    if (target !== undefined) startFastForward(target, direction, { initialVelocity: direction * Math.max(Math.abs(inputVelocity), carriedVelocity) });
+    startFastForward(target ?? view.center, direction, { initialVelocity: direction * Math.max(Math.abs(inputVelocity), carriedVelocity) });
   };
 
   const returnToZero = (): void => {
