@@ -14,6 +14,7 @@ const superscripts: Record<string, string> = {
   "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
   "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
 };
+const decibanFormatters = new Map<LocaleCode, Intl.NumberFormat>();
 
 export const tailValue = (tail: Tail): number => {
   if (tail.kind === "ratio") return tail.numerator / tail.denominator;
@@ -74,10 +75,12 @@ export const formatProbabilityPercent = (value: Chance, locale: LocaleCode = "en
 };
 
 export const formatDecibans = (position: number, locale: LocaleCode = "en"): string => {
-  const magnitude = new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 1,
-    useGrouping: false,
-  }).format(Math.abs(position)).replace(".", localeMetadata[locale].decimalSeparator);
+  let formatter = decibanFormatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(localeMetadata[locale].numberLocale, { maximumFractionDigits: 1, useGrouping: false });
+    decibanFormatters.set(locale, formatter);
+  }
+  const magnitude = formatter.format(Math.abs(position));
   const signed = magnitude === "0" ? magnitude : position > 0 ? `+${magnitude}` : `−${magnitude}`;
   return `${signed} dBan`;
 };

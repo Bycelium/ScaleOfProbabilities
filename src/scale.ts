@@ -1,5 +1,6 @@
 import { displayLandmarks, regionalLandmarkLocales, relatedLandmarkIds, type DisplayLandmark, type LandmarkDiagnostic, type Source } from "./catalogue";
 import { localeChoices, locales, localizeLandmark, resolveInitialLocale, saveLocale, translateArtwork, type LocaleCode, type LocaleDefinition } from "./locales";
+import { fillTemplate } from "./locales/helpers";
 import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabilityPercent } from "./probability";
 
 type View = { center: number };
@@ -522,6 +523,7 @@ export function createScale(root: HTMLElement): () => void {
     const inverseZoom = 1 / sceneZoom;
     setStyle(depthScene, "transform", `scale(${sceneZoom})`);
     setStyle(depthScene, "--scene-inverse-zoom", String(inverseZoom));
+    setStyle(depthScene, "--scene-ring-width", `${inverseZoom}px`);
     const sceneZoomText = String(sceneZoom);
     if (depthScene.dataset.sceneZoom !== sceneZoomText) depthScene.dataset.sceneZoom = sceneZoomText;
     const { width, height, centerX, centerY, referenceDiameter } = nextMetrics;
@@ -626,7 +628,6 @@ export function createScale(root: HTMLElement): () => void {
     evidenceHeading.className = "diagnostic-evidence-heading";
     evidenceHeading.textContent = locale.ui.diagnostic.evidence;
     const localizedNumber = (value: number, maximumFractionDigits: number): string => value.toLocaleString(locale.numberLocale, { maximumFractionDigits });
-    const fill = (template: string, values: Readonly<Record<string, string>>): string => template.replace(/\{(\w+)\}/g, (token, key: string) => values[key] ?? token);
     const sensitivity = localizedNumber(model.sensitivity, 3);
     const specificity = localizedNumber(model.specificity, 3);
     const positiveRatio = localizedNumber(model.positiveLikelihoodRatio, 1);
@@ -634,16 +635,16 @@ export function createScale(root: HTMLElement): () => void {
     const negativeRatio = localizedNumber(model.negativeLikelihoodRatio, 3);
     const positiveEvidence = document.createElement("p");
     positiveEvidence.className = "diagnostic-evidence";
-    positiveEvidence.textContent = fill(locale.ui.diagnostic.positiveEvidence, { factor: positiveRatio, shift: formatDecibans(model.positiveShift, locale.code) });
+    positiveEvidence.textContent = fillTemplate(locale.ui.diagnostic.positiveEvidence, { factor: positiveRatio, shift: formatDecibans(model.positiveShift, locale.code) });
     const positiveFormula = document.createElement("p");
     positiveFormula.className = "diagnostic-formula";
-    positiveFormula.textContent = fill(locale.ui.diagnostic.positiveFormula, { sensitivity, specificity, ratio: positiveRatio });
+    positiveFormula.textContent = fillTemplate(locale.ui.diagnostic.positiveFormula, { sensitivity, specificity, ratio: positiveRatio });
     const negativeEvidence = document.createElement("p");
     negativeEvidence.className = "diagnostic-evidence";
-    negativeEvidence.textContent = fill(locale.ui.diagnostic.negativeEvidence, { divisor: localizedNumber(negativeDivisor, 1), shift: formatDecibans(model.negativeShift, locale.code) });
+    negativeEvidence.textContent = fillTemplate(locale.ui.diagnostic.negativeEvidence, { divisor: localizedNumber(negativeDivisor, 1), shift: formatDecibans(model.negativeShift, locale.code) });
     const negativeFormula = document.createElement("p");
     negativeFormula.className = "diagnostic-formula";
-    negativeFormula.textContent = fill(locale.ui.diagnostic.negativeFormula, { sensitivity, specificity, ratio: negativeRatio });
+    negativeFormula.textContent = fillTemplate(locale.ui.diagnostic.negativeFormula, { sensitivity, specificity, ratio: negativeRatio });
     content.append(caption, table, evidenceHeading, positiveEvidence, positiveFormula, negativeEvidence, negativeFormula);
   };
 

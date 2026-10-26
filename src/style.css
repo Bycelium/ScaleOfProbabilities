@@ -50,7 +50,7 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .hyperspace i { rotate: var(--angle); }
 @keyframes hyperspace-in { 0% { opacity: 0; transform: translateX(2vmin) scaleX(.12); } 28% { opacity: .78; } 100% { opacity: 0; transform: translateX(68vmax) scaleX(1.8); } }
 @keyframes hyperspace-out { 0% { opacity: 0; transform: translateX(68vmax) scaleX(1.8); } 35% { opacity: .72; } 100% { opacity: 0; transform: translateX(2vmin) scaleX(.12); } }
-.depth-ring { border: calc(1px * var(--scene-inverse-zoom, 1)) solid var(--ring-color); border-radius: 50%; left: 50%; opacity: .11; position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 1; }
+.depth-ring { border: var(--scene-ring-width, 1px) solid var(--ring-color); border-radius: 50%; left: 50%; opacity: .11; position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 1; }
 .tick-depth-ring.major-depth-ring { opacity: .2; }
 .event-depth-ring { border-style: dashed; opacity: .16; }
 .current-depth-ring { border: 3px solid var(--ring-color); border-radius: 50%; left: 50%; opacity: .9; pointer-events: none; position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2; }

@@ -467,6 +467,10 @@ describe("public probability exploration", () => {
     expect(Number(scale.dataset.depth)).toBe(beforeMouseDrag);
     scale.dispatchEvent(pointer("pointerdown", 1, 400, 400));
     scale.dispatchEvent(pointer("pointerdown", 2, 600, 600));
+    const beforeStationaryPinch = Number(scale.dataset.depth);
+    scale.dispatchEvent(pointer("pointermove", 2, 600, 600));
+    expect(clock.pendingFrames).toBe(0);
+    expect(Number(scale.dataset.depth)).toBe(beforeStationaryPinch);
     scale.dispatchEvent(pointer("pointermove", 2, 800, 800));
     clock.advanceTo(32);
     expect(Number(scale.dataset.depth)).toBeLessThan(afterWheel);
@@ -524,6 +528,11 @@ describe("public probability exploration", () => {
     press(allReferences, "ArrowUp");
     expect(depth()).toBeCloseTo(beforeControl);
     document.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.click();
+
+    const languageArrow = new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true });
+    document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.dispatchEvent(languageArrow);
+    expect(languageArrow.defaultPrevented).toBe(false);
+    expect(depth()).toBeCloseTo(beforeControl);
 
     press(document.body, "ArrowRight", { ctrlKey: true });
     expect(depth()).toBeCloseTo(beforeControl);
