@@ -51,7 +51,7 @@ class TestFrameClock {
   }
 }
 
-type DrawnCircle = Readonly<{ x: number; y: number; radius: number; width: number; alpha: number; dash: readonly number[] }>;
+type DrawnCircle = Readonly<{ x: number; y: number; radius: number; width: number; alpha: number }>;
 
 class RecordingCanvasContext {
   readonly circles: DrawnCircle[] = [];
@@ -59,17 +59,15 @@ class RecordingCanvasContext {
   lineWidth = 1;
   globalAlpha = 1;
   strokeStyle = "";
-  private dash: number[] = [];
   private path: { x: number; y: number; radius: number }[] = [];
 
   setTransform(...values: number[]): void { this.transform = values; }
   clearRect(): void { this.circles.length = 0; }
-  setLineDash(values: number[]): void { this.dash = values; }
   beginPath(): void { this.path = []; }
   moveTo(): void {}
   arc(x: number, y: number, radius: number): void { this.path.push({ x, y, radius }); }
   stroke(): void {
-    this.circles.push(...this.path.map(circle => ({ ...circle, width: this.lineWidth, alpha: this.globalAlpha, dash: this.dash })));
+    this.circles.push(...this.path.map(circle => ({ ...circle, width: this.lineWidth, alpha: this.globalAlpha })));
   }
 }
 

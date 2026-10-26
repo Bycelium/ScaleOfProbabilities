@@ -279,7 +279,6 @@ export function createScale(root: HTMLElement): () => void {
   let metrics: SceneMetrics | undefined;
   let sceneOrigin: Readonly<{ center: number; metrics: SceneMetrics }> | undefined;
   let sceneBounds: readonly [number, number] = [0, 0];
-  let eventRingPositions: readonly number[] = [];
 
   const setText = (element: HTMLElement, value: string): void => {
     if (element.textContent !== value) element.textContent = value;
@@ -485,7 +484,6 @@ export function createScale(root: HTMLElement): () => void {
       setStyle(title, "--title-y", `${titleOffset?.y ?? 0}px`);
       landmarkNodes.set(item.id, { ...existing, baseX: x, baseY: y, baseArtSize: artSize });
     }
-    eventRingPositions = [...new Set(visibleCatalogue.map(item => item.position))];
     sceneOrigin = { center: originCenter, metrics: nextMetrics };
   };
 
@@ -518,10 +516,9 @@ export function createScale(root: HTMLElement): () => void {
     setStyle(currentDepthRing, "--ring-color", axisColor(view.center));
   };
 
-  const drawGuideBatch = (positions: readonly number[], alpha: number, dash: number[], { width, height, referenceDiameter, centerX, centerY }: SceneMetrics): void => {
+  const drawGuideBatch = (positions: readonly number[], alpha: number, { width, height, referenceDiameter, centerX, centerY }: SceneMetrics): void => {
     const maximumRadius = Math.hypot(width, height) / 2;
     ringContext.globalAlpha = alpha;
-    ringContext.setLineDash(dash);
     ringContext.beginPath();
     for (const position of positions) {
       const radius = referenceDiameter / 2 * 10 ** ((position - view.center) / 10);
@@ -546,9 +543,8 @@ export function createScale(root: HTMLElement): () => void {
     ringContext.strokeStyle = "rgb(126 142 145)";
     ringContext.lineWidth = 1;
     const ticks = visibleTickDepths(referenceDiameter, Math.hypot(width, height), sceneBounds);
-    drawGuideBatch(ticks.filter(position => position % 5 !== 0), 0.11, [], nextMetrics);
-    drawGuideBatch(ticks.filter(position => position % 5 === 0), 0.2, [], nextMetrics);
-    drawGuideBatch(eventRingPositions, 0.16, [4, 4], nextMetrics);
+    drawGuideBatch(ticks.filter(position => position % 5 !== 0), 0.11, nextMetrics);
+    drawGuideBatch(ticks.filter(position => position % 5 === 0), 0.2, nextMetrics);
   };
 
   const render = (): void => {
