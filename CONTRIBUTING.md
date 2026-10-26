@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions should preserve the atlas's scientific meaning, stable landmark identity, and bilingual presentation. Keep the application static and browser-native: Vite, TypeScript, and SVG are the project foundations. Use Node 24 and pnpm 11.20.0 from the repository root.
+Contributions should preserve the atlas's scientific meaning, stable landmark identity, and bilingual presentation. Keep the application static and browser-native: Vite and TypeScript drive the interface, SVG provides the illustrations, and one Canvas 2D layer draws the gray guide circles. Use Node 24 and pnpm 11.20.0 from the repository root.
 
 ## Add a family or example
 

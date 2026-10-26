@@ -75,6 +75,13 @@ class RecordingCanvasContext {
 
 let guideContext: RecordingCanvasContext;
 
+const drawnGuideAt = (position: number, dashed = false): DrawnCircle | undefined => {
+  const center = Number(document.querySelector<HTMLElement>(".scale")!.dataset.depth);
+  const diameter = Number.parseFloat(document.querySelector<HTMLElement>("[data-current-depth-ring]")!.style.width);
+  const radius = diameter / 2 * 10 ** ((position - center) / 10);
+  return guideContext.circles.find(circle => Boolean(circle.dash.length) === dashed && Math.abs(circle.radius - radius) < 1e-8);
+};
+
 let scaleWidth = 1200;
 
 const render = (width = 1200, introSeen = true, allReferences = true) => {
@@ -144,12 +151,11 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-zoom-in], [data-zoom-out]")).toBeNull();
     expect(document.querySelector<HTMLButtonElement>("[data-return-zero]")?.hidden).toBe(true);
     expect(document.querySelector("[data-stem-for]")).toBeNull();
-    expect(document.querySelector('[data-depth-ring="-15.4"]')).not.toBeNull();
+    expect(guideContext.circles.filter(circle => circle.dash.length > 0).length).toBeGreaterThan(0);
     const coinRing = document.querySelector<HTMLElement>("[data-current-depth-ring]")!;
     expect(coinRing).not.toBeNull();
-    expect(document.querySelectorAll("[data-tick-depth-ring]").length).toBeGreaterThan(10);
-    expect(document.querySelectorAll(".tick-depth-ring.major-depth-ring").length).toBeGreaterThanOrEqual(2);
-    expect(document.querySelector(".event-depth-ring")?.classList).toContain("depth-ring");
+    expect(guideContext.circles.filter(circle => circle.dash.length === 0).length).toBeGreaterThan(10);
+    expect(guideContext.circles.filter(circle => circle.alpha === 0.2).length).toBeGreaterThanOrEqual(2);
     expect(document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')?.dataset.ringSize).toBe(coinRing.style.width);
     expect(document.querySelector<HTMLElement>("[data-current-depth-marker]")?.style.getPropertyValue("--axis-color")).toBe("rgb(134 147 140)");
 
@@ -182,13 +188,13 @@ describe("public probability exploration", () => {
     const readout = document.querySelector<HTMLElement>("[data-depth-readout]")!;
     const current = document.querySelector<HTMLElement>("[data-current-depth-marker]")!;
     const tick = document.querySelector<HTMLElement>('[data-tick="-1"]')!;
-    const tickRing = document.querySelector<HTMLElement>('[data-tick-depth-ring="-1"]')!;
+    const tickRing = drawnGuideAt(-1)!;
     expect(spoke).not.toBeNull();
     expect(readout.querySelector(".probability")?.textContent).toBe("Probability: 50%");
     expect(readout.querySelector(".odds")?.textContent).toBe("Odds: 1 to 1");
     expect(current.textContent).toContain("0 dBan");
     expect(Number.parseFloat(tick.style.left)).toBe(600);
-    expect(Number.parseFloat(tick.style.top)).toBeCloseTo(160 - Number.parseFloat(tickRing.style.width) / 2, 8);
+    expect(Number.parseFloat(tick.style.top)).toBeCloseTo(160 - tickRing.radius, 8);
     expect(document.querySelector<HTMLElement>("[data-ruler]")?.style.getPropertyValue("--axis-gradient")).toBe("");
 
     const coin = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!;
@@ -225,7 +231,6 @@ describe("public probability exploration", () => {
     render();
 
     const scene = document.querySelector<HTMLElement>("[data-depth-scene]")!;
-    const ringScene = document.querySelector<HTMLElement>("[data-depth-ring-scene]")!;
     const coin = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!;
     const initialLeft = coin.style.left;
     const initialTop = coin.style.top;
@@ -240,7 +245,7 @@ describe("public probability exploration", () => {
     expect(movedCenter).toBeGreaterThan(0);
     expect(movedCenter).toBeLessThan(0.2);
     expect(sceneZoom).toBeCloseTo(10 ** (-movedCenter / 10), 10);
-    expect(ringScene.style.transform).toBe(scene.style.transform);
+    expect(drawnGuideAt(-1)).toBeDefined();
     expect(initialScale * sceneZoom).toBeCloseTo(10 ** (-movedCenter / 10), 10);
     expect([coin.style.left, coin.style.top]).toEqual([initialLeft, initialTop]);
 
@@ -249,7 +254,6 @@ describe("public probability exploration", () => {
 
     clock.advanceTo(4000);
     expect(scene.style.transform).toBe("scale(1)");
-    expect(ringScene.style.transform).toBe("scale(1)");
   });
 
   it("persists an in-flight view at lifecycle boundaries instead of every animation frame", () => {
@@ -1378,8 +1382,8 @@ describe("public probability exploration", () => {
     render(1200);
 
     const tick = document.querySelector<HTMLElement>('[data-tick="0"]')!;
-    const ring = document.querySelector<HTMLElement>('[data-tick-depth-ring="0"]')!;
-    expect(Number.parseFloat(tick.style.top)).toBeCloseTo(160 - Number.parseFloat(ring.style.width) / 2, 8);
+    const ring = drawnGuideAt(0)!;
+    expect(Number.parseFloat(tick.style.top)).toBeCloseTo(160 - ring.radius, 8);
   });
 
   it("keeps the depth spoke visible at distant catalogue positions", () => {
@@ -1605,7 +1609,8 @@ describe("public probability exploration", () => {
 
     matchingDice.focus();
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("−7 dBan");
-    expect([...document.querySelectorAll<HTMLElement>('[data-depth-ring="-7"]')].some(ring => ring.style.width === matchingDice.dataset.ringSize)).toBe(true);
+    const matchingPosition = displayLandmarks.find(item => item.id === "two-dice-any-double")!.position;
+    expect(drawnGuideAt(matchingPosition, true)!.radius * 2).toBeCloseTo(Number.parseFloat(matchingDice.dataset.ringSize!), 8);
     matchingDice.click();
     expect(document.querySelector("[data-detail-sources]")?.textContent).toContain("Fair independent dice model");
     first.dispose();

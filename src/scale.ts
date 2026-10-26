@@ -22,7 +22,6 @@ type LandmarkNode = Readonly<{
   baseY: number;
   baseArtSize: number;
 }>;
-type RingNode = Readonly<{ element: SVGSVGElement; baseDiameter: number }>;
 type RulerTickNode = Readonly<{ element: HTMLElement; mark: HTMLElement; label: HTMLElement }>;
 
 const STORAGE_KEY = "probability-scale-view-v1";
@@ -141,7 +140,7 @@ export function createScale(root: HTMLElement): () => void {
   root.innerHTML = `<div class="atlas"><div data-page-content>
     <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker" data-language-picker><button class="language-toggle" data-language-toggle aria-label="${locale.ui.language}" aria-expanded="false">🌐</button><div class="language-menu" data-language-menu role="group" aria-label="${locale.ui.language}" hidden>${languageChoices("menu")}</div></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
     <section class="scale" tabindex="0" aria-label="${locale.ui.scaleAria}">
-      <div class="ruler" data-ruler></div><div class="depth-ring-scene" data-depth-ring-scene aria-hidden="true"><div class="depth-rings" data-depth-rings></div></div><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
+      <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
     </section>
   </div>
   <dialog class="scale-intro" data-scale-intro aria-modal="true" aria-labelledby="scale-intro-heading">
@@ -165,10 +164,10 @@ export function createScale(root: HTMLElement): () => void {
   const page = root.querySelector<HTMLElement>("[data-page-content]")!;
   const scale = root.querySelector<HTMLElement>(".scale")!;
   const ruler = root.querySelector<HTMLElement>("[data-ruler]")!;
-  const depthRingScene = root.querySelector<HTMLElement>("[data-depth-ring-scene]")!;
   const depthScene = root.querySelector<HTMLElement>("[data-depth-scene]")!;
   const layer = root.querySelector<HTMLElement>("[data-landmarks]")!;
-  const rings = root.querySelector<HTMLElement>("[data-depth-rings]")!;
+  const rings = root.querySelector<HTMLCanvasElement>("[data-depth-rings]")!;
+  const ringContext = rings.getContext("2d")!;
   const currentDepthRing = root.querySelector<HTMLElement>("[data-current-depth-ring]")!;
   const dialog = root.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
   const introDialog = root.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
@@ -181,8 +180,6 @@ export function createScale(root: HTMLElement): () => void {
   const gapCaption = root.querySelector<HTMLElement>("[data-gap-caption]")!;
   const hyperspace = root.querySelector<HTMLElement>("[data-hyperspace]")!;
   const landmarkNodes = new Map<string, LandmarkNode>();
-  const tickRingNodes = new Map<number, RingNode>();
-  const eventRingNodes = new Map<number, RingNode>();
   const rulerTickNodes = new Map<number, RulerTickNode>();
   const artworkImageSources = new Map<string, string>();
   const landmarksById = new Map<string, DisplayLandmark>(displayLandmarks.map(item => [item.id, item]));
@@ -282,11 +279,12 @@ export function createScale(root: HTMLElement): () => void {
   let metrics: SceneMetrics | undefined;
   let sceneOrigin: Readonly<{ center: number; metrics: SceneMetrics }> | undefined;
   let sceneBounds: readonly [number, number] = [0, 0];
+  let eventRingPositions: readonly number[] = [];
 
   const setText = (element: HTMLElement, value: string): void => {
     if (element.textContent !== value) element.textContent = value;
   };
-  const setStyle = (element: HTMLElement | SVGElement, property: string, value: string): void => {
+  const setStyle = (element: HTMLElement, property: string, value: string): void => {
     if (element.style.getPropertyValue(property) !== value) element.style.setProperty(property, value);
   };
 
@@ -300,10 +298,10 @@ export function createScale(root: HTMLElement): () => void {
     return metrics;
   };
 
-  const visibleTickDepths = (referenceDiameter: number, maximumRingDiameter: number, bounds: readonly [number, number], center = view.center): number[] => {
+  const visibleTickDepths = (referenceDiameter: number, maximumRingDiameter: number, bounds: readonly [number, number]): number[] => {
     const [minimum, maximum] = bounds;
-    const first = Math.ceil(Math.max(minimum, center + 10 * Math.log10(0.75 / referenceDiameter)));
-    const last = Math.floor(Math.min(maximum, center + 10 * Math.log10(maximumRingDiameter / referenceDiameter)));
+    const first = Math.ceil(Math.max(minimum, view.center + 10 * Math.log10(0.75 / referenceDiameter)));
+    const last = Math.floor(Math.min(maximum, view.center + 10 * Math.log10(maximumRingDiameter / referenceDiameter)));
     return Array.from({ length: Math.max(0, last - first + 1) }, (_, index) => first + index);
   };
 
@@ -439,10 +437,9 @@ export function createScale(root: HTMLElement): () => void {
       && Math.max(...vertical) >= 0 && Math.min(...vertical) <= height;
   };
 
-  const rebuildScene = (nextMetrics: SceneMetrics, visibleCatalogue: readonly DisplayLandmark[], bounds: readonly [number, number]): void => {
-    const { width, height, referenceDiameter, centerX, centerY } = nextMetrics;
+  const rebuildScene = (nextMetrics: SceneMetrics, visibleCatalogue: readonly DisplayLandmark[]): void => {
+    const { width, referenceDiameter, centerX, centerY } = nextMetrics;
     const compactArtScale = width <= 640 ? 0.76 : 1;
-    const maximumRingDiameter = Math.hypot(width, height);
     const originCenter = view.center;
     const maximumSceneZoom = 10 ** (SCENE_REBASE_DECIBANS / 10);
     const projected = visibleCatalogue.flatMap(item => {
@@ -488,56 +485,7 @@ export function createScale(root: HTMLElement): () => void {
       setStyle(title, "--title-y", `${titleOffset?.y ?? 0}px`);
       landmarkNodes.set(item.id, { ...existing, baseX: x, baseY: y, baseArtSize: artSize });
     }
-    setStyle(currentDepthRing, "width", `${referenceDiameter}px`);
-    setStyle(currentDepthRing, "height", `${referenceDiameter}px`);
-    const ringCanEnterScene = (position: number): boolean => {
-      const baseDiameter = referenceDiameter * 10 ** ((position - originCenter) / 10);
-      return baseDiameter * maximumSceneZoom >= 0.75 && baseDiameter / maximumSceneZoom <= maximumRingDiameter;
-    };
-    const updateRing = (nodes: Map<number, RingNode>, position: number, className: string): RingNode => {
-      const baseDiameter = referenceDiameter * 10 ** ((position - originCenter) / 10);
-      let node = nodes.get(position);
-      if (!node) {
-        const element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        element.setAttribute("viewBox", "0 0 100 100");
-        element.setAttribute("preserveAspectRatio", "none");
-        element.innerHTML = '<circle cx="50" cy="50" r="50"></circle>';
-        setStyle(element, "--ring-color", "rgb(126 142 145)");
-        node = { element, baseDiameter };
-      }
-      const { element } = node;
-      element.setAttribute("class", className);
-      setStyle(element, "width", `${baseDiameter}px`);
-      setStyle(element, "height", `${baseDiameter}px`);
-      if (element.parentElement !== rings) rings.append(element);
-      const updated = { element, baseDiameter };
-      nodes.set(position, updated);
-      return updated;
-    };
-    const tickPositions = new Set([
-      ...visibleTickDepths(referenceDiameter, maximumRingDiameter, bounds, originCenter - SCENE_REBASE_DECIBANS),
-      ...visibleTickDepths(referenceDiameter, maximumRingDiameter, bounds, originCenter + SCENE_REBASE_DECIBANS),
-    ]);
-    for (const position of tickPositions) {
-      const major = Math.abs(position / 5 - Math.round(position / 5)) < 1e-8;
-      updateRing(tickRingNodes, position, `depth-ring tick-depth-ring${major ? " major-depth-ring" : ""}`).element.dataset.tickDepthRing = trimDecimal(position);
-    }
-    for (const [position, node] of tickRingNodes) {
-      if (!tickPositions.has(position)) {
-        node.element.remove();
-        tickRingNodes.delete(position);
-      }
-    }
-    const eventPositions = new Set([...new Set(visibleCatalogue.map(item => item.position))].filter(ringCanEnterScene));
-    for (const position of eventPositions) {
-      updateRing(eventRingNodes, position, "depth-ring event-depth-ring").element.dataset.depthRing = trimDecimal(position);
-    }
-    for (const [position, node] of eventRingNodes) {
-      if (!eventPositions.has(position)) {
-        node.element.remove();
-        eventRingNodes.delete(position);
-      }
-    }
+    eventRingPositions = [...new Set(visibleCatalogue.map(item => item.position))];
     sceneOrigin = { center: originCenter, metrics: nextMetrics };
   };
 
@@ -545,11 +493,10 @@ export function createScale(root: HTMLElement): () => void {
     if (!sceneOrigin || sceneOrigin.metrics !== nextMetrics || Math.abs(view.center - sceneOrigin.center) >= SCENE_REBASE_DECIBANS) {
       const visibleCatalogue = availableLandmarks();
       sceneBounds = [Math.min(...visibleCatalogue.map(item => item.position)), Math.max(...visibleCatalogue.map(item => item.position))];
-      rebuildScene(nextMetrics, visibleCatalogue, sceneBounds);
+      rebuildScene(nextMetrics, visibleCatalogue);
     }
     const sceneZoom = 10 ** ((sceneOrigin!.center - view.center) / 10);
     const inverseZoom = 1 / sceneZoom;
-    setStyle(depthRingScene, "transform", `scale(${sceneZoom})`);
     setStyle(depthScene, "transform", `scale(${sceneZoom})`);
     const sceneZoomText = String(sceneZoom);
     if (depthScene.dataset.sceneZoom !== sceneZoomText) depthScene.dataset.sceneZoom = sceneZoomText;
@@ -566,27 +513,48 @@ export function createScale(root: HTMLElement): () => void {
       const receded = String(!readable);
       if (button.dataset.receded !== receded) button.dataset.receded = receded;
     }
-    const maximumRingDiameter = Math.hypot(width, height);
-    const updateRingVisibility = (nodes: ReadonlyMap<number, RingNode>): void => {
-      for (const [position, node] of nodes) {
-        const diameter = node.baseDiameter * sceneZoom;
-        const hidden = diameter < 0.75 || diameter > maximumRingDiameter || Math.abs(position - view.center) < 1e-8;
-        if (hidden !== node.element.hasAttribute("hidden")) {
-          if (hidden) node.element.setAttribute("hidden", "");
-          else node.element.removeAttribute("hidden");
-        }
-      }
-    };
-    updateRingVisibility(tickRingNodes);
-    updateRingVisibility(eventRingNodes);
     setStyle(currentDepthRing, "width", `${referenceDiameter}px`);
     setStyle(currentDepthRing, "height", `${referenceDiameter}px`);
     setStyle(currentDepthRing, "--ring-color", axisColor(view.center));
   };
 
+  const drawGuideBatch = (positions: readonly number[], alpha: number, dash: number[], { width, height, referenceDiameter, centerX, centerY }: SceneMetrics): void => {
+    const maximumRadius = Math.hypot(width, height) / 2;
+    ringContext.globalAlpha = alpha;
+    ringContext.setLineDash(dash);
+    ringContext.beginPath();
+    for (const position of positions) {
+      const radius = referenceDiameter / 2 * 10 ** ((position - view.center) / 10);
+      if (radius < 0.375 || radius > maximumRadius || Math.abs(position - view.center) < 1e-8) continue;
+      ringContext.moveTo(centerX + radius, centerY);
+      ringContext.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    }
+    ringContext.stroke();
+  };
+
+  const renderGuideRings = (nextMetrics: SceneMetrics): void => {
+    const { width, height, referenceDiameter } = nextMetrics;
+    const pixelRatio = window.devicePixelRatio;
+    const backingWidth = Math.ceil(width * pixelRatio);
+    const backingHeight = Math.ceil(height * pixelRatio);
+    if (rings.width !== backingWidth) rings.width = backingWidth;
+    if (rings.height !== backingHeight) rings.height = backingHeight;
+    setStyle(rings, "width", `${width}px`);
+    setStyle(rings, "height", `${height}px`);
+    ringContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ringContext.clearRect(0, 0, width, height);
+    ringContext.strokeStyle = "rgb(126 142 145)";
+    ringContext.lineWidth = 1;
+    const ticks = visibleTickDepths(referenceDiameter, Math.hypot(width, height), sceneBounds);
+    drawGuideBatch(ticks.filter(position => position % 5 !== 0), 0.11, [], nextMetrics);
+    drawGuideBatch(ticks.filter(position => position % 5 === 0), 0.2, [], nextMetrics);
+    drawGuideBatch(eventRingPositions, 0.16, [4, 4], nextMetrics);
+  };
+
   const render = (): void => {
     const nextMetrics = sceneMetrics();
     updateSceneProjection(nextMetrics);
+    renderGuideRings(nextMetrics);
     renderRuler(nextMetrics, sceneBounds);
     const returnHidden = Math.abs(view.center) <= 0.1;
     if (returnButton.hidden !== returnHidden) returnButton.hidden = returnHidden;
