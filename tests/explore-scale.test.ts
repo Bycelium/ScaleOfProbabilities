@@ -1594,11 +1594,11 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     expect(scale.dataset.fastForward).toBe("outward");
     clock.advanceTo(16);
-    expect(Number(scale.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThan(0);
+    expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThan(0);
     clock.advanceTo(1400);
-    expect(Number(scale.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThanOrEqual(0);
+    expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThanOrEqual(0);
     clock.advanceTo(3000);
-    expect(scale.style.getPropertyValue("--hyperspace-opacity")).toBe("0");
+    expect(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity")).toBe("0");
     const beforeReverse = Number(scale.dataset.depth);
     scale.dispatchEvent(pointer("pointermove", 2, 350, 300));
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
@@ -1660,7 +1660,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     clock.advanceTo(1000);
     expect(document.querySelector("[data-center-marker]")?.textContent).not.toContain("0 dBan");
-    expect(Number(scale.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThan(.9);
+    expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThan(.9);
     clock.advanceTo(2000);
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("0 dBan");
     expect(scale.dataset.fastForward).toBeUndefined();

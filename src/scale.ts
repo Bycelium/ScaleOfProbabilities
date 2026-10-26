@@ -168,6 +168,7 @@ export function createScale(root: HTMLElement): () => void {
   const returnButton = root.querySelector<HTMLButtonElement>("[data-return-zero]")!;
   const allReferencesInput = root.querySelector<HTMLInputElement>("[data-all-references]")!;
   const gapCaption = root.querySelector<HTMLElement>("[data-gap-caption]")!;
+  const hyperspace = root.querySelector<HTMLElement>("[data-hyperspace]")!;
   const landmarkNodes = new Map<string, LandmarkNode>();
   const tickRingNodes = new Map<number, RingNode>();
   const eventRingNodes = new Map<number, RingNode>();
@@ -877,7 +878,7 @@ export function createScale(root: HTMLElement): () => void {
     travelVelocity = 0;
     gapCaption.hidden = true;
     delete scale.dataset.fastForward;
-    scale.style.setProperty("--hyperspace-opacity", "0");
+    setStyle(hyperspace, "--hyperspace-opacity", "0");
     persistView();
   };
 
@@ -916,7 +917,7 @@ export function createScale(root: HTMLElement): () => void {
       delete scale.dataset.fastForward;
       travelDirection = 0;
       travelVelocity = 0;
-      scale.style.setProperty("--hyperspace-opacity", "0");
+      setStyle(hyperspace, "--hyperspace-opacity", "0");
       if (!onArrival) active = nearestLandmark(target);
       moveTo(target);
       onArrival?.();
@@ -946,7 +947,7 @@ export function createScale(root: HTMLElement): () => void {
       const nearPeak = clamp((slopeAt(progress) / peakSlope - 0.55) / 0.35, 0, 1);
       const substantialJourney = clamp((distance - 5) / 15, 0, 1);
       const streakOpacity = substantialJourney * speedAmplitude * nearPeak;
-      scale.style.setProperty("--hyperspace-opacity", streakOpacity.toFixed(3));
+      setStyle(hyperspace, "--hyperspace-opacity", streakOpacity.toFixed(3));
       view.center = start + (target - start) * eased;
       render();
       if (progress < 1) {
