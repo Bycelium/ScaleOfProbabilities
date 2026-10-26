@@ -131,7 +131,7 @@ export function createScale(root: HTMLElement): () => void {
   root.innerHTML = `<div class="atlas"><div data-page-content>
     <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker" data-language-picker><button class="language-toggle" data-language-toggle aria-label="${locale.ui.language}" aria-expanded="false">🌐</button><div class="language-menu" data-language-menu role="group" aria-label="${locale.ui.language}" hidden>${languageChoices("menu")}</div></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
     <section class="scale" tabindex="0" aria-label="${locale.ui.scaleAria}">
-      <div class="ruler" data-ruler></div><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene aria-hidden="false"><div class="depth-rings" data-depth-rings aria-hidden="true"></div><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
+      <div class="ruler" data-ruler></div><div class="depth-ring-scene" data-depth-ring-scene aria-hidden="true"><div class="depth-rings" data-depth-rings></div></div><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
     </section>
   </div>
   <dialog class="scale-intro" data-scale-intro aria-modal="true" aria-labelledby="scale-intro-heading">
@@ -155,6 +155,7 @@ export function createScale(root: HTMLElement): () => void {
   const page = root.querySelector<HTMLElement>("[data-page-content]")!;
   const scale = root.querySelector<HTMLElement>(".scale")!;
   const ruler = root.querySelector<HTMLElement>("[data-ruler]")!;
+  const depthRingScene = root.querySelector<HTMLElement>("[data-depth-ring-scene]")!;
   const depthScene = root.querySelector<HTMLElement>("[data-depth-scene]")!;
   const layer = root.querySelector<HTMLElement>("[data-landmarks]")!;
   const rings = root.querySelector<HTMLElement>("[data-depth-rings]")!;
@@ -270,7 +271,6 @@ export function createScale(root: HTMLElement): () => void {
   let rulerLocale: LocaleCode | undefined;
   let metrics: SceneMetrics | undefined;
   let sceneOrigin: Readonly<{ center: number; metrics: SceneMetrics }> | undefined;
-  let sceneCatalogue: readonly DisplayLandmark[] = [];
   let sceneBounds: readonly [number, number] = [0, 0];
 
   const setText = (element: HTMLElement, value: string): void => {
@@ -535,12 +535,13 @@ export function createScale(root: HTMLElement): () => void {
 
   const updateSceneProjection = (nextMetrics: SceneMetrics): void => {
     if (!sceneOrigin || sceneOrigin.metrics !== nextMetrics || Math.abs(view.center - sceneOrigin.center) >= SCENE_REBASE_DECIBANS) {
-      sceneCatalogue = availableLandmarks();
-      sceneBounds = [Math.min(...sceneCatalogue.map(item => item.position)), Math.max(...sceneCatalogue.map(item => item.position))];
-      rebuildScene(nextMetrics, sceneCatalogue, sceneBounds);
+      const visibleCatalogue = availableLandmarks();
+      sceneBounds = [Math.min(...visibleCatalogue.map(item => item.position)), Math.max(...visibleCatalogue.map(item => item.position))];
+      rebuildScene(nextMetrics, visibleCatalogue, sceneBounds);
     }
     const sceneZoom = 10 ** ((sceneOrigin!.center - view.center) / 10);
     const inverseZoom = 1 / sceneZoom;
+    setStyle(depthRingScene, "transform", `scale(${sceneZoom})`);
     setStyle(depthScene, "transform", `scale(${sceneZoom})`);
     const sceneZoomText = String(sceneZoom);
     if (depthScene.dataset.sceneZoom !== sceneZoomText) depthScene.dataset.sceneZoom = sceneZoomText;

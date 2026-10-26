@@ -39,8 +39,10 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .current-depth-marker strong { color: var(--axis-color); font: 1.55rem/1 Georgia, serif; left: 18px; position: absolute; top: 0; transform: translateY(calc(-100% - .35rem)); }
 .spoke-event-marker i { border-top-style: dashed; width: 18px; }
 .spoke-event-marker small { background: #0b202de8; border-radius: .25rem; padding: .1rem .25rem; }
-.depth-scene, .depth-rings, .landmarks { inset: 0; position: absolute; }
-.depth-scene { transform-origin: 50% 50%; will-change: transform; }
+.depth-ring-scene, .depth-scene, .depth-rings, .landmarks { inset: 0; position: absolute; }
+.depth-ring-scene, .depth-scene { transform-origin: 50% 50%; will-change: transform; }
+.depth-ring-scene { z-index: 1; }
+.depth-scene { z-index: 3; }
 .depth-rings { pointer-events: none; }
 .hyperspace { inset: 0; opacity: 0; overflow: hidden; pointer-events: none; position: absolute; transition: opacity .18s ease; z-index: 0; }
 .hyperspace i { animation: hyperspace-out .72s linear infinite; animation-delay: var(--delay); animation-play-state: paused; background: linear-gradient(90deg, transparent, #c7f6ffb8 45%, #fff); height: 2px; left: 50%; opacity: 0; position: absolute; top: 50%; transform-origin: left center; width: clamp(2.5rem, 13vmin, 7rem); }
