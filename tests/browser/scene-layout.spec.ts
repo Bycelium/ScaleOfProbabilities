@@ -8,6 +8,7 @@ const densePairs = [
   ["french-scrabble-consonant", "rain-brest-december"],
   ["holdem-one-pair", "full-moon-15-days"],
   ["numbered-card", "ocean-point"],
+  ["numbered-card", "stellar-hydrogen-mass"],
   ["weekday", "yellow-pea"],
   ["weekday", "four-dice-any-match"],
   ["yellow-pea", "four-dice-any-match"],
@@ -214,6 +215,25 @@ test("keeps every new astronomy icon selectable at its exact depth on compact mo
     await page.locator(`[data-landmark="${id}"] .art img`).click();
     await expect(page.locator("[data-detail-panel][open]")).toBeVisible();
     await expect(page.locator("[data-detail-title]")).toHaveText(landmark.title);
+  }
+});
+
+test("keeps stellar hydrogen and its nearby landmarks selectable at their exact depths", async ({ page }) => {
+  const ids = [
+    "stellar-hydrogen-mass",
+    "ocean-point",
+    "mensik-first-serve-miami-2025",
+    "roulette-two-dozens-columns",
+  ] as const;
+  for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    for (const id of ids) {
+      const landmark = displayLandmarks.find(item => item.id === id)!;
+      await openScene(page, "en", landmark.position);
+      await page.locator(`[data-landmark="${id}"] .art img`).click();
+      await expect(page.locator("[data-detail-panel][open]")).toBeVisible();
+      await expect(page.locator("[data-detail-title]")).toHaveText(landmark.title);
+    }
   }
 });
 
