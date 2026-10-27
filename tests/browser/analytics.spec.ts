@@ -33,7 +33,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("keeps analytics inactive after decline and clears pending events on withdrawal", async ({ page }) => {
+test("keeps analytics inactive after decline and clears pending events on withdrawal", async ({ page }, testInfo) => {
   await page.goto(fixture);
   const intro = page.locator("[data-scale-intro]");
   await expect(intro.locator("[data-dismiss-intro]")).toBeDisabled();
@@ -55,9 +55,25 @@ test("keeps analytics inactive after decline and clears pending events on withdr
 
   await page.locator("[data-open-intro]").click();
   await page.locator("[data-privacy-from-intro]").click();
-  await page.locator('[data-consent-choice="accepted"]').last().click();
+  const privacyActions = page.locator("[data-privacy-actions] [data-consent-choice]");
+  await expect(privacyActions).toHaveCount(1);
+  await expect(privacyActions).toHaveAttribute("data-consent-choice", "accepted");
+  await expect(privacyActions).toHaveText("Allow analytics");
+  await expect(privacyActions).toHaveCSS("background-color", "rgb(40, 100, 84)");
+  const allowScreenshot = testInfo.outputPath("privacy-action-allow.png");
+  await page.screenshot({ path: allowScreenshot });
+  await testInfo.attach("privacy-action-allow", { path: allowScreenshot, contentType: "image/png" });
+  await privacyActions.click();
   await expect.poll(() => recorderState(page).then(state => state.starts)).toBe(1);
-  await page.locator('[data-consent-choice="declined"]').last().click();
+  await expect(privacyActions).toHaveCount(1);
+  await expect(privacyActions).toHaveAttribute("data-consent-choice", "declined");
+  await expect(privacyActions).toHaveText("Withdraw consent");
+  await page.mouse.move(0, 0);
+  await expect(privacyActions).toHaveCSS("background-color", "rgb(116, 57, 64)");
+  const withdrawScreenshot = testInfo.outputPath("privacy-action-withdraw.png");
+  await page.screenshot({ path: withdrawScreenshot });
+  await testInfo.attach("privacy-action-withdraw", { path: withdrawScreenshot, contentType: "image/png" });
+  await privacyActions.click();
   await expect.poll(() => recorderState(page).then(state => state.stops)).toBe(1);
   await readyRecorder(page);
   expect((await recorderState(page)).events).toEqual([]);

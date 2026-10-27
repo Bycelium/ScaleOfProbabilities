@@ -48,7 +48,6 @@ export const es: LocaleDefinition = {
       participate: "Participar",
       doNotParticipate: "No participar",
       allow: "Permitir la analítica",
-      decline: "Rechazar la analítica",
       withdraw: "Retirar el consentimiento",
       close: "Cerrar la información de privacidad",
       statusLabel: "Elección actual:",
