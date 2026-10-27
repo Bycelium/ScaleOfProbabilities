@@ -1,11 +1,11 @@
 import { displayLandmarks, regionalLandmarkLocales, relatedLandmarkIds, type DisplayLandmark, type LandmarkDiagnostic, type Source } from "./catalogue";
 import { localeChoices, locales, localizeLandmark, resolveInitialLocale, saveLocale, translateArtwork, type LocaleCode, type LocaleDefinition } from "./locales";
-import { catalogueSlots } from "./catalogue/order";
 import { fillTemplate } from "./locales/helpers";
 import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabilityPercent } from "./probability";
 import { createPreferencesMenu } from "./preferences-menu";
 import { createAnalytics, type Analytics } from "./analytics";
 import { getAnalyticsConfig } from "./analytics-config";
+import { landmarkAngle, suppressedTitleIds, type LayoutBox, type TitleCandidate } from "./scene-layout";
 
 type View = { center: number };
 type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter: number; centerX: number; centerY: number }>;
@@ -24,6 +24,7 @@ type LandmarkNode = Readonly<{
   baseX: number;
   baseY: number;
   baseArtSize: number;
+  titleSuppressed: boolean;
 }>;
 type RulerTickNode = Readonly<{ element: HTMLElement; mark: HTMLElement; label: HTMLElement }>;
 
@@ -215,53 +216,6 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     const [minimum, maximum] = catalogueBounds();
     return clamp(position, minimum, maximum);
   };
-  const landmarkAngleOverrides: Readonly<Record<string, number>> = {
-    "die-d4-highest": 2 * Math.PI / 3,
-    "weekday": 135 * Math.PI / 180,
-    "ocean-point": 55 * Math.PI / 180,
-    "solar-eclipse-year": 220 * Math.PI / 180,
-    "frozen-freshwater": -10 * Math.PI / 180,
-    "four-dice-any-match": 115 * Math.PI / 180,
-    "mensik-first-serve-miami-2025": 30 * Math.PI / 180,
-    "rain-brest-december": 75 * Math.PI / 180,
-    "d20-avoid-natural-one-advantage": 135 * Math.PI / 180,
-    "pokemon-destined-rivals-double-rare": 138 * Math.PI / 180,
-    "pokemon-destined-rivals-illustration-rare": 100 * Math.PI / 180,
-    "pokemon-destined-rivals-special-illustration-rare": 220 * Math.PI / 180,
-    "roulette-two-dozens-columns": 12 * Math.PI / 180,
-    "roulette-even-money": 300 * Math.PI / 180,
-    "roulette-dozen-column": 300 * Math.PI / 180,
-    "roulette-six-line": 280 * Math.PI / 180,
-    "roulette-corner": 252 * Math.PI / 180,
-    "roulette-street": 320 * Math.PI / 180,
-    "roulette-split": 292 * Math.PI / 180,
-    "roulette-straight-up": 330 * Math.PI / 180,
-    "blackjack-natural-six-deck": 155 * Math.PI / 180,
-    "four-leaf-clover": 35 * Math.PI / 180,
-    "uk-recent-car-breakdown-2021": 90 * Math.PI / 180,
-    "fr-person-smartphone-2025": 45 * Math.PI / 180,
-    "rubik-state": 5 * Math.PI / 6,
-    "enigma-m3-known-rings": Math.PI / 5,
-    "enigma-m3-after-clues": Math.PI / 5,
-    "enigma-i-known-rings": 7 * Math.PI / 6,
-    "enigma-i-two-unknown-rings": 7 * Math.PI / 6,
-    "enigma-m4-known-rings": 11 * Math.PI / 6,
-    "sahara-grain": Math.PI / 2,
-  };
-  const landmarkAngles = new Map(displayLandmarks.map(item => [
-    item.id,
-    landmarkAngleOverrides[item.id] ?? -Math.PI / 4 + (((catalogueSlots[item.id] * 137.508) % 360) / 360) * (3 * Math.PI / 2),
-  ]));
-  const compactTitleOffsets: Readonly<Record<string, Readonly<{ x: number; y: number }>>> = {
-    "weekday": { x: 20, y: 0 },
-    "ocean-point": { x: 0, y: 28 },
-    "frozen-freshwater": { x: -16, y: 0 },
-    "red-dwarf-star": { x: -22, y: 0 },
-    "mensik-first-serve-miami-2025": { x: -12, y: 0 },
-    "rain-hilo": { x: -45, y: 12 },
-    "pokemon-destined-rivals-double-rare": { x: 30, y: 0 },
-  };
-
   const artworkImageSource = (item: DisplayLandmark): string => {
     const key = `${locale.code}:${item.id}`;
     const cached = artworkImageSources.get(key);
@@ -473,7 +427,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   };
 
   const rebuildScene = (nextMetrics: SceneMetrics, visibleCatalogue: readonly DisplayLandmark[]): void => {
-    const { width, referenceDiameter, centerX, centerY } = nextMetrics;
+    const { width, height, referenceDiameter, centerX, centerY } = nextMetrics;
     const compactArtScale = width <= 640 ? 0.76 : 1;
     const originCenter = view.center;
     const maximumSceneZoom = 10 ** (sceneRebaseDecibans(width) / 10);
@@ -482,7 +436,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       const zoomFactor = 10 ** (depth / 10);
       const ringDiameter = referenceDiameter * zoomFactor;
       const radius = ringDiameter / 2;
-      const angle = landmarkAngles.get(item.id)!;
+      const angle = landmarkAngle(item.id);
       const x = centerX + Math.cos(angle) * radius;
       const y = centerY + Math.sin(angle) * radius;
       const artSize = item.size * zoomFactor * compactArtScale;
@@ -515,11 +469,54 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       button.tabIndex = 0;
       setStyle(button, "pointer-events", "none");
       setStyle(button, "z-index", String(Math.max(1, Math.min(99, Math.round(zoomFactor * 10)))));
-      const titleOffset = width <= 640 ? compactTitleOffsets[item.id] : undefined;
-      setStyle(title, "--title-x", `${titleOffset?.x ?? 0}px`);
-      setStyle(title, "--title-y", `${titleOffset?.y ?? 0}px`);
-      landmarkNodes.set(item.id, { ...existing, baseX: x, baseY: y, baseArtSize: artSize });
+      setStyle(title, "--title-x", "0px");
+      setStyle(title, "--title-y", "0px");
+      landmarkNodes.set(item.id, { ...existing, baseX: x, baseY: y, baseArtSize: artSize, titleSuppressed: false });
     }
+    const sceneNodes = [...landmarkNodes.values()];
+    const readableNodes = sceneNodes.filter(node => node.baseArtSize >= 32
+      && (width > 640 || Math.abs(node.item.position - view.center) <= 1.7));
+    for (const node of readableNodes) {
+      node.button.hidden = false;
+      node.title.hidden = false;
+    }
+    const artBoxes = new Map(sceneNodes.map(node => [node.item.id, {
+      left: node.baseX - node.baseArtSize / 2,
+      right: node.baseX + node.baseArtSize / 2,
+      top: node.baseY - node.baseArtSize / 2,
+      bottom: node.baseY + node.baseArtSize / 2,
+    } satisfies LayoutBox]));
+    const outsideScene: readonly LayoutBox[] = [
+      { left: -Infinity, right: 4, top: -Infinity, bottom: Infinity },
+      { left: width - 4, right: Infinity, top: -Infinity, bottom: Infinity },
+      { left: -Infinity, right: Infinity, top: -Infinity, bottom: 4 },
+      { left: -Infinity, right: Infinity, top: height - 4, bottom: Infinity },
+    ];
+    const currentMarkerY = centerY - referenceDiameter / 2;
+    const readoutBox: LayoutBox = {
+      left: Math.max(0, centerX - (width <= 640 ? width / 2 : 230)),
+      right: Math.min(width, centerX + (width <= 640 ? width / 2 : 260)),
+      top: Math.max(0, currentMarkerY - (width <= 640 ? 100 : 86)),
+      bottom: currentMarkerY + 12,
+    };
+    const titleCandidates: TitleCandidate[] = readableNodes.map(node => {
+      const titleWidth = node.title.offsetWidth;
+      const titleHeight = node.title.offsetHeight;
+      const left = node.baseX - titleWidth / 2;
+      const top = node.baseY + node.baseArtSize / 2;
+      return {
+        id: node.item.id,
+        priority: Math.abs(node.item.position - view.center),
+        title: { left, right: left + titleWidth, top, bottom: top + titleHeight },
+        obstructions: [
+          ...outsideScene,
+          readoutBox,
+          ...[...artBoxes].filter(([id]) => id !== node.item.id).map(([, box]) => box),
+        ],
+      };
+    });
+    const suppressedTitles = suppressedTitleIds(titleCandidates);
+    for (const [id, node] of landmarkNodes) landmarkNodes.set(id, { ...node, titleSuppressed: suppressedTitles.has(node.item.id) });
     sceneOrigin = { center: originCenter, metrics: nextMetrics };
   };
 
@@ -536,14 +533,16 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     if (depthScene.dataset.sceneZoom !== sceneZoomText) depthScene.dataset.sceneZoom = sceneZoomText;
     const { width, height, centerX, centerY, referenceDiameter } = nextMetrics;
     const updateTitles = travel === undefined;
-    for (const { button, title, item, baseX, baseY, baseArtSize } of landmarkNodes.values()) {
+    for (const { button, title, item, baseX, baseY, baseArtSize, titleSuppressed } of landmarkNodes.values()) {
       const artSize = baseArtSize * sceneZoom;
       const x = centerX + (baseX - centerX) * sceneZoom;
       const y = centerY + (baseY - centerY) * sceneZoom;
       const visible = artSize >= 0.5 && x + artSize / 2 >= 0 && x - artSize / 2 <= width && y + artSize / 2 >= 0 && y - artSize / 2 <= height;
       if (button.hidden === visible) button.hidden = !visible;
       if (!updateTitles) continue;
-      const readable = visible && artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7);
+      const revealSuppressedTitle = active?.id === item.id;
+      const readable = visible && artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7)
+        && (!titleSuppressed || revealSuppressedTitle);
       if (title.hidden === readable) title.hidden = !readable;
       if (readable) setStyle(title, "transform", `scale(${inverseZoom}) translate(var(--title-x), var(--title-y))`);
       const receded = String(!readable);
