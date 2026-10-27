@@ -48,9 +48,9 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .spoke-event-marker i { border-top-style: dashed; width: 18px; }
 .spoke-event-marker small { background: #0b202de8; border-radius: .25rem; padding: .1rem .25rem; }
 .depth-scene, .depth-rings, .family-rails, .landmarks { inset: 0; position: absolute; }
-.depth-scene { transform-origin: 50% 50%; will-change: transform; }
-.depth-scene { z-index: 3; }
-.family-rails { height: 100%; overflow: visible; pointer-events: none; width: 100%; }
+.depth-scene, .family-rails { transform-origin: 50% 50%; will-change: transform; }
+.depth-scene { z-index: 4; }
+.family-rails { height: 100%; overflow: visible; pointer-events: none; transform-box: border-box; width: 100%; z-index: 3; }
 .family-rails line, .family-rails polyline { fill: none; stroke: #a8b9b766; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .depth-rings { pointer-events: none; z-index: 1; }
 .hyperspace { inset: 0; opacity: 0; overflow: hidden; pointer-events: none; position: absolute; transition: opacity .18s ease; z-index: 0; }

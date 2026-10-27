@@ -154,7 +154,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   root.innerHTML = `<div class="atlas"><div data-page-content>
     <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker"><button type="button" class="language-toggle" data-preferences-toggle="toolbar" aria-label="${locale.ui.language}" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">🌐</span></button></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
     <section class="scale" tabindex="0" aria-label="${locale.ui.scaleAria}">
-      <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene><svg class="family-rails" data-family-rails aria-hidden="true" focusable="false"></svg><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
+      <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><svg class="family-rails" data-family-rails aria-hidden="true" focusable="false"></svg><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
     </section>
   </div>
   <dialog class="scale-intro" data-scale-intro aria-modal="true" aria-labelledby="scale-intro-heading">
@@ -265,7 +265,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   const setText = (element: HTMLElement, value: string): void => {
     if (element.textContent !== value) element.textContent = value;
   };
-  const setStyle = (element: HTMLElement, property: string, value: string): void => {
+  const setStyle = (element: HTMLElement | SVGElement, property: string, value: string): void => {
     if (element.style.getPropertyValue(property) !== value) element.style.setProperty(property, value);
   };
   const measureCurrentReadoutStack = (): void => {
@@ -588,7 +588,9 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     }
     const sceneZoom = 10 ** ((sceneOrigin!.center - view.center) / 10);
     const inverseZoom = 1 / sceneZoom;
-    setStyle(depthScene, "transform", `scale(${sceneZoom})`);
+    const sceneTransform = `scale(${sceneZoom})`;
+    setStyle(familyRails, "transform", sceneTransform);
+    setStyle(depthScene, "transform", sceneTransform);
     const sceneZoomText = String(sceneZoom);
     if (depthScene.dataset.sceneZoom !== sceneZoomText) depthScene.dataset.sceneZoom = sceneZoomText;
     const { width, height, centerX, centerY, referenceDiameter } = nextMetrics;

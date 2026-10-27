@@ -77,6 +77,7 @@ describe("scene rendering performance", () => {
     const dispose = renderMobileScale();
     const scale = document.querySelector<HTMLElement>(".scale")!;
     const scene = document.querySelector<HTMLElement>("[data-depth-scene]")!;
+    const rails = document.querySelector<SVGSVGElement>("[data-family-rails]")!;
     const titles = [...document.querySelectorAll<HTMLElement>(".landmark-title")];
     const initialTitleState = titles.map(title => ({ hidden: title.hidden, transform: title.style.transform }));
 
@@ -84,6 +85,9 @@ describe("scene rendering performance", () => {
     clock.advanceTo(16);
 
     expect(scale.dataset.fastForward).toBe("outward");
+    expect(scene.contains(rails)).toBe(false);
+    expect(rails.parentElement).toBe(scale);
+    expect(rails.style.transform).toBe(scene.style.transform);
     expect(titles.map(title => ({ hidden: title.hidden, transform: title.style.transform }))).toEqual(initialTitleState);
     expect(document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.getAttribute("aria-label")).toContain("A chosen side of a fair coin");
     const sceneZoom = Number(scene.dataset.sceneZoom);
@@ -101,12 +105,14 @@ describe("scene rendering performance", () => {
     scale.dispatchEvent(pointerDown);
     expect(scale.dataset.fastForward).toBeUndefined();
     expect(scene.style.transform).toBe("scale(1)");
+    expect(rails.style.transform).toBe("scale(1)");
 
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 20, bubbles: true, cancelable: true }));
     clock.advanceTo(46);
     clock.advanceTo(4000);
     expect(scale.dataset.fastForward).toBeUndefined();
     expect(scene.style.transform).toBe("scale(1)");
+    expect(rails.style.transform).toBe("scale(1)");
     const settledCenter = Number(scale.dataset.depth);
     let eligibleVisibleTitles = 0;
     for (const button of document.querySelectorAll<HTMLElement>("[data-landmark]")) {

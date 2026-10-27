@@ -10,6 +10,11 @@ describe("scene layout", () => {
     expect(landmarkAngle("coin-heads")).toBeCloseTo(80 * Math.PI / 180, 12);
     expect(landmarkAngle("four-dice-any-six")).toBeCloseTo(225 * Math.PI / 180, 12);
     expect(landmarkAngle("french-scrabble-consonant")).toBeCloseTo(315 * Math.PI / 180, 12);
+    expect(landmarkAngle("month-31-days")).toBeCloseTo(58 * Math.PI / 180, 12);
+    expect(landmarkAngle("red-dwarf-star")).toBeCloseTo(170 * Math.PI / 180, 12);
+    expect(landmarkAngle("rain-hilo")).toBeCloseTo(105 * Math.PI / 180, 12);
+    expect(landmarkAngle("france-loto-main-prize")).toBeCloseTo(105 * Math.PI / 180, 12);
+    expect(landmarkAngle("euromillions-main-prize")).toBeCloseTo(75 * Math.PI / 180, 12);
     expect(landmarkAngle("enigma-m3-known-rings")).toBeCloseTo(36 * Math.PI / 180, 12);
   });
 
@@ -19,7 +24,7 @@ describe("scene layout", () => {
       const item = byId.get(id)!;
       const factor = 10 ** (item.position / 10);
       const radius = 320 * .78 / 2 * factor;
-      const size = item.size * .76 * factor;
+      const size = item.size * .76 * landmarkArtFactor(id) * factor;
       const angle = landmarkAngle(id);
       const x = 160 + Math.cos(angle) * radius;
       const y = 370 + Math.sin(angle) * radius;
@@ -40,6 +45,11 @@ describe("scene layout", () => {
       ["yellow-pea", "four-dice-any-match"],
       ["four-dice-any-six", "coin-heads"],
       ["four-dice-any-six", "rain-brest-december"],
+      ["birthday-23", "month-31-days"],
+      ["four-dice-any-match", "red-dwarf-star"],
+      ["four-dice-any-match", "rain-hilo"],
+      ["france-loto-main-prize", "pokemon-destined-rivals-double-rare"],
+      ["any-ace", "euromillions-main-prize"],
     ];
     for (const [first, second] of pairs) expect(overlaps(bounds(first), bounds(second)), `${first} / ${second}`).toBe(false);
   });

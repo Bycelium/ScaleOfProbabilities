@@ -12,6 +12,11 @@ const densePairs = [
   ["weekday", "yellow-pea"],
   ["weekday", "four-dice-any-match"],
   ["yellow-pea", "four-dice-any-match"],
+  ["birthday-23", "month-31-days"],
+  ["four-dice-any-match", "red-dwarf-star"],
+  ["four-dice-any-match", "rain-hilo"],
+  ["france-loto-main-prize", "pokemon-destined-rivals-double-rare"],
+  ["any-ace", "euromillions-main-prize"],
 ] as const;
 
 const openScene = async (page: Page, locale: string, depth: number) => {
