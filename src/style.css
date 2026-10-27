@@ -1,4 +1,4 @@
-:root { color: #edf4eb; background: #071522; font-family: Inter, system-ui, sans-serif; }
+:root { color: #edf4eb; background: #071522; color-scheme: only dark; font-family: Inter, system-ui, sans-serif; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 .nowrap { white-space: nowrap; }
