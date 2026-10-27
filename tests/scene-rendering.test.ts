@@ -108,13 +108,75 @@ describe("scene rendering performance", () => {
     expect(scale.dataset.fastForward).toBeUndefined();
     expect(scene.style.transform).toBe("scale(1)");
     const settledCenter = Number(scale.dataset.depth);
+    let eligibleVisibleTitles = 0;
     for (const button of document.querySelectorAll<HTMLElement>("[data-landmark]")) {
       const landmark = displayLandmarks.find(item => item.id === button.dataset.landmark)!;
       const projectedSize = landmark.size * 0.76 * 10 ** ((landmark.position - settledCenter) / 10);
-      const readable = !button.hidden && projectedSize >= 32 && Math.abs(landmark.position - settledCenter) <= 1.7;
-      expect(button.querySelector<HTMLElement>(".landmark-title")!.hidden).toBe(!readable);
+      const eligible = !button.hidden && projectedSize >= 32 && Math.abs(landmark.position - settledCenter) <= 1.7;
+      const title = button.querySelector<HTMLElement>(".landmark-title")!;
+      if (!eligible) expect(title.hidden).toBe(true);
+      if (!title.hidden) {
+        eligibleVisibleTitles += 1;
+        expect(title.style.transform).toBe("scale(1)");
+      }
       expect(button.getAttribute("aria-label")).toBeTruthy();
     }
+    expect(eligibleVisibleTitles).toBeGreaterThan(0);
+    dispose();
+  });
+
+  it("defers title measurement during travel rebases and restores layout after interruption and arrival", () => {
+    const measuredTitles: HTMLElement[] = [];
+    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains("landmark-title")) measuredTitles.push(this);
+      return this.classList.contains("landmark-title") ? 96 : 0;
+    });
+    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains("landmark-title") ? 18 : 0;
+    });
+    const clock = new TestFrameClock();
+    const dispose = renderMobileScale();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const scene = document.querySelector<HTMLElement>("[data-depth-scene]")!;
+    const initialLabels = new Map([...document.querySelectorAll<HTMLElement>("[data-landmark]")]
+      .map(button => [button.dataset.landmark!, button.getAttribute("aria-label")]));
+    const initialMeasurementCount = measuredTitles.length;
+    const initialCoinLeft = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.style.left;
+
+    document.querySelector<HTMLButtonElement>('[data-landmark="die-six"]')!.click();
+    clock.advanceTo(400);
+
+    expect(Math.abs(Number(scale.dataset.depth))).toBeGreaterThanOrEqual(5);
+    expect(document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.style.left).not.toBe(initialCoinLeft);
+    expect(measuredTitles).toHaveLength(initialMeasurementCount);
+
+    const pointerDown = new Event("pointerdown", { bubbles: true });
+    Object.defineProperties(pointerDown, { pointerId: { value: 1 }, pointerType: { value: "mouse" } });
+    scale.dispatchEvent(pointerDown);
+
+    expect(scale.dataset.fastForward).toBeUndefined();
+    expect(scene.style.transform).toBe("scale(1)");
+    expect(measuredTitles.length).toBeGreaterThan(initialMeasurementCount);
+    const interruptedMeasurementCount = measuredTitles.length;
+
+    document.querySelector<HTMLButtonElement>('[data-landmark="coin-heads"]')!.click();
+    clock.advanceTo(4000);
+
+    expect(scale.dataset.fastForward).toBeUndefined();
+    expect(scene.style.transform).toBe("scale(1)");
+    expect(measuredTitles.length).toBeGreaterThan(interruptedMeasurementCount);
+    let suppressedEligibleTitles = 0;
+    const arrivedCenter = Number(scale.dataset.depth);
+    for (const button of document.querySelectorAll<HTMLElement>("[data-landmark]")) {
+      expect(button.getAttribute("aria-label")).toBe(initialLabels.get(button.dataset.landmark!));
+      const landmark = displayLandmarks.find(item => item.id === button.dataset.landmark)!;
+      const projectedSize = landmark.size * 0.76 * 10 ** ((landmark.position - arrivedCenter) / 10);
+      const eligible = !button.hidden && projectedSize >= 32 && Math.abs(landmark.position - arrivedCenter) <= 1.7;
+      const title = button.querySelector<HTMLElement>(".landmark-title")!;
+      if (eligible && title.hidden) suppressedEligibleTitles += 1;
+      if (!title.hidden) expect(title.style.transform).toBe("scale(1)");
+    }
+    expect(suppressedEligibleTitles).toBeGreaterThan(0);
     dispose();
   });
 

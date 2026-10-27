@@ -15,8 +15,9 @@
 
 ## Working safely and efficiently
 
-- Reuse existing pnpm validation scripts and an already running preview server. Avoid redundant launches and permission prompts.
-- Work within sandbox limits; request additional permission only when a necessary command cannot run within them.
+- Keep ordinary reads, searches, filtering, and diffs in the sandbox. Use tool output limits or native output arguments instead of attaching pipes, redirections, or compound wrappers to a privileged command.
+- Reuse existing pnpm validation scripts, preview sessions, and known session handles. The primary agent owns preview and browser sessions and all permission requests; subagents report an exact blocked command and reason, then continue independent allowed work.
+- Run a necessary privileged command alone with an existing approved stable prefix. Request only a few narrowly scoped reusable capabilities through the primary agent when required; do not create one-off approval prompts or repeatedly probe ports.
 - Use headless automated browser tests and visual reviews. Start a visible browser only for an explicitly requested interactive review or an agreed browser-specific investigation.
 - For prose-only changes, inspect rendered Markdown and links, then run `git diff --check`.
 
