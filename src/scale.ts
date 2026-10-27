@@ -33,6 +33,7 @@ const NEGATIVE = [226, 105, 112] as const;
 const POSITIVE = [74, 185, 137] as const;
 const SCENE_REBASE_DECIBANS = 2;
 const MIN_TRAVEL_DURATION = 220;
+const DEFAULT_CURRENT_STACK_HEIGHT = 84;
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.max(minimum, Math.min(maximum, value));
 const trimDecimal = (value: number): string => value.toFixed(1).replace(/\.0$/, "");
@@ -256,14 +257,15 @@ export function createScale(root: HTMLElement): () => void {
     return source;
   };
 
-  ruler.innerHTML = `<div class="depth-gauge"><div class="depth-readout" data-depth-readout data-center-marker><span class="probability"><small class="readout-label" data-probability-label></small> <span data-probability-value></span></span><span class="odds"><small class="readout-label" data-odds-label></small> <span data-odds-value></span></span><span class="visually-hidden" data-readout-decibans></span></div><i class="depth-spoke" data-depth-spoke></i><span class="current-depth-marker" data-current-depth-marker><i></i><strong></strong></span></div>`;
+  ruler.innerHTML = `<div class="depth-gauge"><div class="depth-readout-group" data-center-marker><div class="depth-readout" data-depth-readout><span class="probability"><small class="readout-label" data-probability-label></small> <span data-probability-value></span></span></div><span class="current-depth-marker" data-current-depth-marker><i></i><span class="current-readout-stack" data-current-readout-stack><span class="odds"><small class="readout-label" data-odds-label></small> <span data-odds-value></span></span><strong></strong></span></span></div><i class="depth-spoke" data-depth-spoke></i></div>`;
   const depthGauge = ruler.querySelector<HTMLElement>(".depth-gauge")!;
+  const centerMarker = ruler.querySelector<HTMLElement>("[data-center-marker]")!;
   const depthReadout = ruler.querySelector<HTMLElement>("[data-depth-readout]")!;
   const probabilityLabel = ruler.querySelector<HTMLElement>("[data-probability-label]")!;
   const probabilityValue = ruler.querySelector<HTMLElement>("[data-probability-value]")!;
   const oddsLabel = ruler.querySelector<HTMLElement>("[data-odds-label]")!;
   const oddsValue = ruler.querySelector<HTMLElement>("[data-odds-value]")!;
-  const readoutDecibans = ruler.querySelector<HTMLElement>("[data-readout-decibans]")!;
+  const currentReadoutStack = ruler.querySelector<HTMLElement>("[data-current-readout-stack]")!;
   const depthSpoke = ruler.querySelector<HTMLElement>("[data-depth-spoke]")!;
   const currentDepthMarker = ruler.querySelector<HTMLElement>("[data-current-depth-marker]")!;
   const currentDepthValue = currentDepthMarker.querySelector<HTMLElement>("strong")!;
@@ -273,6 +275,9 @@ export function createScale(root: HTMLElement): () => void {
   eventMarker.innerHTML = "<i></i><small></small>";
   const eventMarkerLabel = eventMarker.querySelector<HTMLElement>("small")!;
   let rulerLocale: LocaleCode | undefined;
+  let currentReadoutStackHeight = DEFAULT_CURRENT_STACK_HEIGHT;
+  let currentReadoutStackBottomClearance = 6;
+  let currentReadoutStackHeightDirty = true;
   let metrics: SceneMetrics | undefined;
   let sceneOrigin: Readonly<{ center: number; metrics: SceneMetrics }> | undefined;
   let sceneBounds: readonly [number, number] = [0, 0];
@@ -282,6 +287,12 @@ export function createScale(root: HTMLElement): () => void {
   };
   const setStyle = (element: HTMLElement, property: string, value: string): void => {
     if (element.style.getPropertyValue(property) !== value) element.style.setProperty(property, value);
+  };
+  const measureCurrentReadoutStack = (): void => {
+    currentReadoutStackHeight = currentReadoutStack.offsetHeight || DEFAULT_CURRENT_STACK_HEIGHT;
+    const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+    if (Number.isFinite(rootFontSize)) currentReadoutStackBottomClearance = rootFontSize * .35;
+    currentReadoutStackHeightDirty = false;
   };
 
   const sceneMetrics = (): SceneMetrics => {
@@ -308,7 +319,31 @@ export function createScale(root: HTMLElement): () => void {
     let lastLabelY = -Infinity;
     let lastMarkY = -Infinity;
     const currentY = projectedY(view.center);
-    const currentLabelY = currentY - 20;
+    const value = chanceAt(view.center);
+    if (rulerLocale !== locale.code) {
+      setText(probabilityLabel, locale.ui.probabilityLabel);
+      setText(oddsLabel, locale.ui.oddsLabel);
+      rulerLocale = locale.code;
+      currentReadoutStackHeightDirty = true;
+    }
+    setText(probabilityValue, formatProbabilityPercent(value, locale.code));
+    setText(oddsValue, formatOdds(view.center, locale.code));
+    const extreme = Math.abs(view.center) >= 40;
+    depthReadout.classList.toggle("extreme", extreme);
+    setStyle(depthReadout, "top", `${currentY}px`);
+    setStyle(depthReadout, "--axis-color", axisColor(view.center));
+    setStyle(centerMarker, "--axis-color", axisColor(view.center));
+    const fade = clamp((Math.abs(view.center) - 20) / 20, 0, 1);
+    setStyle(depthReadout, "--readout-opacity", String(1 - .4 * fade));
+    setStyle(currentReadoutStack, "--readout-opacity", String(.68 + .32 * fade));
+    setStyle(currentDepthMarker, "left", `${centerX}px`);
+    setStyle(currentDepthMarker, "top", `${currentY}px`);
+    setStyle(currentDepthMarker, "--axis-color", axisColor(view.center));
+    setText(currentDepthValue, formatDecibans(view.center, locale.code));
+    if (currentReadoutStackHeightDirty) measureCurrentReadoutStack();
+    const stackBottom = currentY - currentReadoutStackBottomClearance;
+    const stackTop = stackBottom - currentReadoutStackHeight;
+    const overlapsCurrentStack = (y: number, halfHeight: number): boolean => y + halfHeight >= stackTop && y - halfHeight <= stackBottom;
     for (const position of visibleTickDepths(referenceDiameter, Math.hypot(width, height), bounds)) {
       const rounded = Number(position.toFixed(8));
       const normalized = Math.abs(rounded) < 1e-8 ? 0 : rounded;
@@ -317,7 +352,8 @@ export function createScale(root: HTMLElement): () => void {
       if (y < 0 || y > height) continue;
       const depthFactor = 10 ** ((normalized - view.center) / 10);
       const markVisible = 12 * depthFactor >= 0.5 && (isMajor || Math.abs(y - lastMarkY) >= 4 * depthFactor);
-      const labelVisible = depthFactor >= 0.55 && Math.abs(y - lastLabelY) >= 12 * depthFactor && Math.abs(y - currentY) >= 12 && Math.abs(y - currentLabelY) >= 24;
+      const labelHalfHeight = 6 * depthFactor;
+      const labelVisible = depthFactor >= 0.55 && Math.abs(y - lastLabelY) >= 12 * depthFactor && Math.abs(y - currentY) >= 12 && !overlapsCurrentStack(y, labelHalfHeight);
       if (markVisible) lastMarkY = y;
       if (labelVisible) lastLabelY = y;
       visibleTicks.add(normalized);
@@ -348,13 +384,9 @@ export function createScale(root: HTMLElement): () => void {
     for (const [position, tick] of rulerTickNodes) {
       if (!visibleTicks.has(position)) tick.element.remove();
     }
-    setStyle(currentDepthMarker, "left", `${centerX}px`);
-    setStyle(currentDepthMarker, "top", `${currentY}px`);
-    setStyle(currentDepthMarker, "--axis-color", axisColor(view.center));
-    setText(currentDepthValue, formatDecibans(view.center, locale.code));
     const activeY = active ? projectedY(active.position) : 0;
     const activeFactor = active ? 10 ** ((active.position - view.center) / 10) : 0;
-    const eventVisible = active && activeFactor >= 0.55 && activeY >= 0 && activeY <= height && Math.abs(activeY - currentY) >= 12 && Math.abs(activeY - currentLabelY) >= 24;
+    const eventVisible = active && activeFactor >= 0.55 && activeY >= 0 && activeY <= height && Math.abs(activeY - currentY) >= 12 && !overlapsCurrentStack(activeY, 6 * activeFactor);
     if (eventVisible) {
       setStyle(eventMarker, "left", `${centerX}px`);
       setStyle(eventMarker, "top", `${activeY}px`);
@@ -365,18 +397,6 @@ export function createScale(root: HTMLElement): () => void {
     } else {
       eventMarker.remove();
     }
-    const value = chanceAt(view.center);
-    if (rulerLocale !== locale.code) {
-      setText(probabilityLabel, locale.ui.probabilityLabel);
-      setText(oddsLabel, locale.ui.oddsLabel);
-      rulerLocale = locale.code;
-    }
-    setText(probabilityValue, formatProbabilityPercent(value, locale.code));
-    setText(oddsValue, formatOdds(view.center, locale.code));
-    setText(readoutDecibans, formatDecibans(view.center, locale.code));
-    depthReadout.classList.toggle("extreme", Math.abs(view.center) >= 100);
-    setStyle(depthReadout, "top", `${currentY}px`);
-    setStyle(depthReadout, "--axis-color", axisColor(view.center));
     const ropeTopWidth = 3 * centerY / (referenceDiameter / 2);
     setStyle(depthSpoke, "left", `${centerX}px`);
     setStyle(depthSpoke, "top", "0px");
@@ -1131,12 +1151,23 @@ export function createScale(root: HTMLElement): () => void {
   const onResize = (): void => {
     metrics = undefined;
     sceneOrigin = undefined;
+    currentReadoutStackHeightDirty = true;
     render();
   };
   const persistOnPageHide = (): void => persistView();
   const persistWhenHidden = (): void => {
     if (document.visibilityState === "hidden") persistView();
   };
+  const readoutResizeObserver = new ResizeObserver(entries => {
+    const height = entries[0]?.borderBoxSize[0]?.blockSize ?? entries[0]?.contentRect.height ?? 0;
+    if (height > 0 && height !== currentReadoutStackHeight) {
+      currentReadoutStackHeight = height;
+      const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+      if (Number.isFinite(rootFontSize)) currentReadoutStackBottomClearance = rootFontSize * .35;
+      render();
+    }
+  });
+  readoutResizeObserver.observe(currentReadoutStack);
   const resizeObserver = new ResizeObserver(onResize);
   resizeObserver.observe(scale);
   window.addEventListener("pagehide", persistOnPageHide);
@@ -1150,6 +1181,7 @@ export function createScale(root: HTMLElement): () => void {
 
   return () => {
     resizeObserver.disconnect();
+    readoutResizeObserver.disconnect();
     closeButton.removeEventListener("click", onCloseDetails);
     dialog.removeEventListener("keydown", onDialogKeydown);
     root.removeEventListener("keydown", onRootKeydown);
