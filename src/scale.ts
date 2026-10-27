@@ -482,6 +482,10 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       && Math.max(...vertical) >= 0 && Math.min(...vertical) <= height;
   };
 
+  const artworkIsVisible = (x: number, y: number, artSize: number, { width, height }: SceneMetrics): boolean => artSize >= .5
+    && x + artSize / 2 >= 0 && x - artSize / 2 <= width
+    && y + artSize / 2 >= 0 && y - artSize / 2 <= height;
+
   const rebuildScene = (nextMetrics: SceneMetrics, visibleCatalogue: readonly DisplayLandmark[], measureTitles: boolean): void => {
     const { width, height, referenceDiameter, centerX, centerY } = nextMetrics;
     familyRails.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -588,8 +592,8 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       return;
     }
     const sceneNodes = [...landmarkNodes.values()];
-    const readableNodes = sceneNodes.filter(node => node.baseArtSize >= 32 * landmarkArtFactor(node.item.id)
-      && (width > 640 || Math.abs(node.item.position - view.center) <= 1.7));
+    const readableNodes = sceneNodes.filter(node => artworkIsVisible(node.baseX, node.baseY, node.baseArtSize, nextMetrics)
+      && node.baseArtSize >= 32 * landmarkArtFactor(node.item.id));
     for (const node of readableNodes) {
       node.button.hidden = false;
       node.title.hidden = false;
@@ -644,7 +648,21 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
           makeCandidate(centeredLeft, naturalTop + titleHeight + 4),
           makeCandidate(besideArtLeft, naturalTop + titleHeight + 4),
         ];
-      })() : [makeCandidate(naturalLeft, naturalTop)];
+      })() : width > 640 ? [makeCandidate(naturalLeft, naturalTop)] : (() => {
+        const clampLeft = (left: number): number => Math.min(Math.max(left, 8), width - titleWidth - 8);
+        const centeredLeft = clampLeft(naturalLeft);
+        const aboveTop = node.baseY - node.baseArtSize / 2 - titleHeight - 6;
+        const besideTop = Math.min(Math.max(node.baseY - titleHeight / 2, 8), height - titleHeight - 8);
+        const leftOfArt = node.baseX - node.baseArtSize / 2 - titleWidth - 6;
+        const rightOfArt = node.baseX + node.baseArtSize / 2 + 6;
+        return [
+          ...(naturalTop + titleHeight <= height - 8 ? [makeCandidate(centeredLeft, naturalTop)] : []),
+          ...(aboveTop >= 8 ? [makeCandidate(centeredLeft, aboveTop)] : []),
+          ...(leftOfArt >= 8 ? [makeCandidate(leftOfArt, besideTop)] : []),
+          ...(rightOfArt + titleWidth <= width - 8 ? [makeCandidate(rightOfArt, besideTop)] : []),
+          makeCandidate(centeredLeft, naturalTop),
+        ];
+      })();
       const candidate = candidates.find(option => suppressedTitleIds([option]).size === 0) ?? candidates[0];
       return { node, candidate, naturalLeft, naturalTop };
     });
@@ -671,17 +689,17 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     setStyle(depthScene, "transform", sceneTransform);
     const sceneZoomText = String(sceneZoom);
     if (depthScene.dataset.sceneZoom !== sceneZoomText) depthScene.dataset.sceneZoom = sceneZoomText;
-    const { width, height, centerX, centerY, referenceDiameter } = nextMetrics;
+    const { centerX, centerY, referenceDiameter } = nextMetrics;
     const updateTitles = travel === undefined;
     for (const { button, title, item, baseX, baseY, baseArtSize, titleSuppressed } of landmarkNodes.values()) {
       const artSize = baseArtSize * sceneZoom;
       const x = centerX + (baseX - centerX) * sceneZoom;
       const y = centerY + (baseY - centerY) * sceneZoom;
-      const visible = artSize >= 0.5 && x + artSize / 2 >= 0 && x - artSize / 2 <= width && y + artSize / 2 >= 0 && y - artSize / 2 <= height;
+      const visible = artworkIsVisible(x, y, artSize, nextMetrics);
       if (button.hidden === visible) button.hidden = !visible;
       if (!updateTitles) continue;
       const revealSuppressedTitle = active?.id === item.id;
-      const readable = visible && artSize >= 32 * landmarkArtFactor(item.id) && (width > 640 || Math.abs(item.position - view.center) <= 1.7)
+      const readable = visible && artSize >= 32 * landmarkArtFactor(item.id)
         && (!titleSuppressed || revealSuppressedTitle);
       if (title.hidden === readable) title.hidden = !readable;
       if (readable) setStyle(title, "transform", `scale(${inverseZoom}) translate(var(--title-x), var(--title-y))`);
