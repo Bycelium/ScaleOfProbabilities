@@ -12,20 +12,44 @@ import {
 } from "../src/navigation";
 
 describe("shared navigation policy", () => {
-  it("locks the first gesture and applies the accepted quadratic crescendo", () => {
+  it("locks the first gesture and applies the cubic shared-input crescendo", () => {
     const sequence = new GestureSequence(gestureSequenceConfig);
+    const positions = [.2, 1, 8];
+    const plan = (profile: ReturnType<GestureSequence["begin"]>, lockedTarget?: number) => planDirectionalTravel({
+      center: 0,
+      direction: 1,
+      delta: 7.5,
+      velocity: 375,
+      momentumImpulse: 7.5 * profile.momentumGain,
+      carriedSpeed: lockedTarget === undefined ? 2 : 0,
+      earnedSpeedLimit: profile.speedLimit,
+      lockedTarget,
+      brakingSeconds: .58,
+      minimumTravelDuration: 220,
+      naturalGapAcceleration: false,
+      clampPosition: position => Math.min(8, Math.max(0, position)),
+      nextLandmark: (_direction, after) => positions.find(position => position > after + 1e-9),
+    });
 
-    expect(sequence.begin(1, 0, 0)).toEqual({ count: 1, lockToNext: true, speedLimit: 1, momentumGain: .25 });
+    const first = sequence.begin(1, 0, 0);
+    expect(first).toEqual({ count: 1, lockToNext: true, speedLimit: 1, momentumGain: .25 });
+    expect(plan(first, .2)).toMatchObject({ target: .2, initialSpeed: 1, speedLimit: 1 });
     sequence.noteInput(20);
-    expect(sequence.begin(1, 140, 1)).toMatchObject({ count: 2, lockToNext: false, speedLimit: 1.42, momentumGain: .298 });
+    const second = sequence.begin(1, 140, 1);
+    expect(second).toMatchObject({ count: 2, lockToNext: false, speedLimit: 2, momentumGain: .4 });
     const third = sequence.begin(1, 280, 2);
-    expect(third).toMatchObject({ count: 3, lockToNext: false, momentumGain: .442 });
-    expect(third.speedLimit).toBeCloseTo(2.68);
+    expect(third).toMatchObject({ count: 3, lockToNext: false, momentumGain: 1.45 });
+    expect(third.speedLimit).toBeCloseTo(9);
     const fourth = sequence.begin(1, 420, 3);
     expect(fourth.count).toBe(4);
-    expect(fourth.speedLimit).toBeCloseTo(4.78);
-    expect(sequence.begin(-1, 560, 3)).toMatchObject({ count: 1, lockToNext: false, speedLimit: 1 });
-    expect(sequence.begin(-1, 1200, 0)).toMatchObject({ count: 1, lockToNext: true, speedLimit: 1 });
+    expect(fourth).toMatchObject({ speedLimit: 28, momentumGain: 3.5 });
+    [second, third, fourth].forEach((profile, index) => {
+      expect(plan(profile).initialSpeed).toBeCloseTo([2, 9, 28][index]);
+    });
+    expect(sequence.begin(1, 560, 4)).toMatchObject({ count: 5, speedLimit: 65, momentumGain: 3.5 });
+    expect(sequence.begin(1, 700, 5)).toMatchObject({ count: 6, speedLimit: 120, momentumGain: 3.5 });
+    expect(sequence.begin(-1, 840, 3)).toMatchObject({ count: 1, lockToNext: false, speedLimit: 1 });
+    expect(sequence.begin(-1, 1400, 0)).toMatchObject({ count: 1, lockToNext: true, speedLimit: 1 });
 
     sequence.reset();
     expect(sequence.begin(1, 1210, 0)).toMatchObject({ count: 1, lockToNext: true });
