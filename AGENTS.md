@@ -16,6 +16,7 @@
 ## Working safely and efficiently
 
 - Reuse existing pnpm validation scripts and an already running preview server. Avoid redundant launches and permission prompts.
+- Reuse approved command prefixes. When new access is necessary, request a small number of narrowly scoped reusable prefixes through the primary agent; subagents route permission needs through that agent and avoid one-off prompts.
 - Work within sandbox limits; request additional permission only when a necessary command cannot run within them.
 - Use headless automated browser tests and visual reviews. Start a visible browser only for an explicitly requested interactive review or an agreed browser-specific investigation.
 - For prose-only changes, inspect rendered Markdown and links, then run `git diff --check`.
