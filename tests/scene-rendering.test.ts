@@ -142,9 +142,13 @@ describe("scene rendering performance", () => {
       .map(button => [button.dataset.landmark!, button.getAttribute("aria-label")]));
     const initialMeasurementCount = measuredTitles.length;
     const initialCoinLeft = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.style.left;
-    const railSnapshot = () => [...document.querySelectorAll<SVGLineElement>("[data-family-rail]")].map(line => ({
-      id: line.dataset.familyRail,
-      endpoints: ["x1", "y1", "x2", "y2"].map(attribute => Number(line.getAttribute(attribute))),
+    const railSnapshot = () => [...document.querySelectorAll<SVGElement>("[data-family-rail]")].map(rail => ({
+      id: rail.dataset.familyRail,
+      hidden: rail.hasAttribute("hidden"),
+      path: rail.tagName,
+      geometry: rail.tagName === "polyline"
+        ? (rail.getAttribute("points")?.trim().split(/[\s,]+/).map(Number) ?? [])
+        : ["x1", "y1", "x2", "y2"].map(attribute => Number(rail.getAttribute(attribute))),
     }));
     const initialRails = railSnapshot();
 
@@ -154,8 +158,14 @@ describe("scene rendering performance", () => {
     expect(Math.abs(Number(scale.dataset.depth))).toBeGreaterThanOrEqual(5);
     expect(document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.style.left).not.toBe(initialCoinLeft);
     expect(measuredTitles).toHaveLength(initialMeasurementCount);
-    expect(railSnapshot()).not.toEqual(initialRails);
-    for (const rail of railSnapshot()) expect(rail.endpoints.every(Number.isFinite)).toBe(true);
+    const rebasedRails = railSnapshot();
+    expect(rebasedRails).not.toEqual(initialRails);
+    expect(rebasedRails.find(rail => rail.id === "holdem-seven-card-hands")?.geometry)
+      .not.toEqual(initialRails.find(rail => rail.id === "holdem-seven-card-hands")?.geometry);
+    for (const rail of rebasedRails.filter(rail => !rail.hidden)) {
+      expect(rail.geometry.length).toBeGreaterThanOrEqual(4);
+      expect(rail.geometry.every(Number.isFinite)).toBe(true);
+    }
 
     const pointerDown = new Event("pointerdown", { bubbles: true });
     Object.defineProperties(pointerDown, { pointerId: { value: 1 }, pointerType: { value: "mouse" } });

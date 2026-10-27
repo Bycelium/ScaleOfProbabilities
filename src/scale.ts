@@ -182,10 +182,10 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   const familyRails = root.querySelector<SVGSVGElement>("[data-family-rails]")!;
   const layer = root.querySelector<HTMLElement>("[data-landmarks]")!;
   const familyRailNodes = new Map(familyRailDefinitions.map(family => {
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.dataset.familyRail = family.id;
-    familyRails.append(line);
-    return [family.id, line];
+    const rail = document.createElementNS("http://www.w3.org/2000/svg", family.path);
+    rail.dataset.familyRail = family.id;
+    familyRails.append(rail);
+    return [family.id, rail];
   }));
   const rings = root.querySelector<HTMLCanvasElement>("[data-depth-rings]")!;
   const ringContext = rings.getContext("2d")!;
@@ -488,26 +488,29 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     }
     const projectedById = new Map(projected.map(item => [item.item.id, item]));
     for (const family of familyRailDefinitions) {
-      const line = familyRailNodes.get(family.id)!;
+      const rail = familyRailNodes.get(family.id)!;
       const members = family.members.flatMap(id => {
         const member = projectedById.get(id);
         return member ? [member] : [];
-      });
-      line.toggleAttribute("hidden", members.length < 2);
+      }).sort((first, second) => first.ringDiameter - second.ringDiameter);
+      rail.toggleAttribute("hidden", members.length < 2);
       if (members.length < 2) continue;
-      const first = members.reduce((nearer, member) => member.ringDiameter < nearer.ringDiameter ? member : nearer);
-      const last = members.reduce((farther, member) => member.ringDiameter > farther.ringDiameter ? member : farther);
-      line.setAttribute("x1", String(first.x));
-      line.setAttribute("y1", String(first.y));
-      line.setAttribute("x2", String(last.x));
-      line.setAttribute("y2", String(last.y));
+      if (family.path === "line") {
+        const [first, last] = [members[0], members.at(-1)!];
+        rail.setAttribute("x1", String(first.x));
+        rail.setAttribute("y1", String(first.y));
+        rail.setAttribute("x2", String(last.x));
+        rail.setAttribute("y2", String(last.y));
+      } else {
+        rail.setAttribute("points", members.map(member => `${member.x},${member.y}`).join(" "));
+      }
     }
     if (!measureTitles) {
       sceneOrigin = { center: originCenter, metrics: nextMetrics };
       return;
     }
     const sceneNodes = [...landmarkNodes.values()];
-    const readableNodes = sceneNodes.filter(node => node.baseArtSize >= 32
+    const readableNodes = sceneNodes.filter(node => node.baseArtSize >= 32 * landmarkArtFactor(node.item.id)
       && (width > 640 || Math.abs(node.item.position - view.center) <= 1.7));
     for (const node of readableNodes) {
       node.button.hidden = false;
@@ -532,9 +535,12 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       top: Math.max(0, currentMarkerY - (width <= 640 ? 100 : 86)),
       bottom: currentMarkerY + 12,
     };
-    const titleCandidates: TitleCandidate[] = readableNodes.map(node => {
-      const titleWidth = node.title.offsetWidth;
-      const titleHeight = node.title.offsetHeight;
+    const titleMeasurements = readableNodes.map(node => ({
+      node,
+      width: node.title.offsetWidth,
+      height: node.title.offsetHeight,
+    }));
+    const titleLayouts = titleMeasurements.map(({ node, width: titleWidth, height: titleHeight }) => {
       const naturalLeft = node.baseX - titleWidth / 2;
       const naturalTop = node.baseY + node.baseArtSize / 2;
       const obstructions = [
@@ -555,15 +561,20 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
         return [
           makeCandidate(centeredLeft, naturalTop),
           makeCandidate(besideArtLeft, naturalTop),
+          makeCandidate(besideArtLeft, node.baseY - titleHeight / 2),
+          makeCandidate(besideArtLeft, node.baseY - node.baseArtSize / 2 - titleHeight - 6),
           makeCandidate(centeredLeft, naturalTop + titleHeight + 4),
           makeCandidate(besideArtLeft, naturalTop + titleHeight + 4),
         ];
       })() : [makeCandidate(naturalLeft, naturalTop)];
       const candidate = candidates.find(option => suppressedTitleIds([option]).size === 0) ?? candidates[0];
+      return { node, candidate, naturalLeft, naturalTop };
+    });
+    for (const { node, candidate, naturalLeft, naturalTop } of titleLayouts) {
       setStyle(node.title, "--title-x", `${candidate.title.left - naturalLeft}px`);
       setStyle(node.title, "--title-y", `${candidate.title.top - naturalTop}px`);
-      return candidate;
-    });
+    }
+    const titleCandidates = titleLayouts.map(({ candidate }) => candidate);
     const suppressedTitles = suppressedTitleIds(titleCandidates);
     for (const [id, node] of landmarkNodes) landmarkNodes.set(id, { ...node, titleSuppressed: suppressedTitles.has(node.item.id) });
     sceneOrigin = { center: originCenter, metrics: nextMetrics };
@@ -590,7 +601,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       if (button.hidden === visible) button.hidden = !visible;
       if (!updateTitles) continue;
       const revealSuppressedTitle = active?.id === item.id;
-      const readable = visible && artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7)
+      const readable = visible && artSize >= 32 * landmarkArtFactor(item.id) && (width > 640 || Math.abs(item.position - view.center) <= 1.7)
         && (!titleSuppressed || revealSuppressedTitle);
       if (title.hidden === readable) title.hidden = !readable;
       if (readable) setStyle(title, "transform", `scale(${inverseZoom}) translate(var(--title-x), var(--title-y))`);

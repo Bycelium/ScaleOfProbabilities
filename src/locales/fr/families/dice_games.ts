@@ -78,6 +78,13 @@ export const dice_gamesFR = {
     calculation: "p = 1 triplet favorable / 216 résultats équiprobables = 1/216",
     assumptions: "Les trois dés équilibrés à six faces sont lancés indépendamment.",
   },
+  "four-dice-all-identical": {
+    title: "Quatre dés affichent le même nombre",
+    shortTitle: "quatre dés identiques",
+    explanation: "Six des 1 296 résultats équiprobables de quatre dés ont quatre faces identiques, de 1–1–1–1 à 6–6–6–6.",
+    calculation: "p = 6 résultats à quatre dés identiques / 6⁴ résultats équiprobables = 6/1 296 = 1/216",
+    assumptions: "Les quatre dés équilibrés à six faces sont lancés indépendamment.",
+  },
   "first-roll-yahtzee": {
     title: "Yams/Yahtzee au premier lancer",
     shortTitle: "Yams au premier lancer",

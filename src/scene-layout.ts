@@ -2,6 +2,14 @@ import { catalogueSlots, type LandmarkId } from "./catalogue/order";
 
 const degrees = (value: number): number => value * Math.PI / 180;
 
+type FamilyRailDefinition = Readonly<{
+  id: string;
+  angle: number;
+  members: readonly LandmarkId[];
+  memberAngles?: Readonly<Partial<Record<LandmarkId, number>>>;
+  path: "line" | "polyline";
+}>;
+
 export const familyRailDefinitions = [
   {
     id: "roulette",
@@ -10,13 +18,57 @@ export const familyRailDefinitions = [
       "roulette-straight-up", "roulette-split", "roulette-street", "roulette-corner",
       "roulette-six-line", "roulette-dozen-column", "roulette-even-money", "roulette-two-dozens-columns",
     ],
+    path: "line",
   },
   {
     id: "polyhedral-highest-face",
     angle: degrees(225),
     members: ["die-d4-highest", "die-six", "die-d12-highest", "die-d20-highest"],
+    path: "line",
   },
-] as const satisfies readonly Readonly<{ id: string; angle: number; members: readonly LandmarkId[] }>[];
+  {
+    id: "pokemon-destined-rivals",
+    angle: degrees(138),
+    members: [
+      "pokemon-destined-rivals-double-rare", "pokemon-destined-rivals-illustration-rare",
+      "pokemon-destined-rivals-special-illustration-rare",
+    ],
+    path: "line",
+  },
+  {
+    id: "all-identical-dice",
+    angle: degrees(170),
+    members: [
+      "two-dice-any-double", "three-dice-any-triple", "four-dice-all-identical", "first-roll-yahtzee",
+    ],
+    path: "line",
+  },
+  {
+    id: "any-pair-dice",
+    angle: degrees(150),
+    members: ["four-dice-any-match", "yahtzee-any-match"],
+    memberAngles: {
+      "four-dice-any-match": degrees(142),
+      "yahtzee-any-match": degrees(158),
+    },
+    path: "polyline",
+  },
+  {
+    id: "holdem-seven-card-hands",
+    angle: degrees(250),
+    members: [
+      "holdem-one-pair", "holdem-high-card", "holdem-two-pair", "holdem-three-kind", "holdem-straight",
+      "holdem-flush", "holdem-full-house", "holdem-four-kind", "holdem-straight-flush", "holdem-royal-flush",
+    ],
+    memberAngles: {
+      "holdem-three-kind": degrees(238),
+      "holdem-straight": degrees(262),
+      "holdem-flush": degrees(238),
+      "holdem-full-house": degrees(262),
+    },
+    path: "polyline",
+  },
+] as const satisfies readonly FamilyRailDefinition[];
 
 const familyRailLandmarks = new Set<LandmarkId>(familyRailDefinitions.flatMap(family => [...family.members]));
 
@@ -30,10 +82,9 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "green-pea": degrees(325),
   "rps-win": degrees(190),
   "ace-in-five-cards": degrees(30),
-  "holdem-one-pair": degrees(250),
   "coin-heads": degrees(80),
   "birthday-23": degrees(195),
-  "four-dice-any-six": degrees(315),
+  "four-dice-any-six": degrees(225),
   "month-31-days": degrees(175),
   "three-dice-sum-ten": degrees(250),
   "numbered-card": degrees(75),
@@ -42,10 +93,9 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "yellow-pea": degrees(50),
   "solar-terrestrial": degrees(40),
   "full-moon-15-days": degrees(145),
-  "french-scrabble-consonant": degrees(280),
+  "french-scrabble-consonant": degrees(315),
   "solar-eclipse-year": degrees(225),
   "frozen-freshwater": degrees(280),
-  "four-dice-any-match": degrees(105),
   "red-dwarf-star": degrees(130),
   "planet-with-moon": degrees(250),
   "rain-hilo": degrees(165),
@@ -53,9 +103,6 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "rain-brest-december": degrees(115),
   "covid-scenario-positive": degrees(90),
   "d20-avoid-natural-one-advantage": degrees(135),
-  "pokemon-destined-rivals-double-rare": degrees(138),
-  "pokemon-destined-rivals-illustration-rare": degrees(100),
-  "pokemon-destined-rivals-special-illustration-rare": degrees(220),
   "blackjack-natural-six-deck": degrees(155),
   "four-leaf-clover": degrees(35),
   "uk-recent-car-breakdown-2021": degrees(90),
@@ -70,8 +117,9 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
 };
 
 export const landmarkAngle = (id: LandmarkId): number => {
-  const family = familyRailDefinitions.find(candidate => (candidate.members as readonly LandmarkId[]).includes(id));
-  return family?.angle ?? angleOverrides[id]
+  const family = (familyRailDefinitions as readonly FamilyRailDefinition[])
+    .find(candidate => candidate.members.includes(id));
+  return family ? family.memberAngles?.[id] ?? family.angle : angleOverrides[id]
     ?? degrees(-45 + ((catalogueSlots[id] * 137.508) % 360) / 360 * 270);
 };
 

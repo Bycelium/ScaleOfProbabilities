@@ -32,7 +32,8 @@ Read this guide before changing catalogue landmarks, probabilities, source-backe
 ## Games, weather, sport, and Enigma
 
 - French Scrabble blanks are neither vowels nor consonants. Count Y among the 45 vowels and model a seven-tile rack as sampling without replacement.
-- For matching dice, count every outcome with a repeated face, including larger matching groups. Keep a first-roll five-dice match distinct from five of a kind. Draw any-match dice with fours and six-specific outcomes with sixes.
+- Treat all-dice-identical and at-least-one-pair outcomes as distinct families. For the latter, count every outcome with a repeated face, including larger matching groups. Keep a first-roll five-dice all-identical outcome distinct from an at-least-one-pair outcome. Draw any-match dice with fours and six-specific outcomes with sixes.
+- Limit the Hold'em connector to the ten best-five-card outcomes from the shared seven-card model. Exclude standard-card, five-card draw, and blackjack examples. Limit the Destined Rivals connector to the three rarities from that booster model.
 - Treat d20 critical outcomes as the cited attack-roll convention: natural 20 is a critical hit and natural 1 an automatic miss. Avoiding natural 1 does not guarantee success; keep modifiers, rerolls, advantage, and other systems outside the fair single-roll model.
 - Label weather normals and completed-season sport rates as dated historical estimates. Define whether a sample is a calendar day, daylight moment, shot, serve, or penalty, and do not present an aggregate as a personal forecast.
 - Keep Enigma configuration landmarks conditional on stated known settings, mechanically permitted rotor choices, and exactly 10 plugboard cables joining 20 letters. Treat them as uniform configuration-guess spaces rather than effective cryptographic strength. Ordinary reciprocal family differences compare whole-configuration endpoints.

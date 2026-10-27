@@ -135,6 +135,7 @@ export const catalogueSlots = {
   "blackjack-natural-six-deck": 133,
   "drop-olympic-pool": 134,
   "drop-garden-pool": 135,
+  "four-dice-all-identical": 136,
 } as const;
 
 export type LandmarkId = keyof typeof catalogueSlots;

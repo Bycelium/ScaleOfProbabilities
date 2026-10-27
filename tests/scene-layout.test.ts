@@ -8,8 +8,8 @@ describe("scene layout", () => {
     const expectedDefault = (-45 + ((catalogueSlots["drop-garden-pool"] * 137.508) % 360) / 360 * 270) * Math.PI / 180;
     expect(landmarkAngle("drop-garden-pool")).toBeCloseTo(expectedDefault, 12);
     expect(landmarkAngle("coin-heads")).toBeCloseTo(80 * Math.PI / 180, 12);
-    expect(landmarkAngle("four-dice-any-six")).toBeCloseTo(315 * Math.PI / 180, 12);
-    expect(landmarkAngle("french-scrabble-consonant")).toBeCloseTo(280 * Math.PI / 180, 12);
+    expect(landmarkAngle("four-dice-any-six")).toBeCloseTo(225 * Math.PI / 180, 12);
+    expect(landmarkAngle("french-scrabble-consonant")).toBeCloseTo(315 * Math.PI / 180, 12);
     expect(landmarkAngle("enigma-m3-known-rings")).toBeCloseTo(36 * Math.PI / 180, 12);
   });
 
@@ -57,35 +57,50 @@ describe("scene layout", () => {
     expect(suppressedTitleIds(candidates, 0)).toEqual(suppressed);
   });
 
-  it("aligns explicit roulette and highest-face families with positive mobile artwork clearance", () => {
-    expect(familyRailDefinitions.map(family => ({ id: family.id, members: family.members }))).toEqual([
-      {
-        id: "roulette",
-        members: [
-          "roulette-straight-up", "roulette-split", "roulette-street", "roulette-corner",
-          "roulette-six-line", "roulette-dozen-column", "roulette-even-money", "roulette-two-dozens-columns",
-        ],
-      },
-      { id: "polyhedral-highest-face", members: ["die-d4-highest", "die-six", "die-d12-highest", "die-d20-highest"] },
+  it("connects explicit compact families with mobile artwork clearance", () => {
+    expect(familyRailDefinitions.map(family => family.id)).toEqual([
+      "roulette", "polyhedral-highest-face", "pokemon-destined-rivals", "all-identical-dice", "any-pair-dice",
+      "holdem-seven-card-hands",
     ]);
     expect(landmarkArtFactor("roulette-corner")).toBe(.55);
     expect(landmarkArtFactor("die-six")).toBe(.55);
+    expect(landmarkArtFactor("pokemon-destined-rivals-illustration-rare")).toBe(.55);
+    expect(landmarkArtFactor("four-dice-any-match")).toBe(.55);
+    expect(landmarkArtFactor("holdem-full-house")).toBe(.55);
     expect(landmarkArtFactor("coin-heads")).toBe(1);
     expect(isFamilyRailLandmark("roulette-corner")).toBe(true);
     expect(isFamilyRailLandmark("coin-heads")).toBe(false);
+    for (const id of ["holdem-one-pair", "holdem-high-card", "holdem-two-pair", "holdem-four-kind", "holdem-straight-flush", "holdem-royal-flush"] as const) {
+      expect(landmarkAngle(id)).toBeCloseTo(250 * Math.PI / 180, 12);
+    }
+    expect(landmarkAngle("holdem-three-kind")).toBeCloseTo(238 * Math.PI / 180, 12);
+    expect(landmarkAngle("holdem-straight")).toBeCloseTo(262 * Math.PI / 180, 12);
+    expect(landmarkAngle("holdem-flush")).toBeCloseTo(238 * Math.PI / 180, 12);
+    expect(landmarkAngle("holdem-full-house")).toBeCloseTo(262 * Math.PI / 180, 12);
+    for (const id of ["two-dice-any-double", "three-dice-any-triple", "four-dice-all-identical", "first-roll-yahtzee"] as const) {
+      expect(landmarkAngle(id)).toBeCloseTo(170 * Math.PI / 180, 12);
+    }
+    expect(landmarkAngle("four-dice-any-match")).toBeCloseTo(142 * Math.PI / 180, 12);
+    expect(landmarkAngle("yahtzee-any-match")).toBeCloseTo(158 * Math.PI / 180, 12);
     const byId = new Map(displayLandmarks.map(item => [item.id, item]));
     for (const family of familyRailDefinitions) {
-      for (const id of family.members) expect(landmarkAngle(id)).toBe(family.angle);
-      const members = family.members.map(id => byId.get(id)!).sort((first, second) => first.position - second.position);
-      for (let index = 1; index < members.length; index++) {
-        const inner = members[index - 1];
-        const outer = members[index];
-        const innerScale = 10 ** (inner.position / 10);
-        const outerScale = 10 ** (outer.position / 10);
-        const centerDistance = 320 * .78 / 2 * (outerScale - innerScale);
-        const halfSizes = (inner.size * innerScale + outer.size * outerScale) * .76 * .55 / 2;
-        expect(centerDistance - halfSizes, `${inner.id} / ${outer.id}`).toBeGreaterThan(0);
+      const projected = family.members.map(id => {
+        const item = byId.get(id)!;
+        const scale = 10 ** (item.position / 10);
+        const radius = 320 * .78 / 2 * scale;
+        const angle = landmarkAngle(id);
+        const size = item.size * .76 * landmarkArtFactor(id) * scale;
+        return { id, radius, size, x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+      });
+      for (const member of projected) expect(Math.hypot(member.x, member.y)).toBeCloseTo(member.radius, 10);
+      for (let index = 0; index < projected.length; index++) for (let other = index + 1; other < projected.length; other++) {
+        const first = projected[index];
+        const second = projected[other];
+        const separated = Math.abs(first.x - second.x) >= (first.size + second.size) / 2
+          || Math.abs(first.y - second.y) >= (first.size + second.size) / 2;
+        expect(separated, `${first.id} / ${second.id}`).toBe(true);
       }
     }
+    expect(94 * .76 * landmarkArtFactor("holdem-full-house")).toBeGreaterThan(39);
   });
 });

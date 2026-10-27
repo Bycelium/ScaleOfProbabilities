@@ -89,6 +89,14 @@ export const dice_gamesZH = {
     assumptions: "三枚公平六面骰子相互独立。",
   },
 
+  "four-dice-all-identical": {
+    title: "四枚骰子点数全相同",
+    shortTitle: "四枚骰子相同",
+    explanation: "1,296 个等可能四元组中有 6 个四枚骰子的点数全相同，从 1–1–1–1 到 6–6–6–6。",
+    calculation: "p = 6 个相同四元组 / 6⁴ 个等可能结果 = 6/1296 = 1/216",
+    assumptions: "四枚公平六面骰子相互独立。",
+  },
+
   "first-roll-yahtzee": {
     title: "第一次投掷即得 Yams/Yahtzee",
     shortTitle: "首投 Yams",

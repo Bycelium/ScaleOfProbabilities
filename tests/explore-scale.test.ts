@@ -1337,6 +1337,7 @@ describe("public probability exploration", () => {
       "french-scrabble-consonant",
       "solar-eclipse-year",
       "frozen-freshwater",
+      "four-dice-all-identical",
       "four-dice-any-match",
       "red-dwarf-star",
       "planet-with-moon",
@@ -1350,8 +1351,17 @@ describe("public probability exploration", () => {
 
     expect(newIds.every(id => byId.has(id))).toBe(true);
     expect(byId.get("solar-terrestrial")?.position).toBeCloseTo(0, 10);
+    expect(byId.get("four-dice-all-identical")?.position).toBeCloseTo(-10 * Math.log10(215), 10);
     expect(byId.get("four-dice-any-match")?.position).toBeCloseTo(10 * Math.log10(13 / 5), 10);
     expect(byId.get("french-scrabble-vowel-rack")?.position).toBeGreaterThan(18);
+    const fourIdentical = landmarkModels.find(item => item.id === "four-dice-all-identical");
+    expect(fourIdentical).toMatchObject({
+      chance: { side: "lower", tail: { kind: "ratio", numerator: 1, denominator: 216 } },
+      classification: "Exact model",
+      sourceIds: ["fair-independent-dice-model"],
+    });
+    expect(relatedLandmarkIds["three-dice-any-triple"]).toContain("four-dice-all-identical");
+    expect(relatedLandmarkIds["four-dice-all-identical"]).toContain("first-roll-yahtzee");
     expect(relatedLandmarkIds["four-dice-any-match"]).toContain("yahtzee-any-match");
     expect(relatedLandmarkIds["full-moon-15-days"]).toContain("full-moon-28-days");
   });
