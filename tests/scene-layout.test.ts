@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { displayLandmarks } from "../src/catalogue";
+import { displayLandmarks, relatedLandmarkIds } from "../src/catalogue";
 import { catalogueSlots, type LandmarkId } from "../src/catalogue/order";
 import { familyRailDefinitions, isFamilyRailLandmark, landmarkAngle, landmarkArtFactor, suppressedTitleIds, type LayoutBox, type TitleCandidate } from "../src/scene-layout";
 
@@ -56,6 +56,8 @@ describe("scene layout", () => {
       ["four-dice-any-match", "rain-hilo"],
       ["france-loto-main-prize", "pokemon-destined-rivals-double-rare"],
       ["any-ace", "euromillions-main-prize"],
+      ["die-d12-highest", "rps-win"],
+      ["die-d12-highest", "weekday"],
     ];
     for (const [first, second] of pairs) expect(overlaps(bounds(first), bounds(second)), `${first} / ${second}`).toBe(false);
   });
@@ -84,9 +86,15 @@ describe("scene layout", () => {
     expect(landmarkArtFactor("birthday-60")).toBe(.55);
     expect(landmarkArtFactor("four-dice-any-match")).toBe(.55);
     expect(landmarkArtFactor("holdem-full-house")).toBe(.55);
+    expect(familyRailDefinitions.find(family => family.id === "any-pair-dice")?.path).toBe("polyline");
+    expect(familyRailDefinitions.find(family => family.id === "holdem-seven-card-hands")?.path).toBe("branched");
     expect(landmarkArtFactor("coin-heads")).toBe(1);
     expect(isFamilyRailLandmark("roulette-corner")).toBe(true);
     expect(isFamilyRailLandmark("coin-heads")).toBe(false);
+    expect(relatedLandmarkIds["ace-of-spades"]).toContain("shuffled-deck-specified-order");
+    expect(relatedLandmarkIds["shuffled-deck-specified-order"]).toContain("ace-of-spades");
+    expect(landmarkAngle("numbered-card")).toBeCloseTo(75 * Math.PI / 180, 12);
+    expect(landmarkAngle("ace-in-five-cards")).toBeCloseTo(30 * Math.PI / 180, 12);
     for (const id of ["birthday-10", "birthday-20", "birthday-30", "birthday-40", "birthday-50", "birthday-60"] as const) {
       expect(landmarkAngle(id)).toBeCloseTo(305 * Math.PI / 180, 12);
     }
@@ -99,6 +107,9 @@ describe("scene layout", () => {
     expect(landmarkAngle("holdem-full-house")).toBeCloseTo(262 * Math.PI / 180, 12);
     for (const id of ["two-dice-any-double", "three-dice-any-triple", "four-dice-all-identical", "first-roll-yahtzee"] as const) {
       expect(landmarkAngle(id)).toBeCloseTo(170 * Math.PI / 180, 12);
+    }
+    for (const id of ["die-d4-highest", "die-six", "die-d12-highest", "die-d20-highest"] as const) {
+      expect(landmarkAngle(id)).toBeCloseTo(200 * Math.PI / 180, 12);
     }
     expect(landmarkAngle("four-dice-any-match")).toBeCloseTo(142 * Math.PI / 180, 12);
     expect(landmarkAngle("yahtzee-any-match")).toBeCloseTo(158 * Math.PI / 180, 12);

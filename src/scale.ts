@@ -6,16 +6,32 @@ import { createPreferencesMenu } from "./preferences-menu";
 import { createAnalytics, type Analytics } from "./analytics";
 import { getAnalyticsConfig } from "./analytics-config";
 import { familyRailDefinitions, isFamilyRailLandmark, landmarkAngle, landmarkArtFactor, suppressedTitleIds, type LayoutBox, type TitleCandidate } from "./scene-layout";
+import {
+  GestureSequence,
+  KeyBurst,
+  WheelBurst,
+  gestureSequenceConfig,
+  hasSparseAdjacentGap,
+  peakTravelSlope,
+  planDirectionalTravel,
+  sampleTravel,
+  travelDuration,
+  wheelBurstConfig,
+  type GestureProfile,
+  type TravelCurve,
+} from "./navigation";
 
 type View = { center: number };
 type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter: number; centerX: number; centerY: number }>;
-type TravelOptions = Readonly<{ onArrival?: () => void; initialVelocity?: number; startedAt?: number }>;
-type Travel = Readonly<{
-  start: number; target: number; direction: number; distance: number;
-  duration: number; startedAt: number; initialSlope: number; peakSlope: number;
+type TravelOptions = Readonly<{ onArrival?: () => void; initialVelocity?: number; startedAt?: number; distanceBeforeSegment?: number; durationOverride?: number; speedLimit?: number; brakingDirection?: number; brakingGestureId?: number }>;
+type Travel = TravelCurve & Readonly<{
+  direction: number; peakSlope: number; distanceBeforeSegment: number;
+  brakingDirection?: number;
+  brakingGestureId?: number;
   onArrival?: () => void;
 }>;
-type DirectionalInput = { direction: number; delta: number; velocity: number; startedAt: number };
+type DirectionalInput = { direction: number; delta: number; velocity: number; startedAt: number; momentumImpulse: number; gestureId: number; gestureCount: number; lockedTarget?: number; speedLimit: number; naturalGapAcceleration: boolean };
+type BrakingIntent = Readonly<{ direction: number; gestureId: number }>;
 type LandmarkNode = Readonly<{
   button: HTMLButtonElement;
   image: HTMLImageElement;
@@ -37,6 +53,19 @@ const POSITIVE = [74, 185, 137] as const;
 const SCENE_REBASE_DECIBANS = 2;
 const COMPACT_SCENE_REBASE_DECIBANS = 5;
 const MIN_TRAVEL_DURATION = 220;
+const MOMENTUM_BRAKING_SECONDS = .58;
+const MAX_DIRECTIONAL_SPEED = gestureSequenceConfig.maximumSpeed;
+const REVERSAL_MIN_DURATION = 100;
+const REVERSAL_MAX_DURATION = 180;
+const TOUCH_HOLD_BRAKING_DURATION = 360;
+const REVERSAL_SPEED_THRESHOLD = 18;
+const SPARSE_GAP_ACCELERATION_DISTANCE = 15;
+const TRAVEL_DURATION_CONFIG = {
+  minimumDuration: MIN_TRAVEL_DURATION,
+  maximumNaturalDuration: 3800,
+  maximumLimitedDuration: 12000,
+  maximumDirectionalSpeed: MAX_DIRECTIONAL_SPEED,
+} as const;
 const DEFAULT_CURRENT_STACK_HEIGHT = 84;
 
 export type ScaleDependencies = Readonly<{
@@ -140,8 +169,28 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   let travelFrame: number | undefined;
   let travel: Travel | undefined;
   let pendingInput: DirectionalInput | undefined;
-  let travelDirection = 0;
-  let travelVelocity = 0;
+  let brakingIntent: BrakingIntent | undefined;
+  let nextGestureId = 1;
+  const touchSequence = new GestureSequence(gestureSequenceConfig);
+  const wheelSequence = new GestureSequence(gestureSequenceConfig);
+  const keyboardSequence = new GestureSequence(gestureSequenceConfig);
+  const wheelBurst = new WheelBurst(wheelBurstConfig);
+  const keyBurst = new KeyBurst(wheelBurstConfig.quietGap);
+  let touchGestureId = 0;
+  let touchProfile: GestureProfile | undefined;
+  let touchGestureStartDepth = view.center;
+  let touchGestureStartSpeed = 0;
+  let touchGestureDirection = 0;
+  let touchLockedTarget: number | undefined;
+  let touchNaturalGapAcceleration = false;
+  let wheelGestureId = 0;
+  let wheelProfile: GestureProfile | undefined;
+  let wheelLockedTarget: number | undefined;
+  let wheelNaturalGapAcceleration = false;
+  let keyboardGestureId = 0;
+  let keyboardProfile: GestureProfile | undefined;
+  let keyboardLockedTarget: number | undefined;
+  let keyboardNaturalGapAcceleration = false;
   let lastTravelInputAt: number | undefined;
   let travelToRelated: (target: DisplayLandmark) => void;
   let travelToLandmark: (target: DisplayLandmark) => void;
@@ -154,7 +203,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   root.innerHTML = `<div class="atlas"><div data-page-content>
     <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker"><button type="button" class="language-toggle" data-preferences-toggle="toolbar" aria-label="${locale.ui.language}" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">🌐</span></button></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
     <section class="scale" tabindex="0" aria-label="${locale.ui.scaleAria}">
-      <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><svg class="family-rails" data-family-rails aria-hidden="true" focusable="false"></svg><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
+      <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><svg class="family-rails" data-family-rails aria-hidden="true" focusable="false"></svg><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:10deg;--delay:-.1s"></i><i style="--angle:40deg;--delay:-.45s"></i><i style="--angle:70deg;--delay:-.25s"></i><i style="--angle:100deg;--delay:-.6s"></i><i style="--angle:130deg;--delay:-.32s"></i><i style="--angle:160deg;--delay:-.05s"></i><i style="--angle:190deg;--delay:-.5s"></i><i style="--angle:220deg;--delay:-.18s"></i><i style="--angle:250deg;--delay:-.38s"></i><i style="--angle:280deg;--delay:-.56s"></i><i style="--angle:310deg;--delay:-.28s"></i><i style="--angle:340deg;--delay:-.68s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
     </section>
   </div>
   <dialog class="scale-intro" data-scale-intro aria-modal="true" aria-labelledby="scale-intro-heading">
@@ -182,7 +231,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   const familyRails = root.querySelector<SVGSVGElement>("[data-family-rails]")!;
   const layer = root.querySelector<HTMLElement>("[data-landmarks]")!;
   const familyRailNodes = new Map(familyRailDefinitions.map(family => {
-    const rail = document.createElementNS("http://www.w3.org/2000/svg", family.path);
+    const rail = document.createElementNS("http://www.w3.org/2000/svg", family.path === "branched" ? "path" : family.path);
     rail.dataset.familyRail = family.id;
     familyRails.append(rail);
     return [family.id, rail];
@@ -439,7 +488,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     const compactArtScale = width <= 640 ? 0.76 : 1;
     const originCenter = view.center;
     const maximumSceneZoom = 10 ** (sceneRebaseDecibans(width) / 10);
-    const projected = visibleCatalogue.flatMap(item => {
+    const project = (item: DisplayLandmark) => {
       const depth = item.position - originCenter;
       const zoomFactor = 10 ** (depth / 10);
       const ringDiameter = referenceDiameter * zoomFactor;
@@ -448,8 +497,13 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       const x = centerX + Math.cos(angle) * radius;
       const y = centerY + Math.sin(angle) * radius;
       const artSize = item.size * landmarkArtFactor(item.id) * zoomFactor * compactArtScale;
+      return { item, zoomFactor, ringDiameter, x, y, artSize };
+    };
+    const projections = visibleCatalogue.map(project);
+    const projected = projections.flatMap(projection => {
+      const { x, y, artSize } = projection;
       if (artSize * maximumSceneZoom < 0.5 || !sceneIntersectsAtSomeZoom(x, y, artSize, nextMetrics)) return [];
-      return [{ item, zoomFactor, ringDiameter, x, y, artSize }];
+      return [projection];
     });
     const projectedIds = new Set<string>(projected.map(({ item }) => item.id));
     for (const [id, node] of landmarkNodes) {
@@ -486,23 +540,47 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
         titleSuppressed: previous?.titleSuppressed ?? false,
       });
     }
-    const projectedById = new Map(projected.map(item => [item.item.id, item]));
     for (const family of familyRailDefinitions) {
       const rail = familyRailNodes.get(family.id)!;
-      const members = family.members.flatMap(id => {
-        const member = projectedById.get(id);
-        return member ? [member] : [];
-      }).sort((first, second) => first.ringDiameter - second.ringDiameter);
-      rail.toggleAttribute("hidden", members.length < 2);
-      if (members.length < 2) continue;
+      const familyMembers = projections.filter(member => family.members.some(id => id === member.item.id))
+        .sort((first, second) => first.ringDiameter - second.ringDiameter);
+      const nearestRenderedMember = familyMembers.findIndex(member => projectedIds.has(member.item.id));
+      const members = nearestRenderedMember < 0 ? [] : familyMembers.slice(nearestRenderedMember);
       if (family.path === "line") {
-        const [first, last] = [members[0], members.at(-1)!];
-        rail.setAttribute("x1", String(first.x));
-        rail.setAttribute("y1", String(first.y));
-        rail.setAttribute("x2", String(last.x));
-        rail.setAttribute("y2", String(last.y));
-      } else {
+        rail.toggleAttribute("hidden", members.length < 2);
+        if (members.length < 2) continue;
+        rail.setAttribute("x1", String(members[0].x));
+        rail.setAttribute("y1", String(members[0].y));
+        rail.setAttribute("x2", String(members.at(-1)!.x));
+        rail.setAttribute("y2", String(members.at(-1)!.y));
+        continue;
+      }
+      if (family.path === "polyline") {
+        rail.toggleAttribute("hidden", members.length < 2);
+        if (members.length < 2) continue;
         rail.setAttribute("points", members.map(member => `${member.x},${member.y}`).join(" "));
+      } else {
+        if (members.length < 2) {
+          rail.toggleAttribute("hidden", true);
+          continue;
+        }
+        const trunkPoint = (member: typeof members[number]) => {
+          const radius = member.ringDiameter / 2;
+          return {
+            x: centerX + Math.cos(family.angle) * radius,
+            y: centerY + Math.sin(family.angle) * radius,
+          };
+        };
+        const first = trunkPoint(members[0]);
+        const last = trunkPoint(members.at(-1)!);
+        const branches = members.flatMap(member => {
+          const trunk = trunkPoint(member);
+          return Math.hypot(member.x - trunk.x, member.y - trunk.y) < .01
+            ? []
+            : [`M ${trunk.x} ${trunk.y} L ${member.x} ${member.y}`];
+        });
+        rail.toggleAttribute("hidden", false);
+        rail.setAttribute("d", [`M ${first.x} ${first.y} L ${last.x} ${last.y}`, ...branches].join(" "));
       }
     }
     if (!measureTitles) {
@@ -1106,8 +1184,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     travelFrame = undefined;
     travel = undefined;
     pendingInput = undefined;
-    travelDirection = 0;
-    travelVelocity = 0;
+    brakingIntent = undefined;
     clearTravelPresentation();
     persistView();
   };
@@ -1132,8 +1209,6 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
 
   const finishTravel = (target: number, onArrival?: () => void): void => {
     travel = undefined;
-    travelDirection = 0;
-    travelVelocity = 0;
     clearTravelPresentation();
     if (!onArrival) active = nearestLandmark(target);
     sceneOrigin = undefined;
@@ -1141,43 +1216,125 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     onArrival?.();
   };
 
-  const slopeAt = (initialSlope: number, progress: number): number => 3 * (initialSlope - 2) * progress ** 2 + 2 * (3 - 2 * initialSlope) * progress + initialSlope;
-
-  const travelAt = ({ start, target, distance, duration, startedAt, initialSlope }: Travel, timestamp: number) => {
-    const progress = clamp((timestamp - startedAt) / duration, 0, 1);
-    const eased = (initialSlope - 2) * progress ** 3 + (3 - 2 * initialSlope) * progress ** 2 + initialSlope * progress;
-    const slope = slopeAt(initialSlope, progress);
-    return { progress, position: start + (target - start) * eased, slope, speed: distance / (duration / 1000) * Math.max(0, slope) };
+  const pauseTravel = (timestamp: number, unresolvedTouch = false): void => {
+    if (!travel) {
+      if (pendingInput !== undefined) cancelTravel();
+      return;
+    }
+    const paused = sampleTravel(travel, timestamp);
+    view.center = paused.position;
+    pendingInput = undefined;
+    if (paused.speed <= .5) {
+      cancelTravel();
+      sceneOrigin = undefined;
+      render();
+      return;
+    }
+    const brakingDuration = unresolvedTouch
+      ? TOUCH_HOLD_BRAKING_DURATION
+      : clamp(100 + paused.speed * .6, REVERSAL_MIN_DURATION, REVERSAL_MAX_DURATION);
+    const brakingDistance = paused.speed * brakingDuration / 3000;
+    const target = clampToCatalogue(view.center + travel.direction * brakingDistance);
+    startTravel(target, travel.direction, {
+      initialVelocity: paused.speed,
+      startedAt: timestamp,
+      distanceBeforeSegment: travel.distanceBeforeSegment + Math.abs(paused.position - travel.start),
+      durationOverride: brakingDuration,
+    }, true);
   };
 
   const animateTravel = (timestamp: number): void => {
     travelFrame = undefined;
     if (pendingInput) {
-      const { direction, delta, velocity, startedAt } = pendingInput;
+      const { direction, delta, velocity, startedAt, momentumImpulse, gestureId, gestureCount, lockedTarget, speedLimit, naturalGapAcceleration } = pendingInput;
       pendingInput = undefined;
+      const confirmsReversal = brakingIntent?.direction === direction
+        && (brakingIntent.gestureId !== gestureId || gestureCount > 1);
+      if (brakingIntent?.direction === direction && !confirmsReversal && !travel) return;
+      if (brakingIntent && brakingIntent.direction !== direction) brakingIntent = undefined;
+      let carriedSpeed = 0;
+      let distanceBeforeSegment = 0;
+      let opposingSpeed = 0;
+      let opposingDirection = 0;
+      let opposingDistance = 0;
       if (travel) {
-        const previous = travelAt(travel, startedAt);
+        const previous = sampleTravel(travel, startedAt);
         view.center = previous.position;
-        travelVelocity = travel.direction * previous.speed;
+        if (travel.brakingDirection === direction && travel.brakingGestureId === gestureId) {
+          render();
+          travelFrame = requestAnimationFrame(animateTravel);
+          return;
+        }
+        if (brakingIntent?.direction === direction && !confirmsReversal) {
+          render();
+          travelFrame = requestAnimationFrame(animateTravel);
+          return;
+        }
+        if (travel.direction === direction) {
+          carriedSpeed = previous.speed;
+          distanceBeforeSegment = travel.distanceBeforeSegment + Math.abs(previous.position - travel.start);
+        } else {
+          opposingSpeed = previous.speed;
+          opposingDirection = travel.direction;
+          opposingDistance = travel.distanceBeforeSegment + Math.abs(previous.position - travel.start);
+        }
       }
-      const carriedSpeed = direction === travelDirection ? Math.abs(travelVelocity) : 0;
       // Input requests motion; only the frame controller changes the displayed depth.
-      // Preserve enough forward distance to brake the actual carried speed smoothly.
-      const initialSpeed = travel && direction === travelDirection
-        ? carriedSpeed
-        : Math.min(Math.abs(velocity), Math.max(8, Math.abs(delta) * 2000 / MIN_TRAVEL_DURATION));
-      const distance = Math.max(Math.abs(delta), carriedSpeed * MIN_TRAVEL_DURATION / 3000);
-      const intended = clampToCatalogue(view.center + direction * distance);
-      const target = nextLandmarkPosition(direction, intended) ?? intended;
-      startTravel(target, direction, { initialVelocity: initialSpeed, startedAt }, true);
+      // Each same-direction impulse adds to actual scene speed, then reserves a finite
+      // forward distance in which the accumulated motion can brake to rest.
+      const plan = planDirectionalTravel({
+        center: view.center,
+        direction,
+        delta,
+        velocity,
+        momentumImpulse,
+        carriedSpeed,
+        earnedSpeedLimit: speedLimit,
+        lockedTarget,
+        brakingSeconds: MOMENTUM_BRAKING_SECONDS,
+        minimumTravelDuration: MIN_TRAVEL_DURATION,
+        naturalGapAcceleration,
+        clampPosition: clampToCatalogue,
+        nextLandmark: nextLandmarkPosition,
+      });
+      if (opposingSpeed >= REVERSAL_SPEED_THRESHOLD && opposingDirection !== 0 && !confirmsReversal) {
+        brakingIntent = { direction, gestureId };
+        const brakingDuration = clamp(100 + opposingSpeed * .6, REVERSAL_MIN_DURATION, REVERSAL_MAX_DURATION);
+        const brakingDistance = opposingSpeed * brakingDuration / 3000;
+        const brakingTarget = clampToCatalogue(view.center + opposingDirection * brakingDistance);
+        startTravel(brakingTarget, opposingDirection, {
+          initialVelocity: opposingSpeed,
+          startedAt,
+          distanceBeforeSegment: opposingDistance,
+          durationOverride: brakingDuration,
+        }, true);
+      } else if (opposingSpeed > .5 && opposingDirection !== 0 && confirmsReversal) {
+        brakingIntent = undefined;
+        const brakingDuration = clamp(100 + opposingSpeed * .6, REVERSAL_MIN_DURATION, REVERSAL_MAX_DURATION);
+        const brakingDistance = opposingSpeed * brakingDuration / 3000;
+        const brakingTarget = clampToCatalogue(view.center + opposingDirection * brakingDistance);
+        startTravel(brakingTarget, opposingDirection, {
+          initialVelocity: opposingSpeed,
+          startedAt,
+          distanceBeforeSegment: opposingDistance,
+          durationOverride: brakingDuration,
+          brakingDirection: direction,
+          brakingGestureId: gestureId,
+          onArrival: () => {
+            startTravel(plan.target, direction, { initialVelocity: plan.initialSpeed, speedLimit: plan.speedLimit });
+          },
+        }, true);
+      } else {
+        brakingIntent = undefined;
+        startTravel(plan.target, direction, { initialVelocity: plan.initialSpeed, startedAt, distanceBeforeSegment, speedLimit: plan.speedLimit }, true);
+      }
     }
     if (!travel) return;
-    const { target, direction, distance, peakSlope, onArrival } = travel;
-    const { progress, position, slope, speed } = travelAt(travel, timestamp);
-    travelVelocity = direction * speed;
+    const { target, distance, peakSlope, distanceBeforeSegment, onArrival } = travel;
+    const { progress, position, slope, speed } = sampleTravel(travel, timestamp);
     const speedAmplitude = clamp((speed - 18) / 42, 0, 1);
     const nearPeak = clamp((slope / peakSlope - 0.55) / 0.35, 0, 1);
-    const substantialJourney = clamp((distance - 5) / 15, 0, 1);
+    const substantialJourney = clamp((distanceBeforeSegment + distance - 5) / 15, 0, 1);
     setStyle(hyperspace, "--hyperspace-opacity", (substantialJourney * speedAmplitude * nearPeak).toFixed(3));
     view.center = position;
     if (progress < 1) {
@@ -1188,22 +1345,18 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     }
   };
 
-  const startTravel = (target: number, direction: number, { onArrival, initialVelocity = 0, startedAt = performance.now() }: TravelOptions = {}, retargeting = false): void => {
+  const startTravel = (target: number, direction: number, { onArrival, initialVelocity = 0, startedAt = performance.now(), distanceBeforeSegment = 0, durationOverride, speedLimit, brakingDirection, brakingGestureId }: TravelOptions = {}, retargeting = false): void => {
     if (!retargeting) cancelTravel();
     if (dialog.open) closeDetails(false);
     restoreFocus = undefined;
     const start = view.center;
     const distance = Math.abs(target - start);
-    const naturalDuration = clamp(140 + Math.sqrt(distance) * 180, MIN_TRAVEL_DURATION, 3800);
     const initialSpeed = Math.abs(initialVelocity);
-    const duration = initialSpeed > 0
-      ? Math.max(MIN_TRAVEL_DURATION, Math.min(naturalDuration, 3 * distance / initialSpeed * 1000))
-      : naturalDuration;
+    const duration = durationOverride ?? travelDuration(distance, initialSpeed, speedLimit, TRAVEL_DURATION_CONFIG);
     if (distance < 0.001 || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       finishTravel(target, onArrival);
       return;
     }
-    travelDirection = direction;
     const fastForward = direction > 0 ? "outward" : "inward";
     if (scale.dataset.fastForward !== fastForward) scale.dataset.fastForward = fastForward;
     const exponent = distance / 10;
@@ -1214,25 +1367,36 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     if (gapCaption.innerHTML !== caption) gapCaption.innerHTML = caption;
     gapCaption.hidden = false;
     const initialSlope = clamp(initialSpeed * (duration / 1000) / distance, 0, 3);
-    const peakSlope = Math.max(...Array.from({ length: 33 }, (_, index) => slopeAt(initialSlope, index / 32)));
-    travel = { start, target, direction, distance, duration, startedAt, initialSlope, peakSlope, onArrival };
+    const peakSlope = peakTravelSlope(initialSlope);
+    travel = { start, target, direction, distance, duration, startedAt, initialSlope, peakSlope, distanceBeforeSegment, brakingDirection, brakingGestureId, onArrival };
     if (!retargeting) travelFrame = requestAnimationFrame(animateTravel);
   };
 
-  const travelInDirection = (direction: number, directDelta: number, inputVelocity: number): void => {
+  const travelInDirection = (direction: number, directDelta: number, inputVelocity: number, gestureId: number, momentumGain: number, lockedTarget: number | undefined, speedLimit: number, naturalGapAcceleration: boolean): void => {
     if (dialog.open) closeDetails(false);
     restoreFocus = undefined;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       const intended = clampToCatalogue(view.center + directDelta);
-      startTravel(nextLandmarkPosition(direction, intended) ?? intended, direction);
+      startTravel(lockedTarget ?? nextLandmarkPosition(direction, intended) ?? intended, direction);
       return;
     }
     const previous = pendingInput;
+    const sameGesture = previous?.gestureId === gestureId;
     pendingInput = {
       direction,
       delta: previous?.direction === direction ? previous.delta + directDelta : directDelta,
       velocity: inputVelocity,
       startedAt: previous?.direction === direction ? previous.startedAt : performance.now(),
+      momentumImpulse: previous?.direction === direction
+        ? previous.momentumImpulse + Math.abs(directDelta) * momentumGain
+        : Math.abs(directDelta) * momentumGain,
+      gestureId,
+      gestureCount: previous?.direction === direction && !sameGesture ? previous.gestureCount + 1 : previous?.direction === direction ? previous.gestureCount : 1,
+      lockedTarget,
+      speedLimit: previous?.direction === direction ? Math.max(previous.speedLimit, speedLimit) : speedLimit,
+      naturalGapAcceleration: previous?.direction === direction && sameGesture
+        ? previous.naturalGapAcceleration
+        : naturalGapAcceleration,
     };
     if (travelFrame === undefined) travelFrame = requestAnimationFrame(animateTravel);
   };
@@ -1262,6 +1426,31 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     startTravel(target.position, direction, { onArrival: () => openDetails(target) });
   };
 
+  const resetGestureSequences = (): void => {
+    touchSequence.reset();
+    wheelSequence.reset();
+    keyboardSequence.reset();
+    wheelBurst.reset();
+    keyBurst.reset();
+    touchProfile = undefined;
+    wheelProfile = undefined;
+    keyboardProfile = undefined;
+    touchLockedTarget = undefined;
+    wheelLockedTarget = undefined;
+    keyboardLockedTarget = undefined;
+    touchNaturalGapAcceleration = false;
+    wheelNaturalGapAcceleration = false;
+    keyboardNaturalGapAcceleration = false;
+  };
+
+  const travelSampleAt = (timestamp: number) => travel ? sampleTravel(travel, timestamp) : undefined;
+  const hasNaturalGap = (direction: number, center: number): boolean => hasSparseAdjacentGap(
+    center,
+    direction,
+    SPARSE_GAP_ACCELERATION_DISTANCE,
+    nextLandmarkPosition,
+  );
+
   const onWheel = (event: WheelEvent): void => {
     const delta = event.deltaY;
     if (event.ctrlKey || delta === 0 || Math.abs(delta) <= Math.abs(event.deltaX)) return;
@@ -1269,9 +1458,20 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     const direction = Math.sign(delta);
     const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16
       : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? sceneMetrics().height : 1;
-    const depthDelta = clamp(delta * unit * 0.01, -1.2, 1.2);
-    const velocity = rememberTravelVelocity(depthDelta, performance.now());
-    travelInDirection(direction, depthDelta, velocity);
+    const normalizedDelta = delta * unit;
+    const depthDelta = clamp(normalizedDelta * 0.01, -1.2, 1.2);
+    const timestamp = performance.now();
+    const magnitude = Math.abs(normalizedDelta);
+    if (wheelBurst.push(direction, magnitude, timestamp)) {
+      wheelProfile = wheelSequence.begin(direction, timestamp, travelSampleAt(timestamp)?.speed ?? 0);
+      wheelLockedTarget = wheelProfile.lockToNext ? nextLandmarkPosition(direction, view.center) : undefined;
+      wheelNaturalGapAcceleration = hasNaturalGap(direction, view.center);
+      wheelGestureId = nextGestureId++;
+    } else {
+      wheelProfile = wheelSequence.noteInput(timestamp);
+    }
+    const velocity = rememberTravelVelocity(depthDelta, timestamp);
+    travelInDirection(direction, depthDelta, velocity, wheelGestureId, wheelProfile.momentumGain, wheelLockedTarget, wheelProfile.speedLimit, wheelNaturalGapAcceleration);
   };
   scale.addEventListener("wheel", onWheel, { passive: false });
 
@@ -1290,25 +1490,47 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       || (target instanceof Element && target.closest(".landmark") !== null);
     if (!navigatesScene) return;
     event.preventDefault();
+    const timestamp = performance.now();
+    if (keyBurst.push(direction, timestamp, event.repeat)) {
+      keyboardProfile = keyboardSequence.begin(direction, timestamp, travelSampleAt(timestamp)?.speed ?? 0);
+      keyboardLockedTarget = keyboardProfile.lockToNext ? nextLandmarkPosition(direction, view.center) : undefined;
+      keyboardNaturalGapAcceleration = hasNaturalGap(direction, view.center);
+      keyboardGestureId = nextGestureId++;
+    } else {
+      keyboardProfile = keyboardSequence.noteInput(timestamp);
+    }
     lastTravelInputAt = undefined;
-    travelInDirection(direction, direction, 16);
+    travelInDirection(direction, direction, 16, keyboardGestureId, keyboardProfile.momentumGain, keyboardLockedTarget, keyboardProfile.speedLimit, keyboardNaturalGapAcceleration);
   };
   document.addEventListener("keydown", onKeydown);
 
   scale.addEventListener("pointerdown", event => {
-    const interruptedTravel = travelFrame !== undefined || travel !== undefined || pendingInput !== undefined;
-    cancelTravel();
-    if (interruptedTravel) {
-      sceneOrigin = undefined;
-      render();
-    }
-    lastTravelInputAt = undefined;
     if (dialog.open) closeDetails(false);
     if (pointers.size === 0) {
       suppressLandmarkClick = false;
     }
-    if (event.pointerType === "mouse") return;
+    if (event.pointerType === "mouse") {
+      const interruptedTravel = travelFrame !== undefined || travel !== undefined || pendingInput !== undefined;
+      cancelTravel();
+      if (interruptedTravel) {
+        sceneOrigin = undefined;
+        render();
+      }
+      resetGestureSequences();
+      lastTravelInputAt = undefined;
+      return;
+    }
+    const timestamp = performance.now();
+    const currentSample = travelSampleAt(timestamp);
+    touchGestureStartSpeed = currentSample?.speed ?? 0;
+    touchGestureStartDepth = currentSample?.position ?? view.center;
+    touchGestureDirection = 0;
+    touchLockedTarget = undefined;
+    touchNaturalGapAcceleration = false;
+    touchProfile = undefined;
+    pauseTravel(timestamp, true);
     pointers.add(event.pointerId);
+    if (pointers.size === 1) touchGestureId = nextGestureId++;
     dragY = event.clientY;
     touchOrigin = { x: event.clientX, y: event.clientY };
     touchGesture = "pending";
@@ -1316,6 +1538,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     if (!(event.target as Element).closest?.(".landmark")) scale.setPointerCapture?.(event.pointerId);
     if (pointers.size >= 2) {
       touchGesture = "multiple";
+      lastTravelInputAt = undefined;
       dragY = undefined;
       touchOrigin = undefined;
       suppressLandmarkClick = true;
@@ -1334,21 +1557,43 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       /* v8 ignore next -- pointer capture is an optional browser API. */
       scale.setPointerCapture?.(event.pointerId);
       touchGesture = verticalDistance > horizontalDistance ? "vertical" : "horizontal";
-      if (touchGesture === "horizontal") return;
+      if (touchGesture === "horizontal") {
+        lastTravelInputAt = undefined;
+        return;
+      }
     }
     if (touchGesture === "horizontal") return;
     const delta = event.clientY - dragY;
     const depthDelta = delta * 0.025;
     const direction = Math.sign(depthDelta);
     if (direction === 0) return;
-    const velocity = rememberTravelVelocity(depthDelta, performance.now());
+    if (touchGestureDirection === 0) {
+      touchProfile = touchSequence.begin(direction, performance.now(), touchGestureStartSpeed);
+      touchLockedTarget = touchProfile.lockToNext ? nextLandmarkPosition(direction, touchGestureStartDepth) : undefined;
+      touchNaturalGapAcceleration = hasNaturalGap(direction, touchGestureStartDepth);
+      touchGestureDirection = direction;
+    } else if (touchGestureDirection !== direction) {
+      dragY = event.clientY;
+      return;
+    }
+    const timestamp = performance.now();
+    const velocity = rememberTravelVelocity(depthDelta, timestamp);
     dragY = event.clientY;
-    travelInDirection(direction, depthDelta, velocity);
+    travelInDirection(direction, depthDelta, velocity, touchGestureId, touchProfile!.momentumGain, touchLockedTarget, touchProfile!.speedLimit, touchNaturalGapAcceleration);
   });
   const endPointer = (event: PointerEvent): void => {
     const wasTracking = pointers.delete(event.pointerId);
     if (!wasTracking) return;
     if (pointers.size > 0) return;
+    if (touchGesture === "pending") {
+      pauseTravel(performance.now());
+      resetGestureSequences();
+    }
+    if (event.type === "pointerup" && touchGesture === "vertical" && touchGestureDirection !== 0) {
+      touchProfile = touchSequence.noteInput(performance.now());
+    } else if (event.type === "pointercancel") {
+      resetGestureSequences();
+    }
     dragY = undefined;
     touchOrigin = undefined;
     touchGesture = undefined;

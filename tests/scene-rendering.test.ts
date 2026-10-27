@@ -40,22 +40,25 @@ const canvasContext = {
   stroke: vi.fn(),
 };
 
-const renderMobileScale = () => {
+const renderScale = (width: number, height: number) => {
   document.body.innerHTML = '<main id="app"></main>';
   sessionStorage.setItem("probability-scale-intro-seen", "true");
   localStorage.setItem("probability-scale-all-references", "true");
   Object.defineProperties(HTMLElement.prototype, {
     clientWidth: {
       configurable: true,
-      get() { return this.classList.contains("scale") ? 390 : 0; },
+      get() { return this.classList.contains("scale") ? width : 0; },
     },
     clientHeight: {
       configurable: true,
-      get() { return this.classList.contains("scale") ? 844 : 0; },
+      get() { return this.classList.contains("scale") ? height : 0; },
     },
   });
   return createScale(document.querySelector<HTMLElement>("#app")!);
 };
+
+const renderMobileScale = () => renderScale(390, 844);
+const renderDesktopScale = () => renderScale(1365, 900);
 
 describe("scene rendering performance", () => {
   beforeEach(() => {
@@ -154,7 +157,9 @@ describe("scene rendering performance", () => {
       path: rail.tagName,
       geometry: rail.tagName === "polyline"
         ? (rail.getAttribute("points")?.trim().split(/[\s,]+/).map(Number) ?? [])
-        : ["x1", "y1", "x2", "y2"].map(attribute => Number(rail.getAttribute(attribute))),
+        : rail.tagName === "path"
+          ? (rail.getAttribute("d")?.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi)?.map(Number) ?? [])
+          : ["x1", "y1", "x2", "y2"].map(attribute => Number(rail.getAttribute(attribute))),
     }));
     const initialRails = railSnapshot();
 
@@ -247,4 +252,18 @@ describe("scene rendering performance", () => {
     expect(geometry().every(Number.isFinite)).toBe(true);
     dispose();
   });
+
+  it("continues the birthday rail to its offscreen members at a nearby desktop depth", () => {
+    history.replaceState(null, "", "#d=-1");
+    const dispose = renderDesktopScale();
+    const rail = document.querySelector<SVGLineElement>('[data-family-rail="birthdays-365"]')!;
+    const geometry = ["x1", "y1", "x2", "y2"].map(attribute => Number(rail.getAttribute(attribute)));
+
+    expect(document.querySelector('[data-landmark="birthday-30"]')).toBeNull();
+    expect(rail.hasAttribute("hidden")).toBe(false);
+    expect(geometry.every(Number.isFinite)).toBe(true);
+    expect(geometry[3]).toBeLessThan(0);
+    dispose();
+  });
+
 });

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { displayLandmarks } from "../../src/catalogue";
+import { familyRailDefinitions, landmarkAngle } from "../../src/scene-layout";
 
 const densePairs = [
   ["coin-heads", "french-scrabble-consonant"],
@@ -32,6 +33,17 @@ const openScene = async (page: Page, locale: string, depth: number) => {
   }, { selectedLocale: locale });
   await page.reload();
   await expect(page.locator(".scale")).toHaveAttribute("data-depth", String(depth));
+  await expect(page.locator(".scale")).toHaveCSS("color", "rgb(237, 244, 235)");
+};
+
+const expectedFamilyPoints = (familyId: string, depth: number, sceneCenter: readonly number[], referenceDiameter: number, screenScale: number) => {
+  const family = familyRailDefinitions.find(candidate => candidate.id === familyId)!;
+  return family.members.map(id => {
+    const landmark = displayLandmarks.find(candidate => candidate.id === id)!;
+    const radius = referenceDiameter / 2 * 10 ** ((landmark.position - depth) / 10) * screenScale;
+    const angle = landmarkAngle(id);
+    return { id, ringDiameter: radius * 2, x: sceneCenter[0] + Math.cos(angle) * radius, y: sceneCenter[1] + Math.sin(angle) * radius };
+  }).sort((first, second) => first.ringDiameter - second.ringDiameter);
 };
 
 const auditScene = (page: Page) => page.locator(".scale").evaluate((scale, pairs) => {
@@ -168,12 +180,21 @@ test("renders compact family connectors through their exact members", async ({ p
         const hidden = rail.hasAttribute("hidden");
         const localVertices = hidden ? [] : rail.tagName === "polyline"
           ? rail.getAttribute("points")!.trim().split(/\s+/).map(pair => pair.split(",").map(Number))
-          : [[Number(rail.getAttribute("x1")), Number(rail.getAttribute("y1"))], [Number(rail.getAttribute("x2")), Number(rail.getAttribute("y2"))]];
+          : rail.tagName === "path"
+            ? (rail.getAttribute("d")!.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi) ?? []).map(Number).reduce<number[][]>((pairs, value, index, values) => {
+              if (index % 2 === 0) pairs.push([value, values[index + 1]]);
+              return pairs;
+            }, [])
+            : [[Number(rail.getAttribute("x1")), Number(rail.getAttribute("y1"))], [Number(rail.getAttribute("x2")), Number(rail.getAttribute("y2"))]];
         const vertices = localVertices.map(([x, y]) => screenPoint(x, y));
         return {
           hidden,
           path: rail.tagName,
           vertices: vertices.map(point => [point.x, point.y]),
+          sceneCenter: [sceneCenter.x, sceneCenter.y],
+          referenceDiameter: Math.min(viewBox.width, viewBox.height) * .78,
+          screenScale,
+          id: rail.dataset.familyRail!,
           points,
           renderedPoints,
           radiusErrors,
@@ -220,7 +241,6 @@ test("renders compact family connectors through their exact members", async ({ p
     expect(rails.ariaHidden).toBe("true");
     expect(rails.pointerEvents).toBe("none");
     for (const family of [rails.roulette, rails.dice, rails.pokemon, rails.birthdays, rails.identicalDice, rails.anyPairDice, rails.poker]) {
-      expect(family.hidden).toBe(family.points.length < 2);
       if (family.hidden) expect(family.vertices).toEqual([]);
     }
     for (const key of scenario.families) {
@@ -229,8 +249,30 @@ test("renders compact family connectors through their exact members", async ({ p
       expect(family.intersections.every(area => area === 0)).toBe(true);
       expect(Math.max(...family.radiusErrors)).toBeLessThanOrEqual(.6);
       expect(new Set(family.points.map(point => `${point.x},${point.y}`)).size).toBe(family.points.length);
-      const byRadius = [...family.points].sort((first, second) => first.ringDiameter - second.ringDiameter);
-      const expected = family.path === "polyline" ? byRadius : [byRadius[0], byRadius.at(-1)!];
+      const expectedFamily = expectedFamilyPoints(family.id, scenario.depth, family.sceneCenter, family.referenceDiameter, family.screenScale);
+      const mountedIds = new Set(family.points.map(point => point.member));
+      const firstMountedMember = expectedFamily.findIndex(member => mountedIds.has(member.id));
+      expect(firstMountedMember).toBeGreaterThanOrEqual(0);
+      const expectedMembers = expectedFamily.slice(firstMountedMember);
+      if (family.path === "path") {
+        const definition = familyRailDefinitions.find(candidate => candidate.id === family.id)!;
+        const trunkPoint = (member: typeof expectedMembers[number]) => ({
+          x: family.sceneCenter[0] + Math.cos(definition.angle) * member.ringDiameter / 2,
+          y: family.sceneCenter[1] + Math.sin(definition.angle) * member.ringDiameter / 2,
+        });
+        const expectedVertices = [trunkPoint(expectedMembers[0]), trunkPoint(expectedMembers.at(-1)!)];
+        for (const member of expectedMembers) {
+          const trunk = trunkPoint(member);
+          if (Math.hypot(member.x - trunk.x, member.y - trunk.y) >= .01) expectedVertices.push(trunk, member);
+        }
+        expect(family.vertices).toHaveLength(expectedVertices.length);
+        for (let index = 0; index < expectedVertices.length; index++) {
+          expect(family.vertices[index][0]).toBeCloseTo(expectedVertices[index].x, 1);
+          expect(family.vertices[index][1]).toBeCloseTo(expectedVertices[index].y, 1);
+        }
+        continue;
+      }
+      const expected = family.path === "polyline" ? expectedMembers : [expectedMembers[0], expectedMembers.at(-1)!];
       expect(family.vertices).toHaveLength(expected.length);
       for (let index = 0; index < expected.length; index++) {
         expect(family.vertices[index][0]).toBeCloseTo(expected[index].x, 1);
@@ -240,11 +282,53 @@ test("renders compact family connectors through their exact members", async ({ p
     if (scenario.depth === 0) {
       expect(rails.roulette.vertices[0][1]).toBeCloseTo(rails.roulette.vertices[1][1], 8);
       const diceSlope = (rails.dice.vertices[1][1] - rails.dice.vertices[0][1]) / (rails.dice.vertices[1][0] - rails.dice.vertices[0][0]);
-      expect(Math.abs(diceSlope)).toBeCloseTo(1, 1);
+      expect(Math.abs(diceSlope)).toBeCloseTo(Math.abs(Math.tan(200 * Math.PI / 180)), 1);
     }
-    if (scenario.depth === -13) expect(rails.poker.path).toBe("polyline");
+    if (scenario.depth === -13) expect(rails.poker.path).toBe("path");
     await page.screenshot({ path: testInfo.outputPath(`connected-families-${scenario.depth}-320x740.png`) });
   }
+});
+
+test("keeps the birthday connector crossing the viewport when its next member is culled", async ({ page }) => {
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await openScene(page, "en", -1);
+  const rail = page.locator('[data-family-rail="birthdays-365"]');
+  const geometry = await rail.evaluate(element => ["x1", "y1", "x2", "y2"].map(attribute => Number(element.getAttribute(attribute))));
+
+  expect(await page.locator('[data-landmark="birthday-30"]').count()).toBe(0);
+  expect(await rail.getAttribute("hidden")).toBeNull();
+  expect(geometry.every(Number.isFinite)).toBe(true);
+  expect(geometry[3]).toBeLessThan(0);
+});
+
+test("keeps the birthday connector during inward travel and its scene rebase", async ({ page }) => {
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await openScene(page, "en", 0);
+  const scale = page.locator(".scale");
+  const rail = page.locator('[data-family-rail="birthdays-365"]');
+  const geometry = () => rail.evaluate(element => ["x1", "y1", "x2", "y2"].map(attribute => Number(element.getAttribute(attribute))));
+
+  await scale.hover();
+  await page.mouse.wheel(0, -120);
+  await expect.poll(async () => scale.getAttribute("data-fast-forward")).toBeNull();
+  expect(Number(await scale.getAttribute("data-depth"))).toBeCloseTo(-.2348109585, 10);
+  for (let gesture = 0; gesture < 8 && Number(await scale.getAttribute("data-depth")) > -1; gesture++) {
+    await page.mouse.wheel(0, -120);
+    await expect.poll(async () => scale.getAttribute("data-fast-forward")).toBeNull();
+  }
+  expect(Number(await scale.getAttribute("data-depth"))).toBeLessThan(-1);
+  const nearGeometry = await geometry();
+  expect(nearGeometry.every(Number.isFinite)).toBe(true);
+  expect(nearGeometry[3]).toBeLessThan(0);
+
+  for (let gesture = 0; gesture < 8 && Number(await scale.getAttribute("data-depth")) > -2; gesture++) {
+    await page.mouse.wheel(0, -120);
+    await expect.poll(async () => scale.getAttribute("data-fast-forward")).toBeNull();
+  }
+  expect(Number(await scale.getAttribute("data-depth"))).toBeLessThan(-2);
+  const rebasedGeometry = await geometry();
+  expect(rebasedGeometry.every(Number.isFinite)).toBe(true);
+  expect(rebasedGeometry[3]).toBeLessThan(0);
 });
 
 test("keeps a current family title readable inside the mobile viewport", async ({ page }, testInfo) => {
@@ -256,6 +340,7 @@ test("keeps a current family title readable inside the mobile viewport", async (
     ["die-d12-highest", -10.414],
     ["pokemon-destined-rivals-illustration-rare", displayLandmarks.find(item => item.id === "pokemon-destined-rivals-illustration-rare")!.position],
     ["four-dice-any-match", displayLandmarks.find(item => item.id === "four-dice-any-match")!.position],
+    ["holdem-three-kind", displayLandmarks.find(item => item.id === "holdem-three-kind")!.position],
     ["holdem-straight", displayLandmarks.find(item => item.id === "holdem-straight")!.position],
     ["birthday-20", displayLandmarks.find(item => item.id === "birthday-20")!.position],
     ["birthday-40", displayLandmarks.find(item => item.id === "birthday-40")!.position],
@@ -287,4 +372,36 @@ test("keeps a current family title readable inside the mobile viewport", async (
     await page.screenshot({ path: testInfo.outputPath(`current-family-${id}.png`) });
   }
   expect(automaticTitles).toBeGreaterThan(0);
+});
+
+test("keeps the three-of-a-kind title below its cards on desktop", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1365, height: 900 });
+  const depth = displayLandmarks.find(item => item.id === "holdem-three-kind")!.position;
+  await openScene(page, "en", depth);
+  const landmark = page.locator('[data-landmark="holdem-three-kind"]');
+  const title = landmark.locator(".landmark-title");
+  await landmark.focus();
+  await expect(title).toBeVisible();
+  const [art, label] = await Promise.all([
+    landmark.locator(".art img").boundingBox(),
+    title.boundingBox(),
+  ]);
+  expect(label!.y).toBeGreaterThanOrEqual(art!.y + art!.height - 1);
+  await page.screenshot({ path: testInfo.outputPath("three-kind-title-desktop.png") });
+});
+
+test("keeps the polyhedral dice clear of three of a kind near their shared depths", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1365, height: 900 });
+  for (const depth of [-12, -13]) {
+    await openScene(page, "en", depth);
+    const overlap = await page.locator(".scale").evaluate(scale => {
+      const first = scale.querySelector('[data-landmark="die-d12-highest"] .art img')?.getBoundingClientRect();
+      const second = scale.querySelector('[data-landmark="holdem-three-kind"] .art img')?.getBoundingClientRect();
+      if (!first || !second) return 0;
+      return Math.max(0, Math.min(first.right, second.right) - Math.max(first.left, second.left))
+        * Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top));
+    });
+    expect(overlap).toBe(0);
+    await page.screenshot({ path: testInfo.outputPath(`dice-holdem-${depth}.png`) });
+  }
 });

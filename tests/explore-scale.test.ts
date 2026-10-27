@@ -919,6 +919,43 @@ describe("public probability exploration", () => {
     expect(depth()).toBeCloseTo(beforeControl);
   });
 
+  it("gives arrow presses the same exact first step and gradual repeated-input ramp", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    const immediateNext = displayLandmarks
+      .filter(item => item.position > 1e-9)
+      .sort((first, second) => first.position - second.position)[0].position;
+    const runPresses = (count: number, repeat = false, interval = 140) => {
+      history.replaceState(null, "", "#d=0");
+      sessionStorage.clear();
+      const clock = new TestFrameClock();
+      const rendered = render();
+      const scale = document.querySelector<HTMLElement>(".scale")!;
+      const depths: number[] = [];
+      for (let press = 0; press < count; press += 1) {
+        scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true, repeat: repeat && press > 0 }));
+        clock.advanceTo((press + 1) * interval);
+        depths.push(Number(scale.dataset.depth));
+      }
+      clock.advanceTo(count * interval + 13_000);
+      const destination = Number(scale.dataset.depth);
+      rendered.dispose();
+      return { depths, destination };
+    };
+
+    expect(runPresses(1).destination).toBeCloseTo(immediateNext, 10);
+    const repeated = runPresses(16);
+    const earlyDistance = repeated.depths[3] - repeated.depths[0];
+    const lateDistance = repeated.depths.at(-1)! - repeated.depths.at(-5)!;
+    expect(repeated.depths[1] - repeated.depths[0]).toBeLessThan(1);
+    expect(lateDistance).toBeGreaterThan(earlyDistance);
+    expect(repeated.destination).toBeGreaterThan(immediateNext);
+    expect(displayLandmarks.some(item => Math.abs(item.position - repeated.destination) < 1e-9)).toBe(true);
+
+    const held = runPresses(16, true, 30);
+    expect(held.destination).toBeGreaterThan(immediateNext);
+    expect(held.destination).toBeLessThan(repeated.destination);
+  });
+
   it("uses click-only details and illustrated family travel near the explanation", () => {
     vi.useFakeTimers();
     render();
@@ -1075,12 +1112,29 @@ describe("public probability exploration", () => {
     expect(Number(scale.dataset.depth)).toBeLessThan(afterFirstFrame);
   });
 
+  it("locks one inertial trackpad envelope to the immediate next landmark", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const expected = displayLandmarks
+      .filter(item => item.position > 1e-9)
+      .sort((first, second) => first.position - second.position)[0].position;
+    for (const [index, deltaY] of [8, 32, 80, 40, 16].entries()) {
+      scale.dispatchEvent(new WheelEvent("wheel", { deltaY, cancelable: true }));
+      clock.advanceTo((index + 1) * 16);
+    }
+    clock.advanceTo(2000);
+    expect(Number(scale.dataset.depth)).toBeCloseTo(expected, 10);
+    expect(clock.pendingFrames).toBe(0);
+  });
+
   it("spreads a dense wheel arrival across several frames with progressively smaller final steps", () => {
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
     render();
     const scale = document.querySelector<HTMLElement>(".scale")!;
-    const target = displayLandmarks.filter(item => item.position > 1.044).sort((first, second) => first.position - second.position)[0].position;
+    const target = displayLandmarks.filter(item => item.position > 1e-9).sort((first, second) => first.position - second.position)[0].position;
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
     const positions: number[] = [];
     for (const timestamp of [16, 48, 80, 112, 144, 176, 208]) {
@@ -1135,33 +1189,259 @@ describe("public probability exploration", () => {
     render();
     const scale = document.querySelector<HTMLElement>(".scale")!;
 
-    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
-    expect(Number(scale.dataset.depth)).toBe(0);
-    clock.advanceTo(16);
-    const afterFirstFrame = Number(scale.dataset.depth);
-    expect(afterFirstFrame).toBeGreaterThan(0);
-
-    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
-    expect(Number(scale.dataset.depth)).toBe(afterFirstFrame);
-    clock.advanceTo(32);
-    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterFirstFrame);
+    let timestamp = 0;
+    const gestureDepths: number[] = [];
+    for (let gesture = 0; gesture < 16; gesture += 1) {
+      scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+      timestamp += 140;
+      clock.advanceTo(timestamp);
+      gestureDepths.push(Number(scale.dataset.depth));
+    }
+    expect(gestureDepths[1] - gestureDepths[0]).toBeLessThan(1);
+    expect(gestureDepths.at(-1)! - gestureDepths.at(-4)!).toBeGreaterThan(gestureDepths[2] - gestureDepths[0]);
 
     const beforeReverse = Number(scale.dataset.depth);
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
     expect(Number(scale.dataset.depth)).toBe(beforeReverse);
-    const expectedTarget = displayLandmarks
-      .filter(item => item.position < beforeReverse - 1.044 - 1e-9)
-      .sort((first, second) => second.position - first.position)[0].position;
-    clock.advanceTo(48);
-    expect(Number(scale.dataset.depth)).toBeLessThan(beforeReverse);
-    expect(Number(scale.dataset.depth)).toBeGreaterThan(expectedTarget);
-    clock.advanceTo(1000);
-    expect(Number(scale.dataset.depth)).toBeCloseTo(expectedTarget, 10);
+    clock.advanceTo(timestamp + 16);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(beforeReverse);
+    clock.advanceTo(timestamp + 300);
+    const stoppedAfterBrake = Number(scale.dataset.depth);
+    expect(clock.pendingFrames).toBe(0);
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
+    clock.advanceTo(timestamp + 316);
+    expect(Number(scale.dataset.depth)).toBeLessThan(stoppedAfterBrake);
+    clock.advanceTo(timestamp + 5000);
+    const destination = Number(scale.dataset.depth);
+    expect(displayLandmarks.some(item => Math.abs(item.position - destination) < 1e-9)).toBe(true);
+    expect(clock.pendingFrames).toBe(0);
+  });
+
+  it("consumes one counter gesture through rest and lets renewed forward input clear its intent", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    let timestamp = 0;
+    for (let gesture = 0; gesture < 16; gesture += 1) {
+      scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+      timestamp += 140;
+      clock.advanceTo(timestamp);
+    }
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
+    clock.advanceTo(timestamp + 16);
+    const brakingStart = Number(scale.dataset.depth);
+
+    clock.advanceTo(timestamp + 100);
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -40, cancelable: true }));
+    clock.advanceTo(timestamp + 116);
+    expect(Number(scale.dataset.depth)).toBeGreaterThanOrEqual(brakingStart);
+
+    clock.advanceTo(timestamp + 220);
+    const stopped = Number(scale.dataset.depth);
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -20, cancelable: true }));
+    clock.advanceTo(timestamp + 236);
+    expect(Number(scale.dataset.depth)).toBe(stopped);
+    expect(clock.pendingFrames).toBe(0);
+
+    clock.elapseTo(timestamp + 240);
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    clock.advanceTo(timestamp + 256);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(stopped);
+  });
+
+  it("smoothly bridges a distinct second counter gesture before the first brake finishes", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    history.replaceState(null, "", "#d=100");
+    render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    clock.advanceTo(1400);
+    const timestamp = 1400;
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
+    clock.advanceTo(timestamp + 16);
+    clock.elapseTo(timestamp + 141);
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
+    clock.advanceTo(timestamp + 150);
+    const bridgingDepth = Number(scale.dataset.depth);
+
+    clock.elapseTo(timestamp + 155);
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -40, cancelable: true }));
+    clock.advanceTo(timestamp + 160);
+    expect(Math.abs(Number(scale.dataset.depth) - bridgingDepth)).toBeLessThan(.1);
+    expect(scale.dataset.fastForward).toBe("outward");
+
+    clock.advanceTo(timestamp + 360);
+    const reverseStart = Number(scale.dataset.depth);
+    expect(scale.dataset.fastForward).toBe("inward");
+    clock.advanceTo(timestamp + 460);
+    expect(Number(scale.dataset.depth)).toBeLessThan(reverseStart);
+  });
+
+  it("cancels pending input on touch-down and coalesces distinct gestures before one frame", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    const pointer = (type: string) => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, { clientX: { value: 180 }, clientY: { value: 300 }, pointerId: { value: 1 }, pointerType: { value: "touch" } });
+      return event;
+    };
+    render(390);
+    let scale = document.querySelector<HTMLElement>(".scale")!;
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    expect(clock.pendingFrames).toBe(1);
+    scale.dispatchEvent(pointer("pointerdown"));
+    scale.dispatchEvent(pointer("pointerup"));
+    expect(clock.pendingFrames).toBe(0);
+    expect(Number(scale.dataset.depth)).toBe(0);
+
+    history.replaceState(null, "", "#d=0");
+    render(390);
+    scale = document.querySelector<HTMLElement>(".scale")!;
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    clock.elapseTo(140);
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
+    clock.advanceTo(156);
+    clock.advanceTo(5000);
+    const destination = Number(scale.dataset.depth);
+    const immediateNext = displayLandmarks.filter(item => item.position > 1e-9).sort((first, second) => first.position - second.position)[0].position;
+    expect(destination).toBeGreaterThan(immediateNext);
+    expect(displayLandmarks.some(item => Math.abs(item.position - destination) < 1e-9)).toBe(true);
+  });
+
+  it("builds finite wheel momentum in proportion to sustained scroll input", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    const runBurst = (deltaY: number, count: number) => {
+      history.replaceState(null, "", "#d=0");
+      sessionStorage.clear();
+      const clock = new TestFrameClock();
+      const rendered = render();
+      const scale = document.querySelector<HTMLElement>(".scale")!;
+      const hyperspace = document.querySelector<HTMLElement>("[data-hyperspace]")!;
+      let peakRayOpacity = 0;
+      for (let event = 0; event < count; event += 1) {
+        scale.dispatchEvent(new WheelEvent("wheel", { deltaY, cancelable: true }));
+        clock.advanceTo((event + 1) * 140);
+        peakRayOpacity = Math.max(peakRayOpacity, Number(hyperspace.style.getPropertyValue("--hyperspace-opacity")));
+      }
+      const depthAtRelease = Number(scale.dataset.depth);
+      clock.advanceTo(count * 140 + 13_000);
+      const destination = Number(scale.dataset.depth);
+      clock.advanceTo(count * 140 + 13_200);
+      expect(Number(scale.dataset.depth)).toBe(destination);
+      expect(clock.pendingFrames).toBe(0);
+      expect(scale.dataset.fastForward).toBeUndefined();
+      expect(displayLandmarks.some(item => Math.abs(item.position - destination) < 1e-9)).toBe(true);
+      rendered.dispose();
+      return { depthAtRelease, destination, peakRayOpacity };
+    };
+
+    const single = runBurst(104.4, 1);
+    const light = runBurst(8, 16);
+    const sustained = runBurst(104.4, 16);
+
+    expect(sustained.depthAtRelease).toBeGreaterThan(single.depthAtRelease);
+    expect(sustained.destination).toBeGreaterThan(single.destination);
+    expect(sustained.destination).toBeGreaterThan(light.destination);
+    expect(sustained.peakRayOpacity).toBeGreaterThan(0);
+  });
+
+  it("carries actual speed across quick separate swipes and lets a tap stop it", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render(390);
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const hyperspace = document.querySelector<HTMLElement>("[data-hyperspace]")!;
+    const pointer = (type: string, pointerId: number, clientY: number) => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, { clientX: { value: 180 }, clientY: { value: clientY }, pointerId: { value: pointerId }, pointerType: { value: "touch" } });
+      return event;
+    };
+    const firstDestination = displayLandmarks
+      .filter(item => item.position > 1e-9)
+      .sort((first, second) => first.position - second.position)[0].position;
+    let peakRayOpacity = 0;
+
+    let timestamp = 0;
+    const swipeDepths: number[] = [];
+    for (let swipe = 0; swipe < 16; swipe += 1) {
+      const pointerId = swipe + 1;
+      scale.dispatchEvent(pointer("pointerdown", pointerId, 300));
+      for (let sample = 1; sample <= 6; sample += 1) {
+        scale.dispatchEvent(pointer("pointermove", pointerId, 300 + sample * 50));
+        timestamp += 20;
+        clock.advanceTo(timestamp);
+        peakRayOpacity = Math.max(peakRayOpacity, Number(hyperspace.style.getPropertyValue("--hyperspace-opacity")));
+      }
+      scale.dispatchEvent(pointer("pointerup", pointerId, 600));
+      timestamp += 48;
+      clock.advanceTo(timestamp);
+      swipeDepths.push(Number(scale.dataset.depth));
+    }
+
+    const swipeIncrements = swipeDepths.slice(1).map((depth, index) => depth - swipeDepths[index]);
+    expect(swipeIncrements.slice(0, 3).every(increment => increment > 0 && increment < 1)).toBe(true);
+    expect(swipeDepths.at(-1)! - swipeDepths.at(-5)!).toBeGreaterThan(swipeDepths[3] - swipeDepths[0]);
+
+    const settledAt = timestamp + 13_000;
+    clock.advanceTo(settledAt);
+    const destination = Number(scale.dataset.depth);
+    expect(destination).toBeGreaterThan(firstDestination);
+    expect(displayLandmarks.some(item => Math.abs(item.position - destination) < 1e-9)).toBe(true);
+    expect(peakRayOpacity).toBeGreaterThan(0);
+    expect(clock.pendingFrames).toBe(0);
 
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
-    const afterIdleInput = Number(scale.dataset.depth);
-    clock.advanceTo(1016);
-    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterIdleInput);
+    clock.advanceTo(settledAt + 16);
+    const movingDepth = Number(scale.dataset.depth);
+    scale.dispatchEvent(pointer("pointerdown", 20, 300));
+    scale.dispatchEvent(pointer("pointerup", 20, 300));
+    expect(clock.pendingFrames).toBe(1);
+    clock.advanceTo(settledAt + 100);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(movingDepth);
+    clock.advanceTo(settledAt + 500);
+    const stoppedDepth = Number(scale.dataset.depth);
+    clock.advanceTo(settledAt + 700);
+    expect(Number(scale.dataset.depth)).toBe(stoppedDepth);
+    expect(clock.pendingFrames).toBe(0);
+    expect(scale.dataset.fastForward).toBeUndefined();
+  });
+
+  it("locks every first idle swipe to the immediate next landmark", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    const expected = displayLandmarks
+      .filter(item => item.position > 1e-9)
+      .sort((first, second) => first.position - second.position)[0].position;
+    const runSwipe = (samples: readonly number[]) => {
+      history.replaceState(null, "", "#d=0");
+      sessionStorage.clear();
+      const clock = new TestFrameClock();
+      const rendered = render(390);
+      const scale = document.querySelector<HTMLElement>(".scale")!;
+      const pointer = (type: string, clientY: number) => {
+        const event = new Event(type, { bubbles: true, cancelable: true });
+        Object.defineProperties(event, { clientX: { value: 180 }, clientY: { value: clientY }, pointerId: { value: 1 }, pointerType: { value: "touch" } });
+        return event;
+      };
+      scale.dispatchEvent(pointer("pointerdown", 300));
+      samples.forEach((clientY, index) => {
+        scale.dispatchEvent(pointer("pointermove", clientY));
+        clock.advanceTo((index + 1) * 20);
+      });
+      scale.dispatchEvent(pointer("pointerup", samples.at(-1)!));
+      clock.advanceTo(2000);
+      const destination = Number(scale.dataset.depth);
+      rendered.dispose();
+      return destination;
+    };
+
+    expect(runSwipe([320])).toBeCloseTo(expected, 10);
+    expect(runSwipe([600])).toBeCloseTo(expected, 10);
+    expect(runSwipe([350, 400, 450, 500, 550, 600])).toBeCloseTo(expected, 10);
   });
 
   it("ignores horizontal and multi-touch gestures until every finger lifts", () => {
@@ -2151,32 +2431,35 @@ describe("public probability exploration", () => {
     clock.advanceTo(3000);
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("+289.1 dBan");
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
+    clock.advanceTo(13_000);
+    expect(document.querySelector("[data-center-marker]")?.textContent).toContain("+289.1 dBan");
+    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
     sparse.dispose();
 
     history.replaceState(null, "", "#d=100");
     const reversing = render();
     const reversingScale = document.querySelector<HTMLElement>(".scale")!;
     reversingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
-    clock.advanceTo(3300);
+    clock.advanceTo(13_300);
     const beforeReverse = Number(reversingScale.dataset.depth);
     reversingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: -104.4, cancelable: true }));
     const afterReverseInput = Number(reversingScale.dataset.depth);
-    clock.advanceTo(3316);
-    expect(Number(reversingScale.dataset.depth)).toBeLessThan(beforeReverse);
-    expect(Number(reversingScale.dataset.depth)).toBeLessThan(afterReverseInput);
+    clock.advanceTo(13_316);
+    expect(Number(reversingScale.dataset.depth)).toBeGreaterThan(beforeReverse);
+    expect(Number(reversingScale.dataset.depth)).toBeGreaterThan(afterReverseInput);
     reversing.dispose();
 
     history.replaceState(null, "", "#d=285");
     const approaching = render();
     const approachingScale = document.querySelector<HTMLElement>(".scale")!;
     approachingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 103.2, cancelable: true }));
-    clock.advanceTo(3324);
+    clock.advanceTo(13_324);
     expect(Number(approachingScale.dataset.depth)).toBeGreaterThan(285);
 
     for (let event = 0; event < 10; event += 1) {
       approachingScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 10000, cancelable: true }));
     }
-    clock.advanceTo(3340);
+    clock.advanceTo(13_340);
     expect(Number(document.querySelector<HTMLElement>(".scale")?.dataset.depth)).toBeLessThanOrEqual(Math.max(...displayLandmarks.map(item => item.position)));
     expect(document.querySelector('[data-landmark="radon-222-decay"]')).not.toBeNull();
     approaching.dispose();
@@ -2236,13 +2519,13 @@ describe("public probability exploration", () => {
     clock.advanceTo(1400);
     expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThan(0);
     clock.advanceTo(3000);
-    expect(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity")).toBe("0");
+    expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBeLessThan(.1);
     const beforeReverse = Number(scale.dataset.depth);
     scale.dispatchEvent(pointer("pointermove", 1, 100, 200));
     clock.advanceTo(3016);
-    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
-    expect(scale.dataset.fastForward).toBe("inward");
-    expect(Number(scale.dataset.depth)).toBeLessThan(beforeReverse);
+    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
+    expect(scale.dataset.fastForward).toBeUndefined();
+    expect(Number(scale.dataset.depth)).toBe(beforeReverse);
     swiped.dispose();
 
     history.replaceState(null, "", "#d=100");
@@ -2358,7 +2641,7 @@ describe("public probability exploration", () => {
     const wheelScale = document.querySelector<HTMLElement>(".scale")!;
     wheelScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
     clock.advanceTo(1016);
-    expect(Number(wheelScale.dataset.depth)).toBeGreaterThan(100.1);
+    expect(Number(wheelScale.dataset.depth)).toBeGreaterThan(100);
     clock.advanceTo(4000);
     expect(Number(wheelScale.dataset.depth)).toBeCloseTo(289.1, 1);
     wheelRendered.dispose();
@@ -2376,7 +2659,7 @@ describe("public probability exploration", () => {
     const beforeQuietInterval = Number(swipeScale.dataset.depth);
     clock.advanceTo(4080);
     expect(Number(swipeScale.dataset.depth)).toBeGreaterThan(beforeQuietInterval);
-    clock.advanceTo(7000);
+    clock.advanceTo(17_000);
     expect(Number(swipeScale.dataset.depth)).toBeCloseTo(289.1, 1);
     swipeRendered.dispose();
   });

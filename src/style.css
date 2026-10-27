@@ -51,16 +51,22 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .depth-scene, .family-rails { transform-origin: 50% 50%; will-change: transform; }
 .depth-scene { z-index: 4; }
 .family-rails { height: 100%; overflow: visible; pointer-events: none; transform-box: border-box; width: 100%; z-index: 3; }
-.family-rails line, .family-rails polyline { fill: none; stroke: #a8b9b766; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.family-rails line, .family-rails polyline, .family-rails path { fill: none; stroke: #a8b9b766; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .depth-rings { pointer-events: none; z-index: 1; }
 .hyperspace { inset: 0; opacity: 0; overflow: hidden; pointer-events: none; position: absolute; transition: opacity .18s ease; z-index: 0; }
-.hyperspace i { animation: hyperspace-out .72s linear infinite; animation-delay: var(--delay); animation-play-state: paused; background: linear-gradient(90deg, transparent, #c7f6ffb8 45%, #fff); height: 2px; left: 50%; opacity: 0; position: absolute; top: 50%; transform-origin: left center; width: clamp(2.5rem, 13vmin, 7rem); }
-.scale[data-fast-forward] .hyperspace { opacity: calc(var(--hyperspace-opacity, 0) * .68); }
+.hyperspace i { animation: hyperspace-out .72s linear infinite; animation-delay: var(--delay); animation-play-state: paused; background: linear-gradient(90deg, transparent, #c7f6ffcc 40%, #fff); height: 2px; left: 50%; opacity: 0; position: absolute; top: 50%; transform-origin: left center; width: clamp(2.5rem, 13vmin, 7rem); }
+.scale[data-fast-forward] .hyperspace { opacity: calc(var(--hyperspace-opacity, 0) * .78); }
 .scale[data-fast-forward] .hyperspace i { animation-play-state: running; }
 .scale[data-fast-forward="inward"] .hyperspace i { animation-name: hyperspace-in; }
 .hyperspace i { rotate: var(--angle); }
 @keyframes hyperspace-in { 0% { opacity: 0; transform: translateX(2vmin) scaleX(.12); } 28% { opacity: .78; } 100% { opacity: 0; transform: translateX(68vmax) scaleX(1.8); } }
 @keyframes hyperspace-out { 0% { opacity: 0; transform: translateX(68vmax) scaleX(1.8); } 35% { opacity: .72; } 100% { opacity: 0; transform: translateX(2vmin) scaleX(.12); } }
+@media (max-width: 640px) {
+  .hyperspace i { height: 2px; width: clamp(3.25rem, 18vmin, 5.5rem); }
+  .scale[data-fast-forward] .hyperspace { opacity: calc(var(--hyperspace-opacity, 0) * .86); }
+  @keyframes hyperspace-in { 0% { opacity: 0; transform: translateX(1vmin) scaleX(.12); } 28% { opacity: .88; } 100% { opacity: 0; transform: translateX(44vmin) scaleX(1.25); } }
+  @keyframes hyperspace-out { 0% { opacity: 0; transform: translateX(44vmin) scaleX(1.25); } 35% { opacity: .82; } 100% { opacity: 0; transform: translateX(1vmin) scaleX(.12); } }
+}
 .current-depth-ring { border: 3px solid var(--ring-color); border-radius: 50%; left: 50%; opacity: .9; pointer-events: none; position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2; }
 .landmark { background: none; border: 0; display: grid; gap: .05rem; justify-items: center; padding: 0; pointer-events: none; position: absolute; text-align: center; text-shadow: 0 2px 8px #03101b; transform: translateX(-50%); width: max-content; z-index: 1; }
 .landmark[data-receded="false"]::before { content: ""; inset: -.4rem; position: absolute; }

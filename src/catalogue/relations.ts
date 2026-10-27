@@ -92,7 +92,7 @@ const declaredRelatedLandmarkIds = {
   "birthday-30": ["birthday-40"],
   "birthday-40": ["birthday-50"],
   "birthday-50": ["birthday-60"],
-  "ace-of-spades": ["any-ace", "holdem-one-pair"],
+  "ace-of-spades": ["any-ace", "holdem-one-pair", "shuffled-deck-specified-order"],
   "holdem-high-card": ["holdem-one-pair", "holdem-two-pair"],
   "holdem-one-pair": ["holdem-high-card", "holdem-two-pair", "ace-in-five-cards"],
   "holdem-two-pair": ["holdem-one-pair", "holdem-three-kind"],
