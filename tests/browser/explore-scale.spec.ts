@@ -48,6 +48,15 @@ const expectReadoutInViewport = async (page: Page) => {
   return layout;
 };
 
+const touchSwipe = async (page: Page, start: { x: number; y: number }, end: { x: number; y: number }) => {
+  const session = await page.context().newCDPSession(page);
+  const point = (position: { x: number; y: number }) => ({ ...position, id: 1, radiusX: 1, radiusY: 1, force: 1 });
+  await session.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point(start)] });
+  await session.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [point(end)] });
+  await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await session.detach();
+};
+
 for (const [name, viewport] of [["desktop", { width: 1365, height: 900 }], ["mobile", { width: 390, height: 844 }]] as const) {
   test(`keeps illustration centers at exact positions through arrival and return on ${name}`, async ({ page }) => {
     await page.setViewportSize(viewport);
@@ -290,6 +299,41 @@ test("keeps French depth exploration readable and tappable on mobile", async ({ 
   const travelCaption = page.locator("[data-gap-caption]");
   await expect(travelCaption).toBeVisible();
   await expectTravelCaptionClear(page);
+});
+
+test("uses vertical touch and keyboard navigation while ignoring horizontal input", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?vertical-input#d=0");
+  await page.evaluate(() => {
+    sessionStorage.setItem("probability-scale-intro-seen", "true");
+    localStorage.setItem("probability-scale-all-references", "true");
+  });
+  await page.reload();
+
+  const scale = page.locator(".scale");
+  const box = (await scale.boundingBox())!;
+  const depth = async () => Number(await scale.getAttribute("data-depth"));
+  await touchSwipe(page, { x: box.x + 100, y: box.y + 300 }, { x: box.x + 200, y: box.y + 304 });
+  expect(await depth()).toBe(0);
+
+  await touchSwipe(page, { x: box.x + 180, y: box.y + 300 }, { x: box.x + 180, y: box.y + 360 });
+  expect(await depth()).toBeGreaterThan(0);
+  await page.locator("[data-return-zero]").click();
+  await expect(scale).toHaveAttribute("data-depth", "0");
+
+  const horizontalKeys = await scale.evaluate(element => ["ArrowLeft", "ArrowRight"].map(key => {
+    const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+    element.dispatchEvent(event);
+    return event.defaultPrevented;
+  }));
+  expect(horizontalKeys).toEqual([false, false]);
+  expect(await depth()).toBe(0);
+
+  await scale.focus();
+  await page.keyboard.press("ArrowUp");
+  expect(await depth()).toBeGreaterThan(0);
+  await page.keyboard.press("ArrowDown");
+  expect(await depth()).toBeLessThan(1);
 });
 
 test("crossfades split readouts and keeps every locale within the mobile ruler", async ({ page }, testInfo) => {

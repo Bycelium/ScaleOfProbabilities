@@ -6,7 +6,7 @@ The Scale of Probability is an interactive atlas of probabilities expressed in d
 
 **[Explore the live website](https://deciban.bycelium.com)**
 
-Use the mouse wheel or trackpad on a desktop, the arrow keys when the scene has focus, or a one-finger swipe or pinch on a touch screen.
+Use vertical mouse-wheel or trackpad input on a desktop, the Up and Down arrow keys when the scene has focus, or a one-finger vertical swipe on a touch screen.
 
 Selecting an illustration or related example sets an exact destination and opens its details on arrival. The Return to 0 dBan control appears after the opening position.
 

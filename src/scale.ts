@@ -135,7 +135,8 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   let active: DisplayLandmark | undefined;
   let restoreFocus: HTMLElement | undefined;
   let dragY: number | undefined;
-  let touchOriginY: number | undefined;
+  let touchOrigin: { x: number; y: number } | undefined;
+  let touchGesture: "pending" | "vertical" | "horizontal" | "multiple" | undefined;
   let travelFrame: number | undefined;
   let travel: Travel | undefined;
   let pendingInput: DirectionalInput | undefined;
@@ -144,8 +145,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   let lastTravelInputAt: number | undefined;
   let travelToRelated: (target: DisplayLandmark) => void;
   let travelToLandmark: (target: DisplayLandmark) => void;
-  const pointers = new Map<number, { x: number; y: number }>();
-  let pinchStart: { distance: number } | undefined;
+  const pointers = new Set<number>();
   let introRestoreFocus: HTMLElement | undefined;
   let privacyRestoreFocus: HTMLElement | undefined;
   let suppressLandmarkClick = false;
@@ -1246,14 +1246,6 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   };
   returnButton.addEventListener("click", returnToZero);
 
-  const moveThroughTouchGap = (delta: number, rebase: () => void): void => {
-    const direction = Math.sign(delta);
-    if (direction === 0) return;
-    const velocity = rememberTravelVelocity(delta, performance.now());
-    rebase();
-    travelInDirection(direction, delta, velocity);
-  };
-
   travelToRelated = (target: DisplayLandmark): void => {
     lastTravelInputAt = undefined;
     scale.focus();
@@ -1270,9 +1262,9 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   };
 
   const onWheel = (event: WheelEvent): void => {
+    const delta = event.deltaY;
+    if (event.ctrlKey || delta === 0 || Math.abs(delta) <= Math.abs(event.deltaX)) return;
     event.preventDefault();
-    const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
-    if (delta === 0) return;
     const direction = Math.sign(delta);
     const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16
       : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? sceneMetrics().height : 1;
@@ -1284,9 +1276,9 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
 
   const onKeydown = (event: KeyboardEvent): void => {
     if (!root.isConnected) return;
-    const direction = event.key === "ArrowRight" || event.key === "ArrowUp"
+    const direction = event.key === "ArrowUp"
       ? 1
-      : event.key === "ArrowLeft" || event.key === "ArrowDown"
+      : event.key === "ArrowDown"
         ? -1
         : 0;
     if (direction === 0 || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || introDialog.open || privacyDialog.open) return;
@@ -1315,18 +1307,16 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       suppressLandmarkClick = false;
     }
     if (event.pointerType === "mouse") return;
-    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY || 0 });
+    pointers.add(event.pointerId);
     dragY = event.clientY;
-    touchOriginY = event.clientY;
+    touchOrigin = { x: event.clientX, y: event.clientY };
+    touchGesture = "pending";
     /* v8 ignore next -- pointer capture is an optional browser API; gesture behavior is tested with and without landmark targets. */
     if (!(event.target as Element).closest?.(".landmark")) scale.setPointerCapture?.(event.pointerId);
-    if (pointers.size === 2) {
-      const [first, second] = [...pointers.values()];
-      pinchStart = {
-        distance: Math.max(Math.hypot(second.x - first.x, second.y - first.y), 1),
-      };
+    if (pointers.size >= 2) {
+      touchGesture = "multiple";
       dragY = undefined;
-      touchOriginY = undefined;
+      touchOrigin = undefined;
       suppressLandmarkClick = true;
       /* v8 ignore next -- pointer capture is an optional browser API. */
       scale.setPointerCapture?.(event.pointerId);
@@ -1334,39 +1324,33 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   });
   scale.addEventListener("pointermove", event => {
     if (!pointers.has(event.pointerId)) return;
-    /* v8 ignore next -- synthetic pointer events may omit clientY; browsers provide the numeric coordinate. */
-    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY || 0 });
-    if (pointers.size >= 2 && pinchStart) {
-      const [first, second] = [...pointers.values()];
-      const distance = Math.max(Math.hypot(second.x - first.x, second.y - first.y), 1);
-      const delta = -30 * Math.log10(distance / pinchStart.distance);
-      moveThroughTouchGap(delta, () => {
-        pinchStart = { distance };
-      });
-      return;
+    if (touchGesture === "multiple" || pointers.size !== 1 || !touchOrigin || dragY === undefined) return;
+    if (touchGesture === "pending") {
+      const horizontalDistance = Math.abs(event.clientX - touchOrigin.x);
+      const verticalDistance = Math.abs(event.clientY - touchOrigin.y);
+      if (Math.max(horizontalDistance, verticalDistance) <= 8) return;
+      suppressLandmarkClick = true;
+      /* v8 ignore next -- pointer capture is an optional browser API. */
+      scale.setPointerCapture?.(event.pointerId);
+      touchGesture = verticalDistance > horizontalDistance ? "vertical" : "horizontal";
+      if (touchGesture === "horizontal") return;
     }
-    /* v8 ignore next -- dragY is absent only while the preceding active-pinch branch owns the tracked pointer. */
-    if (dragY === undefined) return;
-    if (!suppressLandmarkClick && Math.abs(event.clientY - touchOriginY!) <= 8) return;
-    const delta = suppressLandmarkClick ? event.clientY - dragY : event.clientY - touchOriginY!;
-    suppressLandmarkClick = true;
-    /* v8 ignore next -- pointer capture is an optional browser API. */
-    scale.setPointerCapture?.(event.pointerId);
-    moveThroughTouchGap(delta * 0.025, () => {
-      dragY = event.clientY;
-    });
+    if (touchGesture === "horizontal") return;
+    const delta = event.clientY - dragY;
+    const depthDelta = delta * 0.025;
+    const direction = Math.sign(depthDelta);
+    if (direction === 0) return;
+    const velocity = rememberTravelVelocity(depthDelta, performance.now());
+    dragY = event.clientY;
+    travelInDirection(direction, depthDelta, velocity);
   });
   const endPointer = (event: PointerEvent): void => {
     const wasTracking = pointers.delete(event.pointerId);
     if (!wasTracking) return;
-    pinchStart = undefined;
-    if (pointers.size === 1) {
-      dragY = [...pointers.values()][0].y;
-      touchOriginY = dragY;
-      return;
-    }
+    if (pointers.size > 0) return;
     dragY = undefined;
-    touchOriginY = undefined;
+    touchOrigin = undefined;
+    touchGesture = undefined;
   };
   scale.addEventListener("pointerup", endPointer);
   scale.addEventListener("pointercancel", endPointer);
