@@ -486,10 +486,6 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
         titleSuppressed: previous?.titleSuppressed ?? false,
       });
     }
-    if (!measureTitles) {
-      sceneOrigin = { center: originCenter, metrics: nextMetrics };
-      return;
-    }
     const projectedById = new Map(projected.map(item => [item.item.id, item]));
     for (const family of familyRailDefinitions) {
       const line = familyRailNodes.get(family.id)!;
@@ -505,6 +501,10 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       line.setAttribute("y1", String(first.y));
       line.setAttribute("x2", String(last.x));
       line.setAttribute("y2", String(last.y));
+    }
+    if (!measureTitles) {
+      sceneOrigin = { center: originCenter, metrics: nextMetrics };
+      return;
     }
     const sceneNodes = [...landmarkNodes.values()];
     const readableNodes = sceneNodes.filter(node => node.baseArtSize >= 32
@@ -593,7 +593,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       const readable = visible && artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7)
         && (!titleSuppressed || revealSuppressedTitle);
       if (title.hidden === readable) title.hidden = !readable;
-      if (readable) setStyle(title, "transform", `scale(${inverseZoom})`);
+      if (readable) setStyle(title, "transform", `scale(${inverseZoom}) translate(var(--title-x), var(--title-y))`);
       const receded = String(!readable);
       if (button.dataset.receded !== receded) button.dataset.receded = receded;
     }

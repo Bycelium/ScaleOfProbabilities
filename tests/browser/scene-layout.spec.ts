@@ -84,7 +84,7 @@ for (const [name, viewport] of [
   ["mobile", { width: 390, height: 844 }],
   ["desktop", { width: 1365, height: 900 }],
 ] as const) {
-  test(`keeps dense scene geometry clear on ${name}`, async ({ page }) => {
+  test(`keeps dense scene geometry clear on ${name}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
     const scenarios = name === "mobile"
       ? ["en", "fr", "zh", "es"].flatMap(locale => [-7, -3, 0, 3, 7].map(depth => ({ locale, depth })))
@@ -102,6 +102,9 @@ for (const [name, viewport] of [
         expect(audit.globalOverlaps.reduce((sum, pair) => sum + pair.area, 0)).toBeLessThan(2_000);
       }
       if (depth === 0) expect(audit.equalProbabilityCenterDistance).toBeGreaterThan(1);
+      if (locale === "fr" && depth === 0) {
+        await page.screenshot({ path: testInfo.outputPath(`dense-fr-0-${viewport.width}x${viewport.height}.png`) });
+      }
     }
   });
 }
@@ -155,7 +158,7 @@ test("renders compact roulette and highest-face rails between their exact member
   expect(Math.abs(diceSlope)).toBeCloseTo(1, 1);
 });
 
-test("keeps a current family title readable inside the mobile viewport", async ({ page }) => {
+test("keeps a current family title readable inside the mobile viewport", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const [id, depth] of [
     ["roulette-even-money", -.235],
@@ -168,5 +171,6 @@ test("keeps a current family title readable inside the mobile viewport", async (
     const bounds = await title.boundingBox();
     expect(bounds!.x).toBeGreaterThanOrEqual(4);
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(386);
+    await page.screenshot({ path: testInfo.outputPath(`current-family-${id}.png`) });
   }
 });

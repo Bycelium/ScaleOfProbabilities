@@ -117,7 +117,7 @@ describe("scene rendering performance", () => {
       if (!eligible) expect(title.hidden).toBe(true);
       if (!title.hidden) {
         eligibleVisibleTitles += 1;
-        expect(title.style.transform).toBe("scale(1)");
+        expect(title.style.transform).toBe("scale(1) translate(var(--title-x), var(--title-y))");
       }
       expect(button.getAttribute("aria-label")).toBeTruthy();
     }
@@ -142,6 +142,11 @@ describe("scene rendering performance", () => {
       .map(button => [button.dataset.landmark!, button.getAttribute("aria-label")]));
     const initialMeasurementCount = measuredTitles.length;
     const initialCoinLeft = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.style.left;
+    const railSnapshot = () => [...document.querySelectorAll<SVGLineElement>("[data-family-rail]")].map(line => ({
+      id: line.dataset.familyRail,
+      endpoints: ["x1", "y1", "x2", "y2"].map(attribute => Number(line.getAttribute(attribute))),
+    }));
+    const initialRails = railSnapshot();
 
     document.querySelector<HTMLButtonElement>('[data-landmark="die-six"]')!.click();
     clock.advanceTo(400);
@@ -149,6 +154,8 @@ describe("scene rendering performance", () => {
     expect(Math.abs(Number(scale.dataset.depth))).toBeGreaterThanOrEqual(5);
     expect(document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.style.left).not.toBe(initialCoinLeft);
     expect(measuredTitles).toHaveLength(initialMeasurementCount);
+    expect(railSnapshot()).not.toEqual(initialRails);
+    for (const rail of railSnapshot()) expect(rail.endpoints.every(Number.isFinite)).toBe(true);
 
     const pointerDown = new Event("pointerdown", { bubbles: true });
     Object.defineProperties(pointerDown, { pointerId: { value: 1 }, pointerType: { value: "mouse" } });
@@ -174,7 +181,7 @@ describe("scene rendering performance", () => {
       const eligible = !button.hidden && projectedSize >= 32 && Math.abs(landmark.position - arrivedCenter) <= 1.7;
       const title = button.querySelector<HTMLElement>(".landmark-title")!;
       if (eligible && title.hidden) suppressedEligibleTitles += 1;
-      if (!title.hidden) expect(title.style.transform).toBe("scale(1)");
+      if (!title.hidden) expect(title.style.transform).toBe("scale(1) translate(var(--title-x), var(--title-y))");
     }
     expect(suppressedEligibleTitles).toBeGreaterThan(0);
     dispose();
