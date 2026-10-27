@@ -53,6 +53,9 @@ test("repeated mobile swipes gather speed, show travel rays, brake, and reverse 
     swipeDepths.push(Number(await scale.getAttribute("data-depth")));
   }
 
+  const secondSwipeDistance = Math.abs(swipeDepths[0] - firstInwardDestination);
+  const thirdSwipeDistance = Math.abs(swipeDepths[1] - swipeDepths[0]);
+  expect(thirdSwipeDistance).toBeGreaterThan(secondSwipeDistance * 2);
   expect(Math.abs(swipeDepths.at(-1)! - swipeDepths[0])).toBeGreaterThan(Math.abs(swipeDepths[0] - firstInwardDestination));
   expect(Number(await scale.getAttribute("data-depth"))).toBeLessThan(firstInwardDestination);
   expect(peakRayOpacity).toBeGreaterThan(0);

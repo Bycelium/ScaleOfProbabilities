@@ -1384,7 +1384,10 @@ describe("public probability exploration", () => {
     }
 
     const swipeIncrements = swipeDepths.slice(1).map((depth, index) => depth - swipeDepths[index]);
-    expect(swipeIncrements.slice(0, 3).every(increment => increment > 0 && increment < 1)).toBe(true);
+    const [secondSwipeContinuation, thirdSwipeContinuation] = swipeIncrements;
+    expect(secondSwipeContinuation).toBeGreaterThan(0);
+    expect(secondSwipeContinuation).toBeLessThan(1);
+    expect(thirdSwipeContinuation).toBeGreaterThan(secondSwipeContinuation);
     expect(swipeDepths.at(-1)! - swipeDepths.at(-5)!).toBeGreaterThan(swipeDepths[3] - swipeDepths[0]);
 
     const settledAt = timestamp + 13_000;

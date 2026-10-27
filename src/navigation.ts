@@ -21,9 +21,9 @@ export const gestureSequenceConfig: GestureSequenceConfig = {
   restSpeed: .5,
   maximumSpeed: 120,
   baseSpeed: 1,
-  speedCoefficient: .42,
+  speedCoefficient: 1,
   baseMomentumGain: .25,
-  momentumGainCoefficient: .048,
+  momentumGainCoefficient: .15,
   maximumMomentumGain: 3.5,
 };
 
@@ -64,8 +64,8 @@ export class GestureSequence {
     return {
       count,
       lockToNext,
-      speedLimit: Math.min(this.config.maximumSpeed, this.config.baseSpeed + this.config.speedCoefficient * (count - 1) ** 2),
-      momentumGain: Math.min(this.config.maximumMomentumGain, this.config.baseMomentumGain + this.config.momentumGainCoefficient * (count - 1) ** 2),
+      speedLimit: Math.min(this.config.maximumSpeed, this.config.baseSpeed + this.config.speedCoefficient * (count - 1) ** 3),
+      momentumGain: Math.min(this.config.maximumMomentumGain, this.config.baseMomentumGain + this.config.momentumGainCoefficient * (count - 1) ** 3),
     };
   }
 }

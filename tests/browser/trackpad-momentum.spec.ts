@@ -51,7 +51,7 @@ test("keeps the first trackpad burst adjacent, then gathers momentum across dist
   await page.waitForTimeout(350);
   const thirdBurstDistance = Number(await scale.getAttribute("data-depth")) - beforeThird;
   expect(secondBurstDistance).toBeGreaterThan(0);
-  expect(thirdBurstDistance).toBeGreaterThan(secondBurstDistance);
+  expect(thirdBurstDistance).toBeGreaterThan(secondBurstDistance * 1.15);
 
   let peakRayOpacity = 0;
   for (let burst = 0; burst < 12; burst += 1) {
