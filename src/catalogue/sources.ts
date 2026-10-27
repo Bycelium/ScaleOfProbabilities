@@ -55,7 +55,6 @@ export const sourceReferences = {
   "nasa-moon-period": { href: "https://eclipse.gsfc.nasa.gov/SEsaros/SEsaros.html" },
   "french-scrabble-federation-letter-distribution": { href: "https://www.ffsc.fr/telecharger.php?id=702" },
   "international-french-language-classic-scrabble-rules": { href: "https://www.ffsc.fr/files/public/fichiers/reglements/classique/Reglement.international.du.Scrabble.classique.pdf" },
-  "hasbro-english-scrabble-letter-distribution": { href: "https://hasbro-apac-eng.custhelp.com/app/answers/detail/a_id/979/~/how-many-of-each-letter-tile-are-included-in-a-scrabble-game%3F" },
   "nasa-solar-eclipse": { href: "https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html" },
   "usgs-water-science-school-ice-snow-glaciers-and-the-water-cycle": { href: "https://www.usgs.gov/water-science-school/science/ice-snow-and-glaciers-and-water-cycle" },
   "nasa-stars-and-red-dwarfs": { href: "https://science.nasa.gov/exoplanets/stars/" },

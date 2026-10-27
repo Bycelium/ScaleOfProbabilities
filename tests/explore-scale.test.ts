@@ -1677,6 +1677,55 @@ describe("public probability exploration", () => {
     expect(relatedLandmarkIds["full-moon-15-days"]).toContain("full-moon-28-days");
   });
 
+  it("models every French Scrabble tile event from the full bag", () => {
+    const ids = [
+      "french-scrabble-consonant",
+      "french-scrabble-vowel",
+      "french-scrabble-vowel-rack",
+      "french-scrabble-consonant-rack",
+      "french-scrabble-blank",
+      "french-scrabble-blank-rack",
+    ] as const;
+    const models = new Map(landmarkModels.map(item => [item.id, item]));
+    const combinations = (total: number, selected: number): number => {
+      let result = 1;
+      for (let value = 1; value <= selected; value += 1) result = result * (total - selected + value) / value;
+      return result;
+    };
+    const singleTiles = [["french-scrabble-consonant", 55], ["french-scrabble-vowel", 45], ["french-scrabble-blank", 2]] as const;
+    expect(singleTiles.reduce((total, [, count]) => total + count, 0)).toBe(102);
+    for (const [id, numerator] of singleTiles) {
+      expect(models.get(id)?.chance).toEqual({ side: "lower", tail: { kind: "ratio", numerator, denominator: 102 } });
+    }
+    const sevenTileDenominator = combinations(102, 7);
+    for (const [id, nonMatchingTiles] of [["french-scrabble-vowel-rack", 57], ["french-scrabble-consonant-rack", 47], ["french-scrabble-blank-rack", 100]] as const) {
+      expect(models.get(id)?.chance).toEqual({ side: "upper", tail: { kind: "ratio", numerator: combinations(nonMatchingTiles, 7), denominator: sevenTileDenominator } });
+    }
+    for (const id of ids) {
+      const model = models.get(id)!;
+      expect(model.classification).toBe("Exact model");
+      expect(model.sourceIds).toEqual(["french-scrabble-federation-letter-distribution", "international-french-language-classic-scrabble-rules"]);
+      expect([...relatedLandmarkIds[id]].sort()).toEqual(ids.filter(candidate => candidate !== id).sort());
+    }
+
+    const vowel = document.createElement("div");
+    vowel.innerHTML = models.get("french-scrabble-vowel")!.art;
+    expect(vowel.querySelector('.scrabble-art[data-kind="vowel"] [data-scrabble-letter="A"]')).not.toBeNull();
+    const consonant = document.createElement("div");
+    consonant.innerHTML = models.get("french-scrabble-consonant")!.art;
+    expect(consonant.querySelector('.scrabble-art[data-kind="consonant"] [data-scrabble-letter="C"]')).not.toBeNull();
+    const blank = document.createElement("div");
+    blank.innerHTML = models.get("french-scrabble-blank")!.art;
+    expect(blank.querySelector('.scrabble-art[data-kind="blank"] [data-scrabble-blank]')).not.toBeNull();
+    expect(blank.querySelector("text")).toBeNull();
+    for (const [id, kind, target] of [["french-scrabble-vowel-rack", "vowel-rack", '[data-scrabble-letter="A"]'], ["french-scrabble-consonant-rack", "consonant-rack", '[data-scrabble-letter="C"]'], ["french-scrabble-blank-rack", "blank-rack", "[data-scrabble-blank]"]] as const) {
+      const rack = document.createElement("div");
+      rack.innerHTML = models.get(id)!.art;
+      expect(rack.querySelector(`.scrabble-art[data-kind="${kind}"]`)?.querySelectorAll("[data-scrabble-letter], [data-scrabble-blank]")).toHaveLength(7);
+      expect(rack.querySelector(`${target} rect`)?.getAttribute("fill")).toBe("#f6c76c");
+    }
+  });
+
   it("includes sourced weather and completed-season sports estimates", () => {
     const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const estimateIds = [

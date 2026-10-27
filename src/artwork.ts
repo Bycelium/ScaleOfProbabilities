@@ -238,10 +238,16 @@ export const eclipseArtwork = (kind: "solar" | "lunar", color: string): string =
   ? `<svg class="eclipse-art" data-kind="solar" viewBox="0 0 100 100" aria-hidden="true">${solarEclipseScene(color)}</svg>`
   : `<svg class="eclipse-art" data-kind="lunar" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="34" fill="#b9c5cc"/><path d="M22 30c36-10 57 11 52 43-9 9-22 14-35 10-24-7-31-36-17-53Z" fill="${color}"/><circle cx="40" cy="42" r="5" fill="#d99a75" opacity=".35"/><circle cx="59" cy="63" r="7" fill="#d99a75" opacity=".28"/></svg>`;
 
-export const scrabbleArtwork = (kind: "consonant" | "vowel-rack", color: string): string => {
-  const tile = (x: number, y: number, letter: string) => `<g transform="translate(${x} ${y})"><rect width="25" height="29" rx="3" fill="#f3d8a1" stroke="${color}" stroke-width="2"/><text x="12.5" y="21" text-anchor="middle" fill="#493b2a" font-size="18" font-family="Georgia" font-weight="700">${letter}</text></g>`;
-  if (kind === "consonant") return `<svg class="scrabble-art" data-kind="consonant" viewBox="0 0 100 100" aria-hidden="true"><path d="M19 30c2-15 60-15 62 0l8 55H11Z" fill="${color}"/><path d="M28 31c7 8 37 8 44 0" fill="none" stroke="#ead9bd" stroke-width="4"/>${tile(37, 43, "R")}</svg>`;
-  return `<svg class="scrabble-art" data-kind="vowel-rack" viewBox="0 0 100 100" aria-hidden="true"><path d="M8 79h84" stroke="${color}" stroke-width="8" stroke-linecap="round"/>${tile(8, 42, "A")}${tile(33, 42, "E")}${tile(58, 42, "Y")}</svg>`;
+export const scrabbleArtwork = (kind: "consonant" | "vowel" | "blank" | "vowel-rack" | "consonant-rack" | "blank-rack", color: string): string => {
+  const tile = (x: number, y: number, letter: string | undefined, highlighted: boolean) => `<g ${letter ? `data-scrabble-letter="${letter}"` : "data-scrabble-blank"} transform="translate(${x} ${y})"><rect width="11" height="22" rx="2" fill="${highlighted ? "#f6c76c" : "#f3d8a1"}" stroke="${color}" stroke-width="1.5"/>${letter ? `<text x="5.5" y="16" text-anchor="middle" fill="#493b2a" font-size="13" font-family="Georgia" font-weight="700">${letter}</text>` : ""}</g>`;
+  if (kind === "consonant" || kind === "vowel" || kind === "blank") {
+    const letter = kind === "consonant" ? "C" : "A";
+    const blankAttribute = kind === "blank" ? " data-scrabble-blank" : "";
+    return `<svg class="scrabble-art" data-kind="${kind}" viewBox="0 0 100 100" aria-hidden="true"><rect${blankAttribute} x="16" y="14" width="68" height="72" rx="7" fill="#f3d8a1" stroke="${color}" stroke-width="3"/>${kind === "blank" ? "" : `<text data-scrabble-letter="${letter}" x="50" y="68" text-anchor="middle" fill="#493b2a" font-size="54" font-family="Georgia" font-weight="700">${letter}</text>`}</svg>`;
+  }
+  const letters = kind === "vowel-rack" ? ["B", "A", "R", "E", "C", "D", "S"] : kind === "consonant-rack" ? ["A", "C", "E", "R", "I", "N", "S"] : ["A", "C", undefined, "R", "I", "N", "S"];
+  const highlightedIndex = kind === "vowel-rack" ? 1 : kind === "consonant-rack" ? 1 : 2;
+  return `<svg class="scrabble-art" data-kind="${kind}" viewBox="0 0 100 100" aria-hidden="true"><path d="M7 80h86" stroke="${color}" stroke-width="7" stroke-linecap="round"/>${letters.map((letter, index) => tile(8 + index * 12, 49, letter, index === highlightedIndex)).join("")}</svg>`;
 };
 
 export const glacierArtwork = (color: string): string =>
