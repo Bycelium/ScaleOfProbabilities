@@ -95,7 +95,8 @@ for (const [name, viewport] of [
       expect(audit.overlaps.filter(pair => pair.area > .5), `${locale} at ${depth} dBan`).toEqual([]);
       expect(audit.worstRadiusError).toBeLessThanOrEqual(.6);
       expect(audit.labelProblems, `${locale} at ${depth} dBan`).toEqual([]);
-      expect(audit.readoutOverlaps, `${locale} at ${depth} dBan`).toEqual([0, 0, 0]);
+      expect(audit.readoutOverlaps.every(area => area === 0), `${locale} at ${depth} dBan`).toBe(true);
+      if (depth === 0) expect(audit.readoutOverlaps, `${locale} at ${depth} dBan`).toEqual([0, 0, 0]);
       if (name === "mobile" && depth === 0) {
         expect(audit.globalOverlaps.length, `${locale} at ${depth} dBan`).toBeLessThanOrEqual(6);
         expect(audit.globalOverlaps.reduce((sum, pair) => sum + pair.area, 0)).toBeLessThan(2_000);

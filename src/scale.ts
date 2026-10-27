@@ -451,7 +451,8 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       }
     }
     for (const { item, zoomFactor, ringDiameter, x, y, artSize } of projected) {
-      const existing = landmarkNodes.get(item.id) ?? makeLandmark(item);
+      const previous = landmarkNodes.get(item.id);
+      const existing = previous ?? makeLandmark(item);
       const { button, image, title } = existing;
       if (button.dataset.locale !== locale.code) {
         const translated = localized(item);
@@ -469,8 +470,13 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       button.tabIndex = 0;
       setStyle(button, "pointer-events", "none");
       setStyle(button, "z-index", String(Math.max(1, Math.min(99, Math.round(zoomFactor * 10)))));
-      const titleSuppressed = "titleSuppressed" in existing ? existing.titleSuppressed : false;
-      landmarkNodes.set(item.id, { ...existing, baseX: x, baseY: y, baseArtSize: artSize, titleSuppressed });
+      landmarkNodes.set(item.id, {
+        ...existing,
+        baseX: x,
+        baseY: y,
+        baseArtSize: artSize,
+        titleSuppressed: previous?.titleSuppressed ?? false,
+      });
     }
     if (!measureTitles) {
       sceneOrigin = { center: originCenter, metrics: nextMetrics };
