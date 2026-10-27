@@ -45,6 +45,7 @@ export const es: LocaleDefinition = {
       review: "Privacidad",
       participationLabel: "Elección sobre la analítica opcional",
       participationDescription: "La analítica opcional mide visitas, país, dispositivo, idiomas, ejemplos abiertos y tiempo visible aproximado para mejorar el sitio y sus traducciones.",
+      more: "(Consulta Privacidad para más información)",
       participate: "Participar",
       doNotParticipate: "No participar",
       allow: "Permitir la analítica",

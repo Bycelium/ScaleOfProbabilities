@@ -2,7 +2,7 @@
 
 The production application uses Vercel Web Analytics through a small provider adapter. The consent controller owns the lifecycle and sends neutral domain events to that adapter, so a future provider can replace the Vercel implementation without changing the scale or consent interface.
 
-When analytics is configured and the visitor has no saved choice, the opening About dialog shows Participate and Do not participate choices and keeps Explore disabled until one is chosen. Analytics stays inactive when consent is declined or withdrawn. The readable privacy notice and later settings are in About. Consent is stored locally for 183 days with an explicit version; versioned source and browser tests document that behavior.
+When analytics is configured and the visitor has no saved choice, the opening About dialog shows Participate and Do not participate choices and keeps Explore disabled until one is chosen. After a decline, it shows Allow analytics; after acceptance, its consent controls disappear. The visible Privacy links open the notice for later changes. Analytics stays inactive when consent is declined or withdrawn. The readable privacy notice and later settings are in About. Consent is stored locally for 183 days with an explicit version; versioned source and browser tests document that behavior.
 
 If a future change replaces Vercel or changes the analytics purpose, update the in-app privacy copy and increment the stored-consent policy version before enabling it. The version change makes the application ask again instead of silently reusing a previous choice. Keep the current Vercel implementation as the only provider until that replacement is complete.
 
