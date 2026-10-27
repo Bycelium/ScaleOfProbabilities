@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { catalogueOrder, displayLandmarks, landmarkModels, relatedLandmarkIds, sourceReferences } from "../src/catalogue";
 import { localeChoices } from "../src/locales";
+import { chance, formatOdds, formatProbability, formatProbabilityPercent } from "../src/probability";
 import { createScale } from "../src/scale";
 
 class TestResizeObserver {
@@ -334,7 +335,7 @@ describe("public probability exploration", () => {
     summaries[1].focus();
     intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(intro.querySelector('a[href*="Good1979"]'));
-    const introLanguage = intro.querySelector<HTMLButtonElement>('[data-locale-choice="fr"]')!;
+    const introLanguage = intro.querySelector<HTMLButtonElement>('[data-locale-choice="es"]')!;
     introLanguage.focus();
     intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(summaries[0]);
@@ -367,7 +368,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
   });
 
-  it("uses browser French on first visit and offers both languages in About", () => {
+  it("uses browser French on first visit and offers every language in About", () => {
     vi.spyOn(window.navigator, "languages", "get").mockReturnValue(["fr-FR"]);
     render(390, false);
 
@@ -380,7 +381,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector('[data-landmark="coin-heads"] .landmark-title')?.textContent).toBe("pile ou face");
     document.querySelector<HTMLButtonElement>('[data-landmark="coin-heads"]')!.click();
     expect(document.querySelector("[data-detail-kind]")?.textContent).toBe("Modèle exact");
-    expect([...intro.querySelectorAll("[data-locale-choice]")].map(button => button.textContent)).toEqual(["English", "Français"]);
+    expect([...intro.querySelectorAll("[data-locale-choice]")].map(button => button.textContent)).toEqual(["English", "Français", "简体中文", "Español"]);
   });
 
   it("uses the first supported browser preference and lets a saved choice override it", () => {
@@ -392,6 +393,27 @@ describe("public probability exploration", () => {
     localStorage.setItem("probability-scale-locale", "fr");
     render();
     expect(document.documentElement.lang).toBe("fr");
+  });
+
+  it("matches Chinese and Spanish browser preferences, keeps a saved choice, and formats their readouts", () => {
+    vi.spyOn(window.navigator, "languages", "get").mockReturnValue(["ja-JP", "zh-Hant-TW", "es-ES"]);
+    const first = render();
+    expect(document.documentElement.lang).toBe("zh");
+    expect(document.querySelector("[data-center-marker] .odds")?.textContent).toBe("胜算： 1 比 1");
+    first.dispose();
+
+    vi.spyOn(window.navigator, "languages", "get").mockReturnValue(["es-MX"]);
+    const spanish = render();
+    expect(document.documentElement.lang).toBe("es");
+    spanish.dispose();
+
+    localStorage.setItem("probability-scale-locale", "es");
+    render();
+    expect(document.documentElement.lang).toBe("es");
+    expect(document.querySelector("[data-center-marker] .odds")?.textContent).toBe("Razón: 1 a 1");
+    expect(formatProbability(chance({ kind: "one-in", denominator: 100_000 }), "zh")).toBe("100,000 分之一");
+    expect(formatProbabilityPercent(chance({ kind: "decimal", value: 0.25 }), "es")).toBe("25 %");
+    expect(formatOdds(-10, "es")).toBe("1 a 10");
   });
 
   it("filters regional references by language and persists the all-references choice", () => {
@@ -474,7 +496,7 @@ describe("public probability exploration", () => {
   });
 
   it("falls back after unsupported browser preferences and reads navigator language when needed", () => {
-    vi.spyOn(window.navigator, "languages", "get").mockReturnValue(["de-DE", "es-ES"]);
+    vi.spyOn(window.navigator, "languages", "get").mockReturnValue(["de-DE", "it-IT"]);
     localStorage.setItem("probability-scale-locale", "constructor");
     const unsupported = render();
     expect(document.documentElement.lang).toBe("en");
@@ -548,6 +570,24 @@ describe("public probability exploration", () => {
     render();
     expect(document.documentElement.lang).toBe("fr");
     expect(document.querySelector<HTMLButtonElement>("[data-open-intro]")?.textContent).toBe("À propos");
+  });
+
+  it("keeps depth and details open while switching to Chinese and Spanish", () => {
+    history.replaceState(null, "", "#d=-4.8");
+    render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    document.querySelector<HTMLButtonElement>('[data-landmark="die-d4-highest"]')!.click();
+    const depth = scale.dataset.depth;
+
+    for (const [code, title, art] of [["zh", "公平 d4 掷出四", "正"], ["es", "Un cuatro con un d4 equilibrado", "C"]] as const) {
+      document.querySelector<HTMLButtonElement>("[data-language-toggle]")!.click();
+      document.querySelector<HTMLButtonElement>(`[data-language-menu] [data-locale-choice="${code}"]`)!.click();
+      expect(document.documentElement.lang).toBe(code);
+      expect(scale.dataset.depth).toBe(depth);
+      expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
+      expect(document.querySelector("[data-detail-title]")?.textContent).toBe(title);
+      expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe(art);
+    }
   });
 
   it("localizes text embedded in nearby illustrations", () => {

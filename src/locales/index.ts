@@ -1,12 +1,14 @@
 import type { DisplayLandmark, Landmark, Source } from "../catalogue";
 import { en } from "./en";
+import { es } from "./es";
 import { fr } from "./fr";
+import { zh } from "./zh";
 import { fillTemplate } from "./helpers";
 import type { LocaleCode, LocaleDefinition } from "./types";
 
 export type { LocaleCode, LocaleDefinition } from "./types";
 
-export const locales: Readonly<Record<LocaleCode, LocaleDefinition>> = { en, fr };
+export const locales: Readonly<Record<LocaleCode, LocaleDefinition>> = { en, fr, zh, es };
 export const localeChoices = Object.values(locales);
 
 const matchingLocale = (preference: string | null): LocaleDefinition | undefined => {

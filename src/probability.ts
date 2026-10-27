@@ -50,7 +50,9 @@ export const formatProbability = (value: Chance, locale: LocaleCode = "en"): str
   const tail = tailValue(value.tail);
   if (tail <= 0.0001) {
     const denominator = scientific(1 / tail, locale);
-    return value.side === "lower" ? `${metadata.oneIn} ${denominator}` : `1 − 1 / (${denominator})`;
+    return value.side === "lower"
+      ? metadata.oneInTemplate.replace("{denominator}", denominator)
+      : `1 − 1 / (${denominator})`;
   }
   const probability = value.side === "lower" ? tail : 1 - tail;
   const percent = probability * 100;
