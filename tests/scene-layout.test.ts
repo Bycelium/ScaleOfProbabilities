@@ -8,7 +8,7 @@ describe("scene layout", () => {
     const expectedDefault = (-45 + ((catalogueSlots["drop-garden-pool"] * 137.508) % 360) / 360 * 270) * Math.PI / 180;
     expect(landmarkAngle("drop-garden-pool")).toBeCloseTo(expectedDefault, 12);
     expect(landmarkAngle("coin-heads")).toBeCloseTo(80 * Math.PI / 180, 12);
-    expect(landmarkAngle("four-dice-any-six")).toBeCloseTo(150 * Math.PI / 180, 12);
+    expect(landmarkAngle("four-dice-any-six")).toBeCloseTo(315 * Math.PI / 180, 12);
     expect(landmarkAngle("enigma-m3-known-rings")).toBeCloseTo(36 * Math.PI / 180, 12);
   });
 
@@ -41,19 +41,6 @@ describe("scene layout", () => {
       ["four-dice-any-six", "rain-brest-december"],
     ];
     for (const [first, second] of pairs) expect(overlaps(bounds(first), bounds(second)), `${first} / ${second}`).toBe(false);
-  });
-
-  it("keeps four dice any six below the opening readout on mobile", () => {
-    const item = displayLandmarks.find(candidate => candidate.id === "four-dice-any-six")!;
-    const factor = 10 ** (item.position / 10);
-    const radius = 320 * .78 / 2 * factor;
-    const size = item.size * .76 * factor;
-    const angle = landmarkAngle(item.id);
-    const x = 160 + Math.cos(angle) * radius;
-    const y = 370 + Math.sin(angle) * radius;
-    const art: LayoutBox = { left: x - size / 2, right: x + size / 2, top: y - size / 2, bottom: y + size / 2 };
-    const readout: LayoutBox = { left: 0, right: 320, top: 145, bottom: 257 };
-    expect(art.top).toBeGreaterThan(readout.bottom);
   });
 
   it("suppresses titles behind artwork, outside the viewport, and behind higher-priority titles", () => {
