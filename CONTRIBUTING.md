@@ -1,24 +1,108 @@
 # Contributing
 
-Contributions should preserve the atlas's scientific meaning, stable landmark identity, and bilingual presentation. Keep the application static and browser-native: Vite and TypeScript drive the interface, SVG provides the illustrations, and one Canvas 2D layer draws the gray guide circles. Use Node 24 and pnpm 11.20.0 from the repository root.
+Contributions should preserve the atlas's scientific meaning, stable landmark identity, and multilingual presentation. Keep the application static and browser-native: Vite and TypeScript drive the interface, SVG provides the illustrations, and one Canvas 2D layer draws the gray guide circles.
 
-## Add a family or example
+## Correct a typo, translation, source, or fact
 
-Catalogue data is organized by responsibility under `src/catalogue/`. Keep shared types in `types.ts`, reusable calculations in `helpers.ts`, source records in `sources.ts`, stable display order in `order.ts`, the family registry in `models.ts`, regional metadata in `regions.ts`, reciprocal relationships in `relations.ts`, and family definitions under `families/`. A family module should own examples with a common subject or model. Keep participant-facing copy in the matching family module under `src/locales/<language>/families/`, where each landmark is a named object with `title`, `shortTitle`, `explanation`, `calculation`, `assumptions`, and optional `advice` fields.
+You can report a correction without setting up the project.
 
-Each example needs a meaningful event, an explicit probability model, and source IDs for any referenced evidence. Declare each source ID once in `src/catalogue/sources.ts`, include its reference link when one exists, and add its label and optional note to every registered locale. State the sampled unit, population or denominator, time period, and assumptions in the copy. Date estimates whose inputs can change. Keep observed historical aggregates labelled as such and keep provider availability, account access, approval, and guarantees as separate events.
+1. [Open a correction issue](https://github.com/Bycelium/ScaleOfProbabilities/issues/new/choose). Name the affected event and language, copy the current text, and give the proposed correction. Include a source link and date for a source or factual correction. A typo does not need a source.
+2. To submit the correction yourself, fork [Bycelium/ScaleOfProbabilities](https://github.com/Bycelium/ScaleOfProbabilities), clone your fork locally, enter it, then create a branch. Replace `YOUR-USERNAME` with your GitHub username.
+
+```sh
+git clone https://github.com/YOUR-USERNAME/ScaleOfProbabilities.git
+cd ScaleOfProbabilities
+git switch -c fix/correction
+```
+
+3. Edit the affected locale or source file. Keep translations together when the shared meaning changes.
+4. Run the focused checks below.
+5. Open a pull request to this repository and write `Fixes #123` in its description to link the issue.
+
+## Development setup
+
+Use Node 24 and pnpm 11.20.0. Run every command from the repository root.
+
+Install locked dependencies:
+
+```sh
+pnpm install --frozen-lockfile
+```
+
+Start Vite:
+
+```sh
+pnpm dev --host 0.0.0.0
+```
+
+The application is a self-contained static Vite build. Vercel uses root directory `.`; the root `vercel.json` pins pnpm 11.20.0 for the frozen install and build and serves `dist`. Do not add a backend or deploy from this repository worktree.
+
+## Add a sourced event
+
+Catalogue data is organized by responsibility under `src/catalogue/`. Keep shared types in `types.ts`, reusable calculations in `helpers.ts`, source records in `sources.ts`, stable display order in `order.ts`, the family registry in `models.ts`, regional metadata in `regions.ts`, reciprocal relationships in `relations.ts`, and family definitions under `families/`. A family module should own examples with a common subject or model. Add the new family to `src/catalogue/models.ts`.
+
+Follow these steps for one event.
+
+1. Add its ID to `src/catalogue/order.ts` first. Set its slot to the current highest slot plus one. Do not reuse a hole left by a removed event: slots fix scene angles.
+
+```ts
+"die-even": 136,
+```
+
+2. Add the model to the appropriate module, such as `src/catalogue/families/dice_games.ts`. Use an existing supported artwork factory and a named source ID.
+
+```ts
+{ id: "die-even", chance: lowerRatio(3, 6), size: 88, art: artwork("die-six", "#527c91"), sourceIds: ["fair-die-model"], classification: exact }
+```
+
+Import the helper and artwork if that family does not already import them, then include the family in `src/catalogue/models.ts` only when it is a new family. `lowerRatio`, `upperRatio`, `lower`, `upper`, and `oneIn` are in `src/catalogue/helpers.ts`; use `upper(tail)` for a near-one event whose small complement is `tail`. Position derives from probability, so do not write a dBan coordinate.
+
+3. Reuse `fair-die-model` for this walkthrough. For a new source, add its source metadata in `src/catalogue/sources.ts`, then add the source label and optional note to all four locale source files.
+
+```ts
+"example-study-2026": { href: "https://example.org/study" },
+```
+
+4. Add the same ID and all five copy fields to the corresponding family files in `src/locales/en/families/`, `src/locales/fr/families/`, `src/locales/zh/families/`, and `src/locales/es/families/`.
+
+```ts
+"die-even": { title: "An even number on one fair die", shortTitle: "even number on one die", explanation: "Three faces are even.", calculation: "p = 3 / 6 = 1/2", assumptions: "Each face is equally likely." },
+```
+
+Aggregate a new family in every locale `catalogue.ts`; an added event in an existing family needs no new aggregate import. State the sampled unit, population or denominator, timeframe, and assumptions in the copy; date estimates whose inputs can change.
 
 Use decibans for positions and differences. For event probability `p`, compute the position as `d = 10 log10(p / (1 − p))`. A difference `Δd = d₂ − d₁` compares the two events' odds and corresponds to an odds multiplier of `10^(Δd / 10)`. The difference does not represent the probability of a shift. Explain odds as the ratio between an event and its complement. One-in-X notation gives a probability denominator. Preserve finite internal positions and write copy that never displays 0%, 100%, or infinity for a finite probability.
 
-Append every new landmark ID to the stable slot registry in `order.ts`, assigning the next unused slot. Existing slot values determine scene angles, so preserve those values when removing or adding examples. Stable IDs identify an event across models, locales, relationships, regional metadata, and tests. Keep related relationships reciprocal and point every relationship at an existing landmark.
+5. Declare each relationship once in `declaredRelatedLandmarkIds` in `src/catalogue/relations.ts`. `reciprocalRelations()` adds the reverse edge and rejects unknown IDs, so do not duplicate a reverse declaration. Add a `regions.ts` entry only for a supported regional audience; unannotated examples remain common. Create or reuse SVG artwork in `src/artwork.ts`; translate embedded artwork text through each locale’s `ui.art` keys.
+
+6. Run `pnpm test` and `pnpm build`; also run `pnpm test:coverage` for model, catalogue, locale, or formatting changes.
 
 ## Add a language
 
-Add the language's native name and number-formatting metadata to `src/locales/metadata.ts`. `LocaleCode` is derived from that registry's keys. Create `src/locales/<language>.ts` with the complete UI translation, mirror the landmark families under `src/locales/<language>/families/`, aggregate them in that locale's `catalogue.ts`, and put source labels and notes in its `sources.ts`. Register the completed locale in `src/locales/index.ts`.
+1. Add native-name and formatting metadata in `src/locales/metadata.ts`. The `oneInTemplate` must contain `{denominator}`.
 
-Translate every visible field, accessibility label, source label or note, and text embedded in artwork. Keep source IDs, landmark IDs, probabilities, positions, artwork structure, relationships, and navigation behavior shared across languages. Complete every named copy field for every landmark in every registered locale. Integrity checks require complete landmark and source key coverage, stable source IDs, and valid relationships.
+```ts
+de: { nativeName: "Deutsch", numberLocale: "de-DE", decimalSeparator: ",", percentSpace: " ", oneInTemplate: "1 von {denominator}", oddsJoiner: "zu" },
+```
 
-Regional metadata controls the default language filter; the All references map control beside the language picker exposes the full catalogue. Filtering preserves full-catalogue angles and current depth, while motion, snapping, bounds, rings, and related links use the visible subset.
+2. Create `src/locales/de.ts` with the complete UI translation and metadata spread, then create `src/locales/de/catalogue.ts`, `src/locales/de/sources.ts`, and one translated copy family for every family in the English catalogue. Each source entry uses the existing source ID, for example `"fair-die-model": { label: "Modell eines fairen Würfels" }`; each landmark entry keeps its existing ID and supplies `title`, `shortTitle`, `explanation`, `calculation`, and `assumptions`. Preserve template placeholder names such as `{population}` and `{prevalence}` exactly. For models with advice, translate `advice.before`, `advice.relatedLabel`, and `advice.after` too.
+
+3. Assemble every family in `src/locales/de/catalogue.ts`, then import and register the locale in `src/locales/index.ts`.
+
+```ts
+import { de } from "./de";
+export const locales: Readonly<Record<LocaleCode, LocaleDefinition>> = { en, fr, zh, es, de };
+```
+
+The locale module itself follows the shared definition:
+
+```ts
+export const de: LocaleDefinition = { code: "de", ...localeMetadata.de, ui, landmarks: deLandmarks, sources: deSources };
+```
+
+Translate every visible field, accessibility label, source label or note, and text embedded in artwork. Keep source IDs, landmark IDs, probabilities, positions, artwork structure, relationships, and navigation behavior shared across languages. Complete every named copy field for every landmark in every registered locale. A saved language wins; otherwise the browser’s ordered preferences match by base language code and fall back to English. Add tests for selection and persistence, numeric formatting, localized artwork, and a narrow browser layout with details open after switching languages. Integrity checks require complete landmark and source key coverage, stable source IDs, and valid relationships.
+
+Regional metadata controls the default language filter. The shared language menu, available from the opening About dialog and the globe control, includes a **Show all references** checkbox that exposes the full catalogue. Chinese and Spanish currently have no region-specific catalogue mappings, so their default view contains the unannotated common examples until Show all references is enabled. Filtering preserves full-catalogue angles and current depth, while motion, snapping, bounds, rings, and related links use the visible subset.
 
 ## Navigation behavior
 
@@ -42,6 +126,12 @@ Use the coverage command when changing calculation, catalogue, locale, or format
 
 ```sh
 pnpm test:coverage
+```
+
+Install Playwright’s Chromium browser first when it is not already available:
+
+```sh
+pnpm exec playwright install chromium
 ```
 
 Use the browser journey for changes to navigation, details, language controls, or filtering:

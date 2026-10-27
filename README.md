@@ -1,60 +1,20 @@
 # The Scale of Probability
 
-The Scale of Probability is a bilingual, interactive atlas of sourced probabilities expressed in decibans. It places each event at its exact depth on a continuous radial scale and provides the model, assumptions, calculations, and sources behind each example.
+The Scale of Probability is an interactive atlas of probabilities expressed in decibans, odds, and percentages. It places each event at its exact depth on a continuous radial scale and provides the model, assumptions, calculations, and sources behind each example.
 
 [![Explore the Scale of Probability: illustrated examples arranged around the current deciban depth](docs/assets/scale-preview.png)](https://deciban.bycelium.com)
 
-Use the mouse wheel or trackpad on a desktop, the arrow keys when the scene has focus, or a one-finger swipe or pinch on a touch screen. Movement begins immediately and continues to the next landmark in the latest input direction. Long gaps accelerate and then brake into arrival. Any travel closes open details. Selecting an illustration or related example sets an exact destination and opens its details on arrival. The Return to 0 dBan control appears after the opening position.
+**[Explore the live website](https://deciban.bycelium.com)**
 
-The explorer supports English and French. A saved choice takes precedence over the browser's ordered language preferences, with English as the fallback. The language picker is in the opening About dialog and beside About in the main view. The map control beside the language picker persists **All references**, including examples associated with every region instead of the selected language's default set.
+Use the mouse wheel or trackpad on a desktop, the arrow keys when the scene has focus, or a one-finger swipe or pinch on a touch screen.
 
-## Development
+Selecting an illustration or related example sets an exact destination and opens its details on arrival. The Return to 0 dBan control appears after the opening position.
 
-Use Node 24 and pnpm 11.20.0. Run every command from the repository root.
+The atlas supports English, Français, 简体中文, and Español. A saved language choice takes precedence over the browser’s ordered language preferences. The shared language menu is available from the opening About dialog and the globe control; its **Show all references** checkbox includes examples associated with every region instead of the selected language’s default set.
 
-Install the locked dependencies:
+## Contributing
 
-```sh
-pnpm install --frozen-lockfile
-```
-
-Start the Vite development server:
-
-```sh
-pnpm dev --host 0.0.0.0
-```
-
-Run the unit suite:
-
-```sh
-pnpm test
-```
-
-Run the coverage thresholds:
-
-```sh
-pnpm test:coverage
-```
-
-Run the browser journey after installing Playwright's Chromium browser:
-
-```sh
-pnpm exec playwright install chromium
-```
-
-```sh
-pnpm test:browser
-```
-
-Build the static application in `dist`:
-
-```sh
-pnpm build
-```
-
-## Deployment
-
-The application is a self-contained static Vite build. Set the Vercel root directory to `.` and use Node 24. The root `vercel.json` pins pnpm 11.20.0 for the frozen install and build, then serves the Vite output from `dist`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) to correct a source or translation, add an event or language, set up the project, and run checks.
 
 ## Attribution and license
 
