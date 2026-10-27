@@ -3,6 +3,7 @@ import { localeChoices, locales, localizeLandmark, resolveInitialLocale, saveLoc
 import { catalogueSlots } from "./catalogue/order";
 import { fillTemplate } from "./locales/helpers";
 import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabilityPercent } from "./probability";
+import { createPreferencesMenu } from "./preferences-menu";
 
 type View = { center: number };
 type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter: number; centerX: number; centerY: number }>;
@@ -135,16 +136,14 @@ export function createScale(root: HTMLElement): () => void {
   let suppressLandmarkClick = false;
   let lastPersistedCenter = view.center;
 
-  const languageChoices = (context: "intro" | "menu"): string => localeChoices.map(choice => `<button type="button" data-locale-choice="${choice.code}" data-locale-context="${context}" aria-pressed="${choice.code === locale.code}">${choice.nativeName}</button>`).join("");
-
   root.innerHTML = `<div class="atlas"><div data-page-content>
-    <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><button class="reference-toggle" data-all-references aria-label="${locale.ui.allReferences}" aria-describedby="all-references-help" aria-pressed="${allReferences}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"/><path d="M9 3v15m6-12v15" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span class="toolbar-tooltip" id="all-references-help" data-all-references-help role="tooltip">${locale.ui.allReferencesHelp}</span></button><div class="language-picker" data-language-picker><button class="language-toggle" data-language-toggle aria-label="${locale.ui.language}" aria-expanded="false">🌐</button><div class="language-menu" data-language-menu role="group" aria-label="${locale.ui.language}" hidden>${languageChoices("menu")}</div></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
+    <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker"><button type="button" class="language-toggle" data-preferences-toggle="toolbar" aria-label="${locale.ui.language}" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">🌐</span></button></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
     <section class="scale" tabindex="0" aria-label="${locale.ui.scaleAria}">
       <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
     </section>
   </div>
   <dialog class="scale-intro" data-scale-intro aria-modal="true" aria-labelledby="scale-intro-heading">
-    <div class="intro-language" role="group" aria-label="${locale.ui.language}" data-intro-language>${languageChoices("intro")}</div>
+    <div class="intro-preferences"><button type="button" data-preferences-toggle="intro" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">🌐</span><span data-current-language>${locale.nativeName}</span><span aria-hidden="true">⌄</span></button></div>
     <h1 id="scale-intro-heading" tabindex="-1" data-intro-title>${locale.ui.title}</h1>
     <div class="intro-scroll">
       <p data-intro-probability>${locale.ui.probabilityExplanation}</p>
@@ -171,11 +170,10 @@ export function createScale(root: HTMLElement): () => void {
   const dialog = root.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
   const introDialog = root.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
   const introButton = root.querySelector<HTMLButtonElement>("[data-open-intro]")!;
-  const languageToggle = root.querySelector<HTMLButtonElement>("[data-language-toggle]")!;
-  const languageMenu = root.querySelector<HTMLElement>("[data-language-menu]")!;
-  const languagePicker = root.querySelector<HTMLElement>("[data-language-picker]")!;
+  const toolbarPreferencesToggle = root.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!;
+  const introPreferences = introDialog.querySelector<HTMLElement>(".intro-preferences")!;
+  const introPreferencesToggle = introPreferences.querySelector<HTMLButtonElement>('[data-preferences-toggle="intro"]')!;
   const returnButton = root.querySelector<HTMLButtonElement>("[data-return-zero]")!;
-  const allReferencesToggle = root.querySelector<HTMLButtonElement>("[data-all-references]")!;
   const gapCaption = root.querySelector<HTMLElement>("[data-gap-caption]")!;
   const hyperspace = root.querySelector<HTMLElement>("[data-hyperspace]")!;
   const landmarkNodes = new Map<string, LandmarkNode>();
@@ -720,6 +718,20 @@ export function createScale(root: HTMLElement): () => void {
   };
 
   const closeButton = dialog.querySelector<HTMLButtonElement>("[data-close-detail]")!;
+  const preferencesMenu = createPreferencesMenu({
+    root,
+    localeChoices,
+    locale,
+    allReferences,
+    onLocaleChange: selectLocale,
+    onAllReferencesChange: setAllReferences,
+  });
+  toolbarPreferencesToggle.setAttribute("aria-controls", preferencesMenu.element.id);
+  introPreferencesToggle.setAttribute("aria-controls", preferencesMenu.element.id);
+  const openToolbarPreferences = (): void => preferencesMenu.open({ anchor: toolbarPreferencesToggle, parent: root, placement: "toolbar" });
+  const openIntroPreferences = (): void => preferencesMenu.open({ anchor: introPreferencesToggle, parent: introPreferences, placement: "intro" });
+  toolbarPreferencesToggle.addEventListener("click", openToolbarPreferences);
+  introPreferencesToggle.addEventListener("click", openIntroPreferences);
   const onCloseDetails = (): void => closeDetails();
   closeButton.addEventListener("click", onCloseDetails);
   const onDialogKeydown = (event: KeyboardEvent): void => {
@@ -737,6 +749,7 @@ export function createScale(root: HTMLElement): () => void {
   root.addEventListener("keydown", onRootKeydown);
 
   const closeIntro = (): void => {
+    preferencesMenu.close(false);
     try { introDialog.close(); } catch { introDialog.removeAttribute("open"); }
     page.inert = false;
     try { sessionStorage.setItem(INTRO_STORAGE_KEY, "true"); } catch { /* The guide can reopen without storage. */ }
@@ -744,6 +757,7 @@ export function createScale(root: HTMLElement): () => void {
     introRestoreFocus = undefined;
   };
   const openIntro = (): void => {
+    preferencesMenu.close(false);
     /* v8 ignore next -- document.activeElement is always an HTMLElement in supported browser documents. */
     introRestoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
     page.inert = true;
@@ -757,8 +771,8 @@ export function createScale(root: HTMLElement): () => void {
       return;
     }
     if (event.key !== "Tab") return;
-    const focusable = [...introDialog.querySelectorAll<HTMLElement>('button, summary, a[href], input:not([disabled])')]
-      .filter(element => !element.closest("[hidden]"));
+    const focusable = [...introDialog.querySelectorAll<HTMLElement>('button, summary, a[href], input:not([disabled]), select:not([disabled])')]
+      .filter(element => !element.closest("[hidden]") && !(element instanceof HTMLInputElement && element.type === "radio" && !element.checked));
     const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
     const nextIndex = event.shiftKey
       ? (currentIndex <= 0 ? focusable.length - 1 : currentIndex - 1)
@@ -766,7 +780,16 @@ export function createScale(root: HTMLElement): () => void {
     event.preventDefault();
     focusable[nextIndex]?.focus();
   };
+  const onIntroCancel = (event: Event): void => {
+    event.preventDefault();
+    if (preferencesMenu.isOpen()) {
+      preferencesMenu.close();
+      return;
+    }
+    closeIntro();
+  };
   const reopenIntro = (): void => {
+    preferencesMenu.close(false);
     if (dialog.open) closeDetails(false);
     introRestoreFocus = introButton;
     page.inert = true;
@@ -776,6 +799,7 @@ export function createScale(root: HTMLElement): () => void {
   introButton.addEventListener("click", reopenIntro);
   introDialog.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.addEventListener("click", closeIntro);
   introDialog.addEventListener("keydown", onIntroKeydown);
+  introDialog.addEventListener("cancel", onIntroCancel);
 
   const applyLocale = (): void => {
     document.documentElement.lang = locale.code;
@@ -783,15 +807,13 @@ export function createScale(root: HTMLElement): () => void {
     introButton.textContent = locale.ui.about;
     returnButton.textContent = locale.ui.returnZero;
     scale.setAttribute("aria-label", locale.ui.scaleAria);
-    languageToggle.setAttribute("aria-label", locale.ui.language);
-    languageMenu.setAttribute("aria-label", locale.ui.language);
-    introDialog.querySelector<HTMLElement>("[data-intro-language]")!.setAttribute("aria-label", locale.ui.language);
+    toolbarPreferencesToggle.setAttribute("aria-label", locale.ui.language);
+    introPreferencesToggle.setAttribute("aria-label", `${locale.ui.language}: ${locale.nativeName}`);
+    introPreferencesToggle.querySelector<HTMLElement>("[data-current-language]")!.textContent = locale.nativeName;
+    preferencesMenu.update(locale, allReferences);
     introDialog.querySelector<HTMLElement>("[data-intro-title]")!.textContent = locale.ui.title;
     introDialog.querySelector<HTMLElement>("[data-how-to-use]")!.textContent = locale.ui.howToUse;
     introDialog.querySelector<HTMLElement>("[data-intro-navigation]")!.textContent = locale.ui.introNavigation;
-    allReferencesToggle.setAttribute("aria-label", locale.ui.allReferences);
-    allReferencesToggle.setAttribute("aria-pressed", String(allReferences));
-    root.querySelector<HTMLElement>("[data-all-references-help]")!.textContent = locale.ui.allReferencesHelp;
     introDialog.querySelector<HTMLElement>("[data-intro-direction-rarer]")!.textContent = locale.ui.introDirectionRarer;
     introDialog.querySelector<HTMLElement>("[data-intro-direction-likely]")!.textContent = locale.ui.introDirectionLikely;
     introDialog.querySelector<HTMLElement>("[data-intro-probability]")!.innerHTML = locale.ui.probabilityExplanation;
@@ -812,56 +834,27 @@ export function createScale(root: HTMLElement): () => void {
     dialog.querySelector<HTMLElement>("[data-assumptions-label]")!.textContent = locale.ui.assumptions;
     dialog.querySelector<HTMLElement>("[data-advice-label]")!.textContent = locale.ui.securityAdvice;
     dialog.querySelector<HTMLElement>("[data-sources-label]")!.textContent = locale.ui.sources;
-    for (const choice of root.querySelectorAll<HTMLButtonElement>("[data-locale-choice]")) choice.setAttribute("aria-pressed", String(choice.dataset.localeChoice === locale.code));
     sceneOrigin = undefined;
     render();
     if (selected && dialog.open) populateDetails(selected);
   };
 
-  const onLanguageToggle = (): void => {
-    languageMenu.hidden = !languageMenu.hidden;
-    languageToggle.setAttribute("aria-expanded", String(!languageMenu.hidden));
-    if (!languageMenu.hidden) languageMenu.querySelector<HTMLButtonElement>(`[data-locale-choice="${locale.code}"]`)?.focus();
-  };
-  const closeLanguageMenu = (restoreFocus = false): void => {
-    if (languageMenu.hidden) return;
-    languageMenu.hidden = true;
-    languageToggle.setAttribute("aria-expanded", "false");
-    if (restoreFocus) languageToggle.focus();
-  };
-  const onLanguagePickerKeydown = (event: KeyboardEvent): void => {
-    if (event.key !== "Escape" || languageMenu.hidden) return;
-    event.preventDefault();
-    event.stopPropagation();
-    closeLanguageMenu(true);
-  };
-  const onRootClick = (event: Event): void => {
-    const choice = (event.target as Element).closest<HTMLButtonElement>("[data-locale-choice]");
-    if (!choice) {
-      if (!(event.target as Element).closest("[data-language-picker]")) closeLanguageMenu();
-      return;
-    }
-    locale = locales[choice.dataset.localeChoice as LocaleCode];
+  function selectLocale(code: LocaleCode): void {
+    locale = locales[code];
     saveLocale(locale);
-    const menuChoice = choice.dataset.localeContext === "menu";
-    closeLanguageMenu();
     applyLocale();
-    if (menuChoice) languageToggle.focus();
-  };
-  languageToggle.addEventListener("click", onLanguageToggle);
-  languagePicker.addEventListener("keydown", onLanguagePickerKeydown);
-  root.addEventListener("click", onRootClick);
+  }
 
-  const onAllReferencesToggle = (): void => {
+  function setAllReferences(checked: boolean): void {
     cancelTravel();
-    allReferences = !allReferences;
+    allReferences = checked;
     saveAllReferences(allReferences);
-    allReferencesToggle.setAttribute("aria-pressed", String(allReferences));
+    preferencesMenu.update(locale, allReferences);
     if (active && !landmarkIsAvailable(active)) active = selected;
     sceneOrigin = undefined;
     render();
-  };
-  allReferencesToggle.addEventListener("click", onAllReferencesToggle);
+    if (selected && dialog.open) populateDetails(selected);
+  }
 
   const clearTravelPresentation = (): void => {
     gapCaption.hidden = true;
@@ -1058,7 +1051,7 @@ export function createScale(root: HTMLElement): () => void {
       : event.key === "ArrowLeft" || event.key === "ArrowDown"
         ? -1
         : 0;
-    if (direction === 0 || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || introDialog.open || !languageMenu.hidden) return;
+    if (direction === 0 || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || introDialog.open) return;
     const target = event.target;
     const navigatesScene = target === document.body
       || target === document.documentElement
@@ -1163,10 +1156,10 @@ export function createScale(root: HTMLElement): () => void {
     introButton.removeEventListener("click", reopenIntro);
     introDialog.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.removeEventListener("click", closeIntro);
     introDialog.removeEventListener("keydown", onIntroKeydown);
-    languageToggle.removeEventListener("click", onLanguageToggle);
-    languagePicker.removeEventListener("keydown", onLanguagePickerKeydown);
-    root.removeEventListener("click", onRootClick);
-    allReferencesToggle.removeEventListener("click", onAllReferencesToggle);
+    introDialog.removeEventListener("cancel", onIntroCancel);
+    toolbarPreferencesToggle.removeEventListener("click", openToolbarPreferences);
+    introPreferencesToggle.removeEventListener("click", openIntroPreferences);
+    preferencesMenu.destroy();
     scale.removeEventListener("wheel", onWheel);
     document.removeEventListener("keydown", onKeydown);
     window.removeEventListener("pagehide", persistOnPageHide);

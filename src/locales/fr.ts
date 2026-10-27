@@ -13,7 +13,7 @@ export const fr: LocaleDefinition = {
     language: "Langue",
     scaleAria: "Échelle des probabilités. Sur ordinateur, utilisez la molette ou les touches fléchées. Gauche et Bas vont vers l’intérieur jusqu’au prochain événement plus rare. Droite et Haut vont vers l’extérieur jusqu’au prochain événement plus probable. Sur écran tactile, balayez ou pincez.",
     howToUse: "Comment utiliser l’échelle",
-    allReferences: "Toutes les références",
+    allReferences: "Afficher toutes les références",
     allReferencesHelp: "Afficher aussi les exemples propres à d’autres pays.",
     introDirectionRarer: "− dBan : plus rare, vers le centre",
     introDirectionLikely: "+ dBan : plus probable, vers l’extérieur",

@@ -81,16 +81,29 @@ test("explores radial depth and switches an open explanation to French", async (
   await expect(intro).toBeVisible();
   await expect(intro.getByRole("heading", { name: "The Scale of Probability" })).toBeVisible();
   await expect(intro).toContainText("introduced by Alan Turing");
-  await expect(intro.getByRole("button", { name: "English" })).toHaveAttribute("aria-pressed", "true");
-  await expect(intro.getByRole("button", { name: "Français" })).toBeVisible();
+  const introPreferencesToggle = intro.locator('[data-preferences-toggle="intro"]');
+  const preferencesMenu = page.locator("[data-preferences-menu]");
+  await expect(introPreferencesToggle).toContainText("English");
+  await introPreferencesToggle.click();
+  await expect(preferencesMenu).toBeVisible();
+  await expect(preferencesMenu.locator("[data-preferences-language-label]")).toHaveText("Language");
+  await expect(preferencesMenu.locator(".preferences-options label")).toHaveText(["English", "Français", "简体中文", "Español"]);
+  await expect(preferencesMenu.locator('[data-locale-choice="en"]')).toBeChecked();
+  await expect(preferencesMenu.locator("[data-all-references]")).toBeVisible();
   await expect(intro.getByRole("button", { name: "Explore the scale" })).toBeInViewport();
-  await intro.getByRole("button", { name: "Français" }).click();
+  await preferencesMenu.locator('[data-locale-choice="fr"]').check();
+  await expect(preferencesMenu).toBeVisible();
+  await expect(introPreferencesToggle).toContainText("Français");
+  await page.keyboard.press("Escape");
+  await expect(preferencesMenu).toBeHidden();
   await expect(intro.getByRole("button", { name: "Explorer l’échelle" })).toBeInViewport();
   await intro.locator("details").evaluateAll(details => details.forEach(detail => { (detail as HTMLDetailsElement).open = true; }));
   await expect(intro.getByRole("button", { name: "Explorer l’échelle" })).toBeInViewport();
   await intro.locator("details").evaluateAll(details => details.forEach(detail => { (detail as HTMLDetailsElement).open = false; }));
   await capture(page, testInfo, "desktop-french-about-language-choice");
-  await intro.getByRole("button", { name: "English" }).click();
+  await introPreferencesToggle.click();
+  await preferencesMenu.locator('[data-locale-choice="en"]').check();
+  await page.keyboard.press("Escape");
   await capture(page, testInfo, "desktop-about-language-choice");
   await intro.getByRole("button", { name: "Explore the scale" }).click();
 
@@ -135,30 +148,41 @@ test("explores radial depth and switches an open explanation to French", async (
   await expect(page.locator("[data-detail-title]")).toHaveText("At least one ace in five cards");
   const depthBeforeLocale = await scale.getAttribute("data-depth");
 
-  await page.locator("[data-language-toggle]").click();
-  const languageMenu = page.locator("[data-language-menu]");
-  await expect(languageMenu).toBeVisible();
-  await languageMenu.getByRole("button", { name: "Français" }).click();
+  const toolbarPreferencesToggle = page.locator('[data-preferences-toggle="toolbar"]');
+  await toolbarPreferencesToggle.click();
+  await expect(preferencesMenu).toBeVisible();
+  await preferencesMenu.locator('[data-locale-choice="fr"]').check();
+  await expect(preferencesMenu).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
   await expect(page).toHaveTitle("L’échelle des probabilités");
   await expect(page.locator("[data-detail-title]")).toHaveText("Au moins un as parmi cinq cartes");
   await expect(page.locator("[data-detail-kind]")).toHaveText("Modèle exact");
   await expect(scale).toHaveAttribute("data-depth", depthBeforeLocale!);
   await expect(page.locator("[data-open-intro]")).toHaveText("À propos");
-  await expect(page.locator("[data-language-toggle]")).toBeFocused();
+  await expect(preferencesMenu.locator('[data-locale-choice="fr"]')).toBeFocused();
   await expect(page.locator("[data-center-marker] .probability")).toContainText(" %");
   await expect(page.locator("[data-center-marker] .probability")).toContainText("Probabilité :");
   await expect(page.locator("[data-center-marker] .odds")).toContainText("Cote :");
   await capture(page, testInfo, "desktop-french-open-details");
 
+  await preferencesMenu.locator("[data-all-references]").check();
+  await expect(preferencesMenu).toBeVisible();
+  await expect(details).toBeVisible();
+  await expect(scale).toHaveAttribute("data-depth", depthBeforeLocale!);
+  await page.keyboard.press("Escape");
+  await expect(preferencesMenu).toBeHidden();
+  await expect(toolbarPreferencesToggle).toBeFocused();
+  await expect(details).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(details).toBeHidden();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+  await page.locator('[data-preferences-toggle="toolbar"]').click();
+  await expect(page.locator("[data-all-references]")).toBeChecked();
 });
 
 test("keeps French depth exploration readable and tappable on mobile", async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 360, height: 640 });
+  await page.setViewportSize({ width: 320, height: 640 });
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.clear();
@@ -167,7 +191,9 @@ test("keeps French depth exploration readable and tappable on mobile", async ({ 
   await page.reload();
 
   const intro = page.locator("[data-scale-intro]");
-  await intro.getByRole("button", { name: "Français" }).click();
+  await intro.locator('[data-preferences-toggle="intro"]').click();
+  await page.locator('[data-preferences-menu] [data-locale-choice="fr"]').check();
+  await page.keyboard.press("Escape");
   await expect(intro).toContainText("Une augmentation de 10 dBan multiplie la cote par dix");
   await expect(intro).toContainText("travaux de décryptage de la Seconde Guerre mondiale");
   await capture(page, testInfo, "mobile-french-about");
@@ -218,6 +244,96 @@ test("keeps French depth exploration readable and tappable on mobile", async ({ 
   const readoutBox = await page.locator("[data-center-marker]").boundingBox();
   expect(readoutBox).not.toBeNull();
   expect(readoutBox!.x).toBeGreaterThanOrEqual(0);
-  expect(readoutBox!.x + readoutBox!.width).toBeLessThanOrEqual(360);
+  expect(readoutBox!.x + readoutBox!.width).toBeLessThanOrEqual(320);
   await capture(page, testInfo, "mobile-french-extreme");
+});
+
+test("keeps Chinese and Spanish choices and open details readable on a narrow screen", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await page.reload();
+
+  const intro = page.locator("[data-scale-intro]");
+  const introPreferencesToggle = intro.locator('[data-preferences-toggle="intro"]');
+  await introPreferencesToggle.click();
+  const preferencesMenu = page.locator("[data-preferences-menu]");
+  await expect(preferencesMenu.locator(".preferences-options label")).toHaveText(["English", "Français", "简体中文", "Español"]);
+  const introLayout = await intro.evaluate(panel => {
+    const panelBox = panel.getBoundingClientRect();
+    const scroll = panel.querySelector<HTMLElement>(".intro-scroll")!;
+    return {
+      contentFits: scroll.scrollWidth <= scroll.clientWidth,
+      triggerFits: (() => {
+        const box = panel.querySelector<HTMLElement>('[data-preferences-toggle="intro"]')!.getBoundingClientRect();
+        return box.left >= panelBox.left && box.right <= panelBox.right;
+      })(),
+    };
+  });
+  expect(introLayout).toEqual({ contentFits: true, triggerFits: true });
+  const menuLayout = await preferencesMenu.evaluate(menu => {
+    const box = menu.getBoundingClientRect();
+    const targets = [...menu.querySelectorAll<HTMLElement>("label")].map(label => label.getBoundingClientRect().height);
+    return { left: box.left, right: box.right, width: innerWidth, targets };
+  });
+  expect(menuLayout.left).toBeGreaterThanOrEqual(0);
+  expect(menuLayout.right).toBeLessThanOrEqual(menuLayout.width);
+  expect(menuLayout.targets.every(height => height >= 44)).toBe(true);
+
+  await preferencesMenu.locator('[data-locale-choice="en"]').focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(preferencesMenu.locator('[data-locale-choice="fr"]')).toBeChecked();
+  await expect(preferencesMenu).toBeVisible();
+  await page.keyboard.press("Tab");
+  await expect(preferencesMenu.locator("[data-all-references]")).toBeFocused();
+
+  await preferencesMenu.locator('[data-locale-choice="zh"]').check();
+  await page.keyboard.press("Escape");
+  await expect(intro.getByRole("button", { name: "探索尺度" })).toBeVisible();
+  await capture(page, testInfo, "mobile-chinese-about");
+  await intro.getByRole("button", { name: "探索尺度" }).click();
+  await page.locator('[data-landmark="ace-in-five-cards"]').click();
+  const scale = page.locator(".scale");
+  const depth = await scale.getAttribute("data-depth");
+  await expect(page.locator("[data-detail-title]")).toHaveText("五张牌中至少有一张 A");
+  await capture(page, testInfo, "mobile-chinese-open-details");
+
+  await page.locator('[data-preferences-toggle="toolbar"]').click();
+  const toolbarMenuBox = await preferencesMenu.boundingBox();
+  expect(toolbarMenuBox).not.toBeNull();
+  expect(toolbarMenuBox!.x).toBeGreaterThanOrEqual(0);
+  expect(toolbarMenuBox!.x + toolbarMenuBox!.width).toBeLessThanOrEqual(320);
+  await preferencesMenu.locator('[data-locale-choice="es"]').check();
+  await expect(page.locator("html")).toHaveAttribute("lang", "es");
+  await expect(page.locator("[data-detail-title]")).toHaveText("Al menos un as en cinco cartas");
+  await expect(scale).toHaveAttribute("data-depth", depth!);
+  expect(await page.locator("[data-detail-panel]").evaluate(panel => panel.scrollWidth <= panel.clientWidth)).toBe(true);
+  await capture(page, testInfo, "mobile-chinese-spanish-open-details");
+});
+
+test("keeps the shared preferences menu within a short viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 568, height: 320 });
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await page.reload();
+
+  await page.locator('[data-preferences-toggle="intro"]').click();
+  const layout = await page.locator("[data-preferences-menu]").evaluate(menu => {
+    const box = menu.getBoundingClientRect();
+    return {
+      top: box.top,
+      bottom: box.bottom,
+      viewportHeight: innerHeight,
+      scrollable: menu.scrollHeight > menu.clientHeight,
+    };
+  });
+  expect(layout.top).toBeGreaterThanOrEqual(0);
+  expect(layout.bottom).toBeLessThanOrEqual(layout.viewportHeight);
+  expect(layout.scrollable).toBe(true);
 });
