@@ -78,6 +78,13 @@ export const dice_gamesES = {
     calculation: "p = 1 triple seis / 216 tiradas igualmente probables = 1/216",
     assumptions: "Los tres dados equilibrados de seis caras se lanzan de forma independiente.",
   },
+  "four-dice-all-identical": {
+    title: "Cuatro dados muestran el mismo número",
+    shortTitle: "cuatro dados coinciden",
+    explanation: "Seis de las 1296 tiradas igualmente probables de cuatro dados tienen las cuatro caras iguales, desde 1–1–1–1 hasta 6–6–6–6.",
+    calculation: "p = 6 tiradas coincidentes de cuatro dados / 6⁴ tiradas igualmente probables = 6/1296 = 1/216",
+    assumptions: "Los cuatro dados equilibrados de seis caras se lanzan de forma independiente.",
+  },
   "first-roll-yahtzee": {
     title: "Yams/Yahtzee en la primera tirada",
     shortTitle: "Yams en la primera tirada",

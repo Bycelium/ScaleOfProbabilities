@@ -78,6 +78,13 @@ export const dice_gamesEN = {
     calculation: "p = 1 triple six / 216 equally likely rolls = 1/216",
     assumptions: "The three fair six-sided dice roll independently.",
   },
+  "four-dice-all-identical": {
+    title: "Four dice all match",
+    shortTitle: "four dice match",
+    explanation: "Six of the 1,296 equally likely four-die rolls have all four faces the same, from 1–1–1–1 through 6–6–6–6.",
+    calculation: "p = 6 matching four-die rolls / 6⁴ equally likely rolls = 6/1296 = 1/216",
+    assumptions: "The four fair six-sided dice roll independently.",
+  },
   "first-roll-yahtzee": {
     title: "Yams/Yahtzee on the first roll",
     shortTitle: "first-roll Yams",

@@ -77,6 +77,7 @@ describe("scene rendering performance", () => {
     const dispose = renderMobileScale();
     const scale = document.querySelector<HTMLElement>(".scale")!;
     const scene = document.querySelector<HTMLElement>("[data-depth-scene]")!;
+    const rails = document.querySelector<SVGSVGElement>("[data-family-rails]")!;
     const titles = [...document.querySelectorAll<HTMLElement>(".landmark-title")];
     const initialTitleState = titles.map(title => ({ hidden: title.hidden, transform: title.style.transform }));
 
@@ -84,6 +85,9 @@ describe("scene rendering performance", () => {
     clock.advanceTo(16);
 
     expect(scale.dataset.fastForward).toBe("outward");
+    expect(scene.contains(rails)).toBe(false);
+    expect(rails.parentElement).toBe(scale);
+    expect(rails.style.transform).toBe(scene.style.transform);
     expect(titles.map(title => ({ hidden: title.hidden, transform: title.style.transform }))).toEqual(initialTitleState);
     expect(document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.getAttribute("aria-label")).toContain("A chosen side of a fair coin");
     const sceneZoom = Number(scene.dataset.sceneZoom);
@@ -101,12 +105,14 @@ describe("scene rendering performance", () => {
     scale.dispatchEvent(pointerDown);
     expect(scale.dataset.fastForward).toBeUndefined();
     expect(scene.style.transform).toBe("scale(1)");
+    expect(rails.style.transform).toBe("scale(1)");
 
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 20, bubbles: true, cancelable: true }));
     clock.advanceTo(46);
     clock.advanceTo(4000);
     expect(scale.dataset.fastForward).toBeUndefined();
     expect(scene.style.transform).toBe("scale(1)");
+    expect(rails.style.transform).toBe("scale(1)");
     const settledCenter = Number(scale.dataset.depth);
     let eligibleVisibleTitles = 0;
     for (const button of document.querySelectorAll<HTMLElement>("[data-landmark]")) {
@@ -117,7 +123,7 @@ describe("scene rendering performance", () => {
       if (!eligible) expect(title.hidden).toBe(true);
       if (!title.hidden) {
         eligibleVisibleTitles += 1;
-        expect(title.style.transform).toBe("scale(1)");
+        expect(title.style.transform).toBe("scale(1) translate(var(--title-x), var(--title-y))");
       }
       expect(button.getAttribute("aria-label")).toBeTruthy();
     }
@@ -142,6 +148,15 @@ describe("scene rendering performance", () => {
       .map(button => [button.dataset.landmark!, button.getAttribute("aria-label")]));
     const initialMeasurementCount = measuredTitles.length;
     const initialCoinLeft = document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.style.left;
+    const railSnapshot = () => [...document.querySelectorAll<SVGElement>("[data-family-rail]")].map(rail => ({
+      id: rail.dataset.familyRail,
+      hidden: rail.hasAttribute("hidden"),
+      path: rail.tagName,
+      geometry: rail.tagName === "polyline"
+        ? (rail.getAttribute("points")?.trim().split(/[\s,]+/).map(Number) ?? [])
+        : ["x1", "y1", "x2", "y2"].map(attribute => Number(rail.getAttribute(attribute))),
+    }));
+    const initialRails = railSnapshot();
 
     document.querySelector<HTMLButtonElement>('[data-landmark="die-six"]')!.click();
     clock.advanceTo(400);
@@ -149,6 +164,14 @@ describe("scene rendering performance", () => {
     expect(Math.abs(Number(scale.dataset.depth))).toBeGreaterThanOrEqual(5);
     expect(document.querySelector<HTMLElement>('[data-landmark="coin-heads"]')!.style.left).not.toBe(initialCoinLeft);
     expect(measuredTitles).toHaveLength(initialMeasurementCount);
+    const rebasedRails = railSnapshot();
+    expect(rebasedRails).not.toEqual(initialRails);
+    expect(rebasedRails.find(rail => rail.id === "holdem-seven-card-hands")?.geometry)
+      .not.toEqual(initialRails.find(rail => rail.id === "holdem-seven-card-hands")?.geometry);
+    for (const rail of rebasedRails.filter(rail => !rail.hidden)) {
+      expect(rail.geometry.length).toBeGreaterThanOrEqual(4);
+      expect(rail.geometry.every(Number.isFinite)).toBe(true);
+    }
 
     const pointerDown = new Event("pointerdown", { bubbles: true });
     Object.defineProperties(pointerDown, { pointerId: { value: 1 }, pointerType: { value: "mouse" } });
@@ -174,7 +197,7 @@ describe("scene rendering performance", () => {
       const eligible = !button.hidden && projectedSize >= 32 && Math.abs(landmark.position - arrivedCenter) <= 1.7;
       const title = button.querySelector<HTMLElement>(".landmark-title")!;
       if (eligible && title.hidden) suppressedEligibleTitles += 1;
-      if (!title.hidden) expect(title.style.transform).toBe("scale(1)");
+      if (!title.hidden) expect(title.style.transform).toBe("scale(1) translate(var(--title-x), var(--title-y))");
     }
     expect(suppressedEligibleTitles).toBeGreaterThan(0);
     dispose();
@@ -197,6 +220,31 @@ describe("scene rendering performance", () => {
     expect([coin.style.left, coin.style.top]).toEqual(initialCoinPosition);
     expect(Number(scene.dataset.sceneZoom)).toBeCloseTo(10 ** (-center / 10), 10);
     expect(Number(coin.dataset.depthScale) * Number(scene.dataset.sceneZoom)).toBeCloseTo(10 ** (-center / 10), 10);
+    dispose();
+  });
+
+  it("rebases the birthday rail through a long family journey", () => {
+    const birthday40 = displayLandmarks.find(item => item.id === "birthday-40")!;
+    const birthday60 = displayLandmarks.find(item => item.id === "birthday-60")!;
+    history.replaceState(null, "", `#d=${birthday60.position}`);
+    const clock = new TestFrameClock();
+    const dispose = renderMobileScale();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const rail = document.querySelector<SVGLineElement>('[data-family-rail="birthdays-365"]')!;
+    const geometry = () => ["x1", "y1", "x2", "y2"].map(attribute => Number(rail.getAttribute(attribute)));
+    const initialGeometry = geometry();
+
+    expect(rail.hasAttribute("hidden")).toBe(false);
+    expect(initialGeometry.every(Number.isFinite)).toBe(true);
+    document.querySelector<HTMLButtonElement>('[data-landmark="birthday-40"]')!.click();
+    clock.advanceTo(400);
+
+    expect(geometry()).not.toEqual(initialGeometry);
+    expect(geometry().every(Number.isFinite)).toBe(true);
+    clock.advanceTo(4000);
+    expect(Number(scale.dataset.depth)).toBeCloseTo(birthday40.position, 10);
+    expect(rail.hasAttribute("hidden")).toBe(false);
+    expect(geometry().every(Number.isFinite)).toBe(true);
     dispose();
   });
 });

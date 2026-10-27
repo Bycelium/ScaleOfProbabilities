@@ -2,51 +2,119 @@ import { catalogueSlots, type LandmarkId } from "./catalogue/order";
 
 const degrees = (value: number): number => value * Math.PI / 180;
 
+type FamilyRailDefinition = Readonly<{
+  id: string;
+  angle: number;
+  members: readonly LandmarkId[];
+  memberAngles?: Readonly<Partial<Record<LandmarkId, number>>>;
+  path: "line" | "polyline";
+}>;
+
+export const familyRailDefinitions = [
+  {
+    id: "roulette",
+    angle: 0,
+    members: [
+      "roulette-straight-up", "roulette-split", "roulette-street", "roulette-corner",
+      "roulette-six-line", "roulette-dozen-column", "roulette-even-money", "roulette-two-dozens-columns",
+    ],
+    path: "line",
+  },
+  {
+    id: "polyhedral-highest-face",
+    angle: degrees(225),
+    members: ["die-d4-highest", "die-six", "die-d12-highest", "die-d20-highest"],
+    path: "line",
+  },
+  {
+    id: "pokemon-destined-rivals",
+    angle: degrees(138),
+    members: [
+      "pokemon-destined-rivals-double-rare", "pokemon-destined-rivals-illustration-rare",
+      "pokemon-destined-rivals-special-illustration-rare",
+    ],
+    path: "line",
+  },
+  {
+    id: "birthdays-365",
+    angle: degrees(305),
+    members: ["birthday-10", "birthday-20", "birthday-30", "birthday-40", "birthday-50", "birthday-60"],
+    path: "line",
+  },
+  {
+    id: "all-identical-dice",
+    angle: degrees(170),
+    members: [
+      "two-dice-any-double", "three-dice-any-triple", "four-dice-all-identical", "first-roll-yahtzee",
+    ],
+    path: "line",
+  },
+  {
+    id: "any-pair-dice",
+    angle: degrees(150),
+    members: ["four-dice-any-match", "yahtzee-any-match"],
+    memberAngles: {
+      "four-dice-any-match": degrees(142),
+      "yahtzee-any-match": degrees(158),
+    },
+    path: "polyline",
+  },
+  {
+    id: "holdem-seven-card-hands",
+    angle: degrees(250),
+    members: [
+      "holdem-one-pair", "holdem-high-card", "holdem-two-pair", "holdem-three-kind", "holdem-straight",
+      "holdem-flush", "holdem-full-house", "holdem-four-kind", "holdem-straight-flush", "holdem-royal-flush",
+    ],
+    memberAngles: {
+      "holdem-three-kind": degrees(238),
+      "holdem-straight": degrees(262),
+      "holdem-flush": degrees(238),
+      "holdem-full-house": degrees(262),
+    },
+    path: "polyline",
+  },
+] as const satisfies readonly FamilyRailDefinition[];
+
+const familyRailLandmarks = new Set<LandmarkId>(familyRailDefinitions.flatMap(family => [...family.members]));
+
+export const isFamilyRailLandmark = (id: LandmarkId): boolean => familyRailLandmarks.has(id);
+
+export const landmarkArtFactor = (id: LandmarkId): number => isFamilyRailLandmark(id) ? .55 : 1;
+
 // Curated once against the complete catalogue. These dense bands keep their
 // geometry when a locale or regional filter changes the visible subset.
 const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "green-pea": degrees(325),
   "rps-win": degrees(190),
   "ace-in-five-cards": degrees(30),
-  "holdem-one-pair": degrees(250),
   "coin-heads": degrees(80),
-  "birthday-23": degrees(195),
-  "four-dice-any-six": degrees(315),
-  "month-31-days": degrees(175),
+  "four-dice-any-six": degrees(225),
+  "month-31-days": degrees(58),
   "three-dice-sum-ten": degrees(250),
   "numbered-card": degrees(75),
   "weekday": degrees(200),
   "ocean-point": degrees(20),
   "yellow-pea": degrees(50),
-  "die-d4-highest": degrees(110),
   "solar-terrestrial": degrees(40),
   "full-moon-15-days": degrees(145),
-  "french-scrabble-consonant": degrees(350),
+  "french-scrabble-consonant": degrees(325),
   "solar-eclipse-year": degrees(225),
   "frozen-freshwater": degrees(280),
-  "four-dice-any-match": degrees(105),
-  "red-dwarf-star": degrees(130),
+  "red-dwarf-star": degrees(170),
   "planet-with-moon": degrees(250),
-  "rain-hilo": degrees(165),
-  "mensik-first-serve-miami-2025": degrees(345),
+  "rain-hilo": degrees(105),
+  "mensik-first-serve-miami-2025": degrees(335),
   "rain-brest-december": degrees(115),
-  "covid-scenario-positive": degrees(338),
-  "roulette-dozen-column": degrees(70),
-  "roulette-even-money": degrees(225),
-  "roulette-two-dozens-columns": degrees(317),
+  "covid-scenario-positive": degrees(90),
   "d20-avoid-natural-one-advantage": degrees(135),
-  "pokemon-destined-rivals-double-rare": degrees(138),
-  "pokemon-destined-rivals-illustration-rare": degrees(100),
-  "pokemon-destined-rivals-special-illustration-rare": degrees(220),
-  "roulette-six-line": degrees(280),
-  "roulette-corner": degrees(252),
-  "roulette-street": degrees(320),
-  "roulette-split": degrees(292),
-  "roulette-straight-up": degrees(330),
   "blackjack-natural-six-deck": degrees(155),
+  "euromillions-main-prize": degrees(75),
+  "france-loto-main-prize": degrees(105),
   "four-leaf-clover": degrees(35),
   "uk-recent-car-breakdown-2021": degrees(90),
   "fr-person-smartphone-2025": degrees(45),
+  "fr-household-television-2025": degrees(235),
   "rubik-state": degrees(150),
   "enigma-m3-known-rings": degrees(36),
   "enigma-m3-after-clues": degrees(36),
@@ -56,8 +124,12 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "sahara-grain": degrees(90),
 };
 
-export const landmarkAngle = (id: LandmarkId): number => angleOverrides[id]
-  ?? degrees(-45 + ((catalogueSlots[id] * 137.508) % 360) / 360 * 270);
+export const landmarkAngle = (id: LandmarkId): number => {
+  const family = (familyRailDefinitions as readonly FamilyRailDefinition[])
+    .find(candidate => candidate.members.includes(id));
+  return family ? family.memberAngles?.[id] ?? family.angle : angleOverrides[id]
+    ?? degrees(-45 + ((catalogueSlots[id] * 137.508) % 360) / 360 * 270);
+};
 
 export type LayoutBox = Readonly<{ left: number; top: number; right: number; bottom: number }>;
 export type TitleCandidate = Readonly<{

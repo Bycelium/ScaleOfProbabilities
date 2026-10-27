@@ -1,5 +1,7 @@
 import type { LandmarkCopyFamily } from "../../types";
 
+const birthdayAssumptions = "Birthdays are independent and equally spread over 365 dates. Leap days are ignored.";
+
 export const basicsEN = {
   "coin-heads": {
     title: "A chosen side of a fair coin",
@@ -8,12 +10,33 @@ export const basicsEN = {
     calculation: "p = 1 chosen side / 2 sides = 1/2",
     assumptions: "The coin has equal chances of heads and tails, and it does not land on its edge.",
   },
-  "birthday-23": {
-    title: "A shared birthday in a room of 23",
-    shortTitle: "a shared birthday",
-    explanation: "A modelled group of 23 is slightly more likely to contain a shared birthday than to have 23 different birthdays. Every possible pair counts, rather than only people matching your birthday.",
-    calculation: "p = 1 − ∏ₖ₌₀²² (365 − k) / 365",
-    assumptions: "Birthdays are independent and equally spread over 365 dates. Leap days are ignored.",
+  "birthday-10": {
+    title: "A shared birthday in a room of 10",
+    shortTitle: "shared birthday among 10",
+    explanation: "About 12 in 100 modelled groups of 10 contain at least one shared birthday. Every possible pair counts.",
+    calculation: "p = 1 − ∏ₖ₌₀⁹ (365 − k) / 365 ≈ 0.11694818",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-20": {
+    title: "A shared birthday in a room of 20",
+    shortTitle: "shared birthday among 20",
+    explanation: "About 41 in 100 modelled groups of 20 contain at least one shared birthday. The calculation subtracts the chance that all 20 dates differ.",
+    calculation: "p = 1 − ∏ₖ₌₀¹⁹ (365 − k) / 365 ≈ 0.41143838",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-30": {
+    title: "A shared birthday in a room of 30",
+    shortTitle: "shared birthday among 30",
+    explanation: "About 71 in 100 modelled groups of 30 contain at least one shared birthday. The calculation subtracts the chance that all 30 dates differ.",
+    calculation: "p = 1 − ∏ₖ₌₀²⁹ (365 − k) / 365 ≈ 0.70631624",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-40": {
+    title: "A shared birthday in a room of 40",
+    shortTitle: "shared birthday among 40",
+    explanation: "About 89 in 100 modelled groups of 40 contain at least one shared birthday. The calculation subtracts the chance that all 40 dates differ.",
+    calculation: "p = 1 − ∏ₖ₌₀³⁹ (365 − k) / 365 ≈ 0.89123181",
+    assumptions: birthdayAssumptions,
   },
   "month-31-days": {
     title: "A chosen month has 31 days",
@@ -48,21 +71,14 @@ export const basicsEN = {
     shortTitle: "shared birthday among 50",
     explanation: "About 97 in 100 modelled groups of 50 contain at least one shared birthday. The calculation subtracts the chance that all 50 dates differ.",
     calculation: "p = 1 − ∏ₖ₌₀⁴⁹ (365 − k) / 365 ≈ 0.97037358",
-    assumptions: "Birthdays are independent and equally spread over 365 dates. Leap days are ignored.",
+    assumptions: birthdayAssumptions,
   },
-  "birthday-70": {
-    title: "A shared birthday in a room of 70",
-    shortTitle: "shared birthday among 70",
-    explanation: "About 1,189 modelled groups of 70 contain a shared birthday for every group with 70 different birthdays. The calculation subtracts the small chance that all dates differ.",
-    calculation: "p ≈ 0.999159576 from 1 minus the chance that all 70 birthdays differ",
-    assumptions: "Birthdays are independent and equally spread over 365 dates. Leap days are ignored.",
-  },
-  "birthday-79": {
-    title: "A shared birthday in a room of 79",
-    shortTitle: "shared birthday among 79",
-    explanation: "About 9,146 modelled groups of 79 contain a shared birthday for every group with 79 different birthdays. The calculation subtracts the tiny chance that all dates differ.",
-    calculation: "p ≈ 0.999890668 from 1 minus the chance that all 79 birthdays differ",
-    assumptions: "Birthdays are independent and equally spread over 365 dates. Leap days are ignored.",
+  "birthday-60": {
+    title: "A shared birthday in a room of 60",
+    shortTitle: "shared birthday among 60",
+    explanation: "More than 99 in 100 modelled groups of 60 contain at least one shared birthday. The calculation subtracts the small chance that all 60 dates differ.",
+    calculation: "p = 1 − ∏ₖ₌₀⁵⁹ (365 − k) / 365 ≈ 0.99412266",
+    assumptions: birthdayAssumptions,
   },
   "lightning-year": {
     title: "Lightning strike in a year (US estimate)",

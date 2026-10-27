@@ -1,5 +1,7 @@
 import type { LandmarkCopyFamily } from "../../types";
 
+const birthdayAssumptions = "Los cumpleaños son independientes y se distribuyen uniformemente entre 365 fechas. Se ignoran los días bisiestos.";
+
 export const basicsES = {
   "coin-heads": {
     title: "Una cara elegida de una moneda equilibrada",
@@ -8,12 +10,33 @@ export const basicsES = {
     calculation: "p = 1 cara elegida / 2 caras = 1/2",
     assumptions: "La moneda tiene la misma probabilidad de caer de cara que de cruz y no cae de canto.",
   },
-  "birthday-23": {
-    title: "Un cumpleaños compartido en un grupo de 23",
-    shortTitle: "un cumpleaños compartido",
-    explanation: "Es ligeramente más probable que un grupo modelizado de 23 personas contenga un cumpleaños compartido que 23 cumpleaños distintos. Se cuentan todas las parejas posibles, no solo las personas que cumplen años el mismo día que tú.",
-    calculation: "p = 1 − ∏ₖ₌₀²² (365 − k) / 365",
-    assumptions: "Los cumpleaños son independientes y se distribuyen uniformemente entre 365 fechas. Se ignoran los días bisiestos.",
+  "birthday-10": {
+    title: "Un cumpleaños compartido en un grupo de 10",
+    shortTitle: "cumpleaños compartido entre 10",
+    explanation: "Unos 12 de cada 100 grupos modelizados de 10 personas contienen al menos un cumpleaños compartido. Se cuentan todas las parejas posibles.",
+    calculation: "p = 1 − ∏ₖ₌₀⁹ (365 − k) / 365 ≈ 0,11694818",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-20": {
+    title: "Un cumpleaños compartido en un grupo de 20",
+    shortTitle: "cumpleaños compartido entre 20",
+    explanation: "Unos 41 de cada 100 grupos modelizados de 20 personas contienen al menos un cumpleaños compartido. El cálculo resta la probabilidad de que las 20 fechas sean distintas.",
+    calculation: "p = 1 − ∏ₖ₌₀¹⁹ (365 − k) / 365 ≈ 0,41143838",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-30": {
+    title: "Un cumpleaños compartido en un grupo de 30",
+    shortTitle: "cumpleaños compartido entre 30",
+    explanation: "Unos 71 de cada 100 grupos modelizados de 30 personas contienen al menos un cumpleaños compartido. El cálculo resta la probabilidad de que las 30 fechas sean distintas.",
+    calculation: "p = 1 − ∏ₖ₌₀²⁹ (365 − k) / 365 ≈ 0,70631624",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-40": {
+    title: "Un cumpleaños compartido en un grupo de 40",
+    shortTitle: "cumpleaños compartido entre 40",
+    explanation: "Unos 89 de cada 100 grupos modelizados de 40 personas contienen al menos un cumpleaños compartido. El cálculo resta la probabilidad de que las 40 fechas sean distintas.",
+    calculation: "p = 1 − ∏ₖ₌₀³⁹ (365 − k) / 365 ≈ 0,89123181",
+    assumptions: birthdayAssumptions,
   },
   "month-31-days": {
     title: "Un mes elegido tiene 31 días",
@@ -48,21 +71,14 @@ export const basicsES = {
     shortTitle: "cumpleaños compartido entre 50",
     explanation: "Unos 97 de cada 100 grupos modelizados de 50 personas contienen al menos un cumpleaños compartido. El cálculo resta la probabilidad de que las 50 fechas sean distintas.",
     calculation: "p = 1 − ∏ₖ₌₀⁴⁹ (365 − k) / 365 ≈ 0,97037358",
-    assumptions: "Los cumpleaños son independientes y se distribuyen uniformemente entre 365 fechas. Se ignoran los días bisiestos.",
+    assumptions: birthdayAssumptions,
   },
-  "birthday-70": {
-    title: "Un cumpleaños compartido en un grupo de 70",
-    shortTitle: "cumpleaños compartido entre 70",
-    explanation: "Unos 1189 grupos modelizados de 70 personas contienen un cumpleaños compartido por cada grupo con 70 cumpleaños distintos. El cálculo resta la pequeña probabilidad de que todas las fechas sean diferentes.",
-    calculation: "p ≈ 0,999159576 a partir de 1 menos la probabilidad de que los 70 cumpleaños sean distintos",
-    assumptions: "Los cumpleaños son independientes y se distribuyen uniformemente entre 365 fechas. Se ignoran los días bisiestos.",
-  },
-  "birthday-79": {
-    title: "Un cumpleaños compartido en un grupo de 79",
-    shortTitle: "cumpleaños compartido entre 79",
-    explanation: "Unos 9146 grupos modelizados de 79 personas contienen un cumpleaños compartido por cada grupo con 79 cumpleaños distintos. El cálculo resta la diminuta probabilidad de que todas las fechas sean diferentes.",
-    calculation: "p ≈ 0,999890668 a partir de 1 menos la probabilidad de que los 79 cumpleaños sean distintos",
-    assumptions: "Los cumpleaños son independientes y se distribuyen uniformemente entre 365 fechas. Se ignoran los días bisiestos.",
+  "birthday-60": {
+    title: "Un cumpleaños compartido en un grupo de 60",
+    shortTitle: "cumpleaños compartido entre 60",
+    explanation: "Más de 99 de cada 100 grupos modelizados de 60 personas contienen al menos un cumpleaños compartido. El cálculo resta la pequeña probabilidad de que las 60 fechas sean distintas.",
+    calculation: "p = 1 − ∏ₖ₌₀⁵⁹ (365 − k) / 365 ≈ 0,99412266",
+    assumptions: birthdayAssumptions,
   },
   "lightning-year": {
     title: "Impacto de un rayo en un año (estimación de EE. UU.)",

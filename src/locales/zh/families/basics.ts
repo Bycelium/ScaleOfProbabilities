@@ -1,5 +1,7 @@
 import type { LandmarkCopyFamily } from "../../types";
 
+const birthdayAssumptions = "每个人的生日相互独立，并均匀分布在 365 个日期上。忽略闰日。";
+
 export const basicsZH = {
   "coin-heads": {
     title: "公平硬币出现预先选定的一面",
@@ -9,12 +11,33 @@ export const basicsZH = {
     assumptions: "硬币出现正面和反面的概率相等，且不会立在边缘。",
   },
 
-  "birthday-23": {
-    title: "23 人中有人生日相同",
-    shortTitle: "生日相同",
-    explanation: "在模型中，23 人的小组出现至少两人生日相同的可能性略高于 23 人生日各不相同。计算考虑每一对人，不仅考虑是否有人与你同一天生日。",
-    calculation: "p = 1 − ∏ₖ₌₀²² (365 − k) / 365",
-    assumptions: "每个人的生日相互独立，并均匀分布在 365 个日期上。忽略闰日。",
+  "birthday-10": {
+    title: "10 人中有人生日相同",
+    shortTitle: "10 人中生日相同",
+    explanation: "在模型中，每 100 个 10 人小组约有 12 个包含至少一对生日相同的人。计算考虑每一对人。",
+    calculation: "p = 1 − ∏ₖ₌₀⁹ (365 − k) / 365 ≈ 0.11694818",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-20": {
+    title: "20 人中有人生日相同",
+    shortTitle: "20 人中生日相同",
+    explanation: "在模型中，每 100 个 20 人小组约有 41 个包含至少一对生日相同的人。计算先求 20 个日期全都不同的概率，再用 1 减去它。",
+    calculation: "p = 1 − ∏ₖ₌₀¹⁹ (365 − k) / 365 ≈ 0.41143838",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-30": {
+    title: "30 人中有人生日相同",
+    shortTitle: "30 人中生日相同",
+    explanation: "在模型中，每 100 个 30 人小组约有 71 个包含至少一对生日相同的人。计算先求 30 个日期全都不同的概率，再用 1 减去它。",
+    calculation: "p = 1 − ∏ₖ₌₀²⁹ (365 − k) / 365 ≈ 0.70631624",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-40": {
+    title: "40 人中有人生日相同",
+    shortTitle: "40 人中生日相同",
+    explanation: "在模型中，每 100 个 40 人小组约有 89 个包含至少一对生日相同的人。计算先求 40 个日期全都不同的概率，再用 1 减去它。",
+    calculation: "p = 1 − ∏ₖ₌₀³⁹ (365 − k) / 365 ≈ 0.89123181",
+    assumptions: birthdayAssumptions,
   },
 
   "month-31-days": {
@@ -53,23 +76,14 @@ export const basicsZH = {
     shortTitle: "50 人中生日相同",
     explanation: "在模型中，每 100 个 50 人小组约有 97 个包含至少一对生日相同的人。计算先求 50 个日期全都不同的概率，再用 1 减去它。",
     calculation: "p = 1 − ∏ₖ₌₀⁴⁹ (365 − k) / 365 ≈ 0.97037358",
-    assumptions: "每个人的生日相互独立，并均匀分布在 365 个日期上。忽略闰日。",
+    assumptions: birthdayAssumptions,
   },
-
-  "birthday-70": {
-    title: "70 人中有人生日相同",
-    shortTitle: "70 人中生日相同",
-    explanation: "在模型中，每出现一个 70 人生日各不相同的小组，约有 1,189 个小组包含相同生日。计算用 1 减去所有日期均不同的小概率。",
-    calculation: "p ≈ 0.999159576，即 1 减去 70 个生日全都不同的概率",
-    assumptions: "每个人的生日相互独立，并均匀分布在 365 个日期上。忽略闰日。",
-  },
-
-  "birthday-79": {
-    title: "79 人中有人生日相同",
-    shortTitle: "79 人中生日相同",
-    explanation: "在模型中，每出现一个 79 人生日各不相同的小组，约有 9,146 个小组包含相同生日。计算用 1 减去所有日期均不同的极小概率。",
-    calculation: "p ≈ 0.999890668，即 1 减去 79 个生日全都不同的概率",
-    assumptions: "每个人的生日相互独立，并均匀分布在 365 个日期上。忽略闰日。",
+  "birthday-60": {
+    title: "60 人中有人生日相同",
+    shortTitle: "60 人中生日相同",
+    explanation: "在模型中，每 100 个 60 人小组中超过 99 个包含至少一对生日相同的人。计算先求 60 个日期全都不同的小概率，再用 1 减去它。",
+    calculation: "p = 1 − ∏ₖ₌₀⁵⁹ (365 − k) / 365 ≈ 0.99412266",
+    assumptions: birthdayAssumptions,
   },
 
   "lightning-year": {
