@@ -109,6 +109,7 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "frozen-freshwater": degrees(280),
   "red-dwarf-star": degrees(170),
   "rain-hilo": degrees(105),
+  "nba-free-throw-2023-24": degrees(217),
   "mensik-first-serve-miami-2025": degrees(335),
   "rain-brest-december": degrees(115),
   "covid-scenario-positive": degrees(90),

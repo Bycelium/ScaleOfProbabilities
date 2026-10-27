@@ -228,6 +228,7 @@ test("keeps stellar hydrogen and its nearby landmarks selectable at their exact 
     "red-dwarf-star",
     "lunar-eclipse-year",
     "rain-hilo",
+    "nba-free-throw-2023-24",
   ] as const;
   for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
