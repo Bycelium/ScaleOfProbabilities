@@ -9,6 +9,7 @@ Read this guide before changing the scale scene, readout, navigation, details, A
 - Project circle radius and illustration size as `10^((event dBan − current dBan) / 10)`. The current-depth circle is 78% of the smaller scene dimension, so every +10 dBan is exactly 10 times larger on screen. Do not normalize projection to catalogue density.
 - Titles disappear before receding illustrations. Keep an illustration at its true geometric size until it is imperceptible or fully offscreen.
 - Resolve dense landmark angles against the complete catalogue and keep them stable across locales and regional filters. Suppress a colliding title before moving its illustration; reveal that title when its landmark receives hover or keyboard focus.
+- A compact family may share one restrained radial rail when its members use the same model and their exact depths leave every illustration separately selectable. Draw the rail only from the nearest rendered member to the farthest, behind the artwork, and clip it with the scene.
 - Draw only geometrically visible one-dBan tick rings as thin solid grey and five-dBan rings slightly stronger. Keep a persistent thick current-depth circle above every guide, coloured by the current axis position. These graduation rings and the current-depth circle are the only concentric circles.
 - Suppress crowded spoke marks and labels near the vanishing point while retaining pixel-visible circles.
 

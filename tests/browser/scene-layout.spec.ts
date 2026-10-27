@@ -105,3 +105,68 @@ for (const [name, viewport] of [
     }
   });
 }
+
+test("renders compact roulette and highest-face rails between their exact members", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await openScene(page, "en", 0);
+  const rails = await page.locator("[data-family-rails]").evaluate(layer => {
+    const inspect = (id: string, members: string[]) => {
+      const line = layer.querySelector<SVGLineElement>(`[data-family-rail="${id}"]`)!;
+      const points = members.map(member => {
+        const button = document.querySelector<HTMLElement>(`[data-landmark="${member}"]`)!;
+        const art = button.querySelector<HTMLImageElement>(".art img")!.getBoundingClientRect();
+        return { member, x: art.left + art.width / 2, y: art.top + art.height / 2, width: art.width, height: art.height };
+      });
+      const intersections = points.slice(1).map((point, index) => {
+        const previous = points[index];
+        return Math.max(0, Math.min(previous.x + previous.width / 2, point.x + point.width / 2) - Math.max(previous.x - previous.width / 2, point.x - point.width / 2))
+          * Math.max(0, Math.min(previous.y + previous.height / 2, point.y + point.height / 2) - Math.max(previous.y - previous.height / 2, point.y - point.height / 2));
+      });
+      return {
+        hidden: line.hasAttribute("hidden"),
+        attributes: ["x1", "y1", "x2", "y2"].map(name => Number(line.getAttribute(name))),
+        points,
+        intersections,
+      };
+    };
+    return {
+      ariaHidden: layer.getAttribute("aria-hidden"),
+      pointerEvents: getComputedStyle(layer).pointerEvents,
+      roulette: inspect("roulette", [
+        "roulette-straight-up", "roulette-split", "roulette-street", "roulette-corner",
+        "roulette-six-line", "roulette-dozen-column", "roulette-even-money", "roulette-two-dozens-columns",
+      ]),
+      dice: inspect("polyhedral-highest-face", ["die-d4-highest", "die-six", "die-d12-highest", "die-d20-highest"]),
+    };
+  });
+  expect(rails.ariaHidden).toBe("true");
+  expect(rails.pointerEvents).toBe("none");
+  for (const family of [rails.roulette, rails.dice]) {
+    expect(family.hidden).toBe(false);
+    expect(family.intersections.every(area => area === 0)).toBe(true);
+    expect(new Set(family.points.map(point => `${point.x},${point.y}`)).size).toBe(family.points.length);
+    expect(Math.min(family.attributes[0], family.attributes[2])).toBeCloseTo(Math.min(...family.points.map(point => point.x)), 1);
+    expect(Math.max(family.attributes[0], family.attributes[2])).toBeCloseTo(Math.max(...family.points.map(point => point.x)), 1);
+    expect(Math.min(family.attributes[1], family.attributes[3])).toBeCloseTo(Math.min(...family.points.map(point => point.y)), 1);
+    expect(Math.max(family.attributes[1], family.attributes[3])).toBeCloseTo(Math.max(...family.points.map(point => point.y)), 1);
+  }
+  expect(rails.roulette.attributes[1]).toBeCloseTo(rails.roulette.attributes[3], 8);
+  const diceSlope = (rails.dice.attributes[3] - rails.dice.attributes[1]) / (rails.dice.attributes[2] - rails.dice.attributes[0]);
+  expect(Math.abs(diceSlope)).toBeCloseTo(1, 1);
+});
+
+test("keeps a current family title readable inside the mobile viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const [id, depth] of [
+    ["roulette-even-money", -.235],
+    ["roulette-dozen-column", -3.188],
+    ["die-d12-highest", -10.414],
+  ] as const) {
+    await openScene(page, "fr", depth);
+    const title = page.locator(`[data-landmark="${id}"] .landmark-title`);
+    await expect(title).toBeVisible();
+    const bounds = await title.boundingBox();
+    expect(bounds!.x).toBeGreaterThanOrEqual(4);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(386);
+  }
+});

@@ -2,6 +2,28 @@ import { catalogueSlots, type LandmarkId } from "./catalogue/order";
 
 const degrees = (value: number): number => value * Math.PI / 180;
 
+export const familyRailDefinitions = [
+  {
+    id: "roulette",
+    angle: 0,
+    members: [
+      "roulette-straight-up", "roulette-split", "roulette-street", "roulette-corner",
+      "roulette-six-line", "roulette-dozen-column", "roulette-even-money", "roulette-two-dozens-columns",
+    ],
+  },
+  {
+    id: "polyhedral-highest-face",
+    angle: degrees(225),
+    members: ["die-d4-highest", "die-six", "die-d12-highest", "die-d20-highest"],
+  },
+] as const satisfies readonly Readonly<{ id: string; angle: number; members: readonly LandmarkId[] }>[];
+
+const familyRailLandmarks = new Set<LandmarkId>(familyRailDefinitions.flatMap(family => [...family.members]));
+
+export const isFamilyRailLandmark = (id: LandmarkId): boolean => familyRailLandmarks.has(id);
+
+export const landmarkArtFactor = (id: LandmarkId): number => isFamilyRailLandmark(id) ? .55 : 1;
+
 // Curated once against the complete catalogue. These dense bands keep their
 // geometry when a locale or regional filter changes the visible subset.
 const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
@@ -18,31 +40,22 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "weekday": degrees(200),
   "ocean-point": degrees(20),
   "yellow-pea": degrees(50),
-  "die-d4-highest": degrees(110),
   "solar-terrestrial": degrees(40),
   "full-moon-15-days": degrees(145),
-  "french-scrabble-consonant": degrees(350),
+  "french-scrabble-consonant": degrees(280),
   "solar-eclipse-year": degrees(225),
   "frozen-freshwater": degrees(280),
   "four-dice-any-match": degrees(105),
   "red-dwarf-star": degrees(130),
   "planet-with-moon": degrees(250),
   "rain-hilo": degrees(165),
-  "mensik-first-serve-miami-2025": degrees(345),
+  "mensik-first-serve-miami-2025": degrees(330),
   "rain-brest-december": degrees(115),
-  "covid-scenario-positive": degrees(338),
-  "roulette-dozen-column": degrees(70),
-  "roulette-even-money": degrees(225),
-  "roulette-two-dozens-columns": degrees(317),
+  "covid-scenario-positive": degrees(90),
   "d20-avoid-natural-one-advantage": degrees(135),
   "pokemon-destined-rivals-double-rare": degrees(138),
   "pokemon-destined-rivals-illustration-rare": degrees(100),
   "pokemon-destined-rivals-special-illustration-rare": degrees(220),
-  "roulette-six-line": degrees(280),
-  "roulette-corner": degrees(252),
-  "roulette-street": degrees(320),
-  "roulette-split": degrees(292),
-  "roulette-straight-up": degrees(330),
   "blackjack-natural-six-deck": degrees(155),
   "four-leaf-clover": degrees(35),
   "uk-recent-car-breakdown-2021": degrees(90),
@@ -56,8 +69,11 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "sahara-grain": degrees(90),
 };
 
-export const landmarkAngle = (id: LandmarkId): number => angleOverrides[id]
-  ?? degrees(-45 + ((catalogueSlots[id] * 137.508) % 360) / 360 * 270);
+export const landmarkAngle = (id: LandmarkId): number => {
+  const family = familyRailDefinitions.find(candidate => (candidate.members as readonly LandmarkId[]).includes(id));
+  return family?.angle ?? angleOverrides[id]
+    ?? degrees(-45 + ((catalogueSlots[id] * 137.508) % 360) / 360 * 270);
+};
 
 export type LayoutBox = Readonly<{ left: number; top: number; right: number; bottom: number }>;
 export type TitleCandidate = Readonly<{

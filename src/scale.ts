@@ -5,7 +5,7 @@ import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabil
 import { createPreferencesMenu } from "./preferences-menu";
 import { createAnalytics, type Analytics } from "./analytics";
 import { getAnalyticsConfig } from "./analytics-config";
-import { landmarkAngle, suppressedTitleIds, type LayoutBox, type TitleCandidate } from "./scene-layout";
+import { familyRailDefinitions, isFamilyRailLandmark, landmarkAngle, landmarkArtFactor, suppressedTitleIds, type LayoutBox, type TitleCandidate } from "./scene-layout";
 
 type View = { center: number };
 type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter: number; centerX: number; centerY: number }>;
@@ -154,7 +154,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   root.innerHTML = `<div class="atlas"><div data-page-content>
     <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker"><button type="button" class="language-toggle" data-preferences-toggle="toolbar" aria-label="${locale.ui.language}" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">🌐</span></button></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
     <section class="scale" tabindex="0" aria-label="${locale.ui.scaleAria}">
-      <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
+      <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><div class="depth-scene" data-depth-scene><svg class="family-rails" data-family-rails aria-hidden="true" focusable="false"></svg><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:8deg;--delay:-.1s"></i><i style="--angle:48deg;--delay:-.45s"></i><i style="--angle:92deg;--delay:-.25s"></i><i style="--angle:137deg;--delay:-.6s"></i><i style="--angle:181deg;--delay:-.32s"></i><i style="--angle:224deg;--delay:-.05s"></i><i style="--angle:274deg;--delay:-.5s"></i><i style="--angle:318deg;--delay:-.2s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
     </section>
   </div>
   <dialog class="scale-intro" data-scale-intro aria-modal="true" aria-labelledby="scale-intro-heading">
@@ -179,7 +179,14 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   const scale = root.querySelector<HTMLElement>(".scale")!;
   const ruler = root.querySelector<HTMLElement>("[data-ruler]")!;
   const depthScene = root.querySelector<HTMLElement>("[data-depth-scene]")!;
+  const familyRails = root.querySelector<SVGSVGElement>("[data-family-rails]")!;
   const layer = root.querySelector<HTMLElement>("[data-landmarks]")!;
+  const familyRailNodes = new Map(familyRailDefinitions.map(family => {
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.dataset.familyRail = family.id;
+    familyRails.append(line);
+    return [family.id, line];
+  }));
   const rings = root.querySelector<HTMLCanvasElement>("[data-depth-rings]")!;
   const ringContext = rings.getContext("2d")!;
   const currentDepthRing = root.querySelector<HTMLElement>("[data-current-depth-ring]")!;
@@ -428,6 +435,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
 
   const rebuildScene = (nextMetrics: SceneMetrics, visibleCatalogue: readonly DisplayLandmark[], measureTitles: boolean): void => {
     const { width, height, referenceDiameter, centerX, centerY } = nextMetrics;
+    familyRails.setAttribute("viewBox", `0 0 ${width} ${height}`);
     const compactArtScale = width <= 640 ? 0.76 : 1;
     const originCenter = view.center;
     const maximumSceneZoom = 10 ** (sceneRebaseDecibans(width) / 10);
@@ -439,7 +447,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       const angle = landmarkAngle(item.id);
       const x = centerX + Math.cos(angle) * radius;
       const y = centerY + Math.sin(angle) * radius;
-      const artSize = item.size * zoomFactor * compactArtScale;
+      const artSize = item.size * landmarkArtFactor(item.id) * zoomFactor * compactArtScale;
       if (artSize * maximumSceneZoom < 0.5 || !sceneIntersectsAtSomeZoom(x, y, artSize, nextMetrics)) return [];
       return [{ item, zoomFactor, ringDiameter, x, y, artSize }];
     });
@@ -463,7 +471,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       }
       setStyle(button, "left", `${x}px`);
       setStyle(button, "top", `${y - artSize / 2}px`);
-      setStyle(button, "--size", `${item.size * compactArtScale}px`);
+      setStyle(button, "--size", `${item.size * landmarkArtFactor(item.id) * compactArtScale}px`);
       setStyle(button, "--depth-scale", String(zoomFactor));
       button.dataset.ringSize = `${ringDiameter}px`;
       button.dataset.depthScale = String(zoomFactor);
@@ -481,6 +489,22 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     if (!measureTitles) {
       sceneOrigin = { center: originCenter, metrics: nextMetrics };
       return;
+    }
+    const projectedById = new Map(projected.map(item => [item.item.id, item]));
+    for (const family of familyRailDefinitions) {
+      const line = familyRailNodes.get(family.id)!;
+      const members = family.members.flatMap(id => {
+        const member = projectedById.get(id);
+        return member ? [member] : [];
+      });
+      line.toggleAttribute("hidden", members.length < 2);
+      if (members.length < 2) continue;
+      const first = members.reduce((nearer, member) => member.ringDiameter < nearer.ringDiameter ? member : nearer);
+      const last = members.reduce((farther, member) => member.ringDiameter > farther.ringDiameter ? member : farther);
+      line.setAttribute("x1", String(first.x));
+      line.setAttribute("y1", String(first.y));
+      line.setAttribute("x2", String(last.x));
+      line.setAttribute("y2", String(last.y));
     }
     const sceneNodes = [...landmarkNodes.values()];
     const readableNodes = sceneNodes.filter(node => node.baseArtSize >= 32
@@ -511,18 +535,34 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     const titleCandidates: TitleCandidate[] = readableNodes.map(node => {
       const titleWidth = node.title.offsetWidth;
       const titleHeight = node.title.offsetHeight;
-      const left = node.baseX - titleWidth / 2;
-      const top = node.baseY + node.baseArtSize / 2;
-      return {
+      const naturalLeft = node.baseX - titleWidth / 2;
+      const naturalTop = node.baseY + node.baseArtSize / 2;
+      const obstructions = [
+        ...outsideScene,
+        readoutBox,
+        ...[...artBoxes].filter(([id]) => id !== node.item.id).map(([, box]) => box),
+      ];
+      const makeCandidate = (left: number, top: number): TitleCandidate => ({
         id: node.item.id,
         priority: Math.abs(node.item.position - view.center),
         title: { left, right: left + titleWidth, top, bottom: top + titleHeight },
-        obstructions: [
-          ...outsideScene,
-          readoutBox,
-          ...[...artBoxes].filter(([id]) => id !== node.item.id).map(([, box]) => box),
-        ],
-      };
+        obstructions,
+      });
+      const candidates = isFamilyRailLandmark(node.item.id) ? (() => {
+        const clampLeft = (left: number): number => Math.min(Math.max(left, 8), width - titleWidth - 8);
+        const centeredLeft = clampLeft(naturalLeft);
+        const besideArtLeft = clampLeft(node.baseX - node.baseArtSize / 2 - titleWidth - 6);
+        return [
+          makeCandidate(centeredLeft, naturalTop),
+          makeCandidate(besideArtLeft, naturalTop),
+          makeCandidate(centeredLeft, naturalTop + titleHeight + 4),
+          makeCandidate(besideArtLeft, naturalTop + titleHeight + 4),
+        ];
+      })() : [makeCandidate(naturalLeft, naturalTop)];
+      const candidate = candidates.find(option => suppressedTitleIds([option]).size === 0) ?? candidates[0];
+      setStyle(node.title, "--title-x", `${candidate.title.left - naturalLeft}px`);
+      setStyle(node.title, "--title-y", `${candidate.title.top - naturalTop}px`);
+      return candidate;
     });
     const suppressedTitles = suppressedTitleIds(titleCandidates);
     for (const [id, node] of landmarkNodes) landmarkNodes.set(id, { ...node, titleSuppressed: suppressedTitles.has(node.item.id) });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { displayLandmarks } from "../src/catalogue";
 import { catalogueSlots, type LandmarkId } from "../src/catalogue/order";
-import { landmarkAngle, suppressedTitleIds, type LayoutBox, type TitleCandidate } from "../src/scene-layout";
+import { familyRailDefinitions, isFamilyRailLandmark, landmarkAngle, landmarkArtFactor, suppressedTitleIds, type LayoutBox, type TitleCandidate } from "../src/scene-layout";
 
 describe("scene layout", () => {
   it("keeps catalogue-slot angles deterministic and applies curated dense angles", () => {
@@ -9,6 +9,7 @@ describe("scene layout", () => {
     expect(landmarkAngle("drop-garden-pool")).toBeCloseTo(expectedDefault, 12);
     expect(landmarkAngle("coin-heads")).toBeCloseTo(80 * Math.PI / 180, 12);
     expect(landmarkAngle("four-dice-any-six")).toBeCloseTo(315 * Math.PI / 180, 12);
+    expect(landmarkAngle("french-scrabble-consonant")).toBeCloseTo(280 * Math.PI / 180, 12);
     expect(landmarkAngle("enigma-m3-known-rings")).toBeCloseTo(36 * Math.PI / 180, 12);
   });
 
@@ -54,5 +55,37 @@ describe("scene layout", () => {
     const suppressed = suppressedTitleIds(candidates);
     expect([...suppressed]).toEqual(["birthday-23", "solar-terrestrial"]);
     expect(suppressedTitleIds(candidates, 0)).toEqual(suppressed);
+  });
+
+  it("aligns explicit roulette and highest-face families with positive mobile artwork clearance", () => {
+    expect(familyRailDefinitions.map(family => ({ id: family.id, members: family.members }))).toEqual([
+      {
+        id: "roulette",
+        members: [
+          "roulette-straight-up", "roulette-split", "roulette-street", "roulette-corner",
+          "roulette-six-line", "roulette-dozen-column", "roulette-even-money", "roulette-two-dozens-columns",
+        ],
+      },
+      { id: "polyhedral-highest-face", members: ["die-d4-highest", "die-six", "die-d12-highest", "die-d20-highest"] },
+    ]);
+    expect(landmarkArtFactor("roulette-corner")).toBe(.55);
+    expect(landmarkArtFactor("die-six")).toBe(.55);
+    expect(landmarkArtFactor("coin-heads")).toBe(1);
+    expect(isFamilyRailLandmark("roulette-corner")).toBe(true);
+    expect(isFamilyRailLandmark("coin-heads")).toBe(false);
+    const byId = new Map(displayLandmarks.map(item => [item.id, item]));
+    for (const family of familyRailDefinitions) {
+      for (const id of family.members) expect(landmarkAngle(id)).toBe(family.angle);
+      const members = family.members.map(id => byId.get(id)!).sort((first, second) => first.position - second.position);
+      for (let index = 1; index < members.length; index++) {
+        const inner = members[index - 1];
+        const outer = members[index];
+        const innerScale = 10 ** (inner.position / 10);
+        const outerScale = 10 ** (outer.position / 10);
+        const centerDistance = 320 * .78 / 2 * (outerScale - innerScale);
+        const halfSizes = (inner.size * innerScale + outer.size * outerScale) * .76 * .55 / 2;
+        expect(centerDistance - halfSizes, `${inner.id} / ${outer.id}`).toBeGreaterThan(0);
+      }
+    }
   });
 });
