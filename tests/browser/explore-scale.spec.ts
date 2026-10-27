@@ -14,6 +14,14 @@ const sceneArtworkText = (page: Page, id: string, key: string) => page.locator(`
   return artwork.querySelector(`[data-art-text="${artworkKey}"]`)?.textContent;
 }, key);
 
+const expectTravelCaptionClear = async (page: Page) => {
+  const caption = (await page.locator("[data-gap-caption]").boundingBox())!;
+  const readout = (await page.locator("[data-center-marker]").boundingBox())!;
+  const controls = (await page.locator(".explorer-tools").boundingBox())!;
+  expect(caption.y).toBeGreaterThanOrEqual(readout.y + readout.height);
+  expect(caption.y + caption.height).toBeLessThanOrEqual(controls.y);
+};
+
 for (const [name, viewport] of [["desktop", { width: 1365, height: 900 }], ["mobile", { width: 390, height: 844 }]] as const) {
   test(`keeps illustration centers at exact positions through arrival and return on ${name}`, async ({ page }) => {
     await page.setViewportSize(viewport);
@@ -246,6 +254,12 @@ test("keeps French depth exploration readable and tappable on mobile", async ({ 
   expect(readoutBox!.x).toBeGreaterThanOrEqual(0);
   expect(readoutBox!.x + readoutBox!.width).toBeLessThanOrEqual(320);
   await capture(page, testInfo, "mobile-french-extreme");
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.locator("[data-return-zero]").click();
+  const travelCaption = page.locator("[data-gap-caption]");
+  await expect(travelCaption).toBeVisible();
+  await expectTravelCaptionClear(page);
 });
 
 test("keeps Chinese and Spanish choices and open details readable on a narrow screen", async ({ page }, testInfo) => {
@@ -312,6 +326,12 @@ test("keeps Chinese and Spanish choices and open details readable on a narrow sc
   await expect(scale).toHaveAttribute("data-depth", depth!);
   expect(await page.locator("[data-detail-panel]").evaluate(panel => panel.scrollWidth <= panel.clientWidth)).toBe(true);
   await capture(page, testInfo, "mobile-chinese-spanish-open-details");
+
+  await page.goto("/?spanish-caption#d=525.36");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.locator("[data-return-zero]").click();
+  await expect(page.locator("[data-gap-caption]")).toBeVisible();
+  await expectTravelCaptionClear(page);
 });
 
 test("keeps the shared preferences menu within a short viewport", async ({ page }) => {

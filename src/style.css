@@ -67,7 +67,7 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .landmark-title { pointer-events: auto; }
 .landmark:hover .art, .landmark:focus-visible .art { filter: drop-shadow(0 15px 10px #020b12dd); transform: scale(1.04); }
 .landmark-title { font-family: Georgia, serif; font-size: .92rem; line-height: 1.05; max-width: 10rem; transform: translate(var(--title-x, 0), var(--title-y, 0)); transform-origin: top center; }
-.gap-caption { animation: gap-in .2s ease-out; background: #0b202de8; border: 1px solid #547984; border-radius: 999px; color: #cfe2df; font-size: .82rem; left: 50%; margin: 0; padding: .45rem .8rem; position: absolute; text-align: center; top: 4.3rem; transform: translateX(-50%); white-space: nowrap; z-index: 21; }
+.gap-caption { animation: gap-in .2s ease-out; background: #0b202de8; border: 1px solid #547984; border-radius: 999px; bottom: 4.6rem; color: #cfe2df; font-size: .82rem; left: 50%; margin: 0; padding: .45rem .8rem; position: absolute; text-align: center; transform: translateX(-50%); white-space: nowrap; z-index: 21; }
 .gap-caption span { color: #f6cf70; font-family: Georgia, serif; }
 .gap-caption sup { font-size: .7em; }
 @keyframes gap-in { from { opacity: 0; } }
@@ -170,6 +170,6 @@ dd a { color: #9ed6c8; }
   .intro-preferences > button { max-width: 100%; }
   .intro-directions svg { height: 6rem; }
   .intro-directions p { font-size: .86rem; gap: .5rem; }
-  .gap-caption { font-size: .75rem; max-width: calc(100vw - 1.6rem); white-space: normal; width: max-content; }
+  .gap-caption { bottom: 7.5rem; font-size: .75rem; max-width: calc(100vw - 1.6rem); white-space: normal; width: max-content; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } .hyperspace { display: none; } }
