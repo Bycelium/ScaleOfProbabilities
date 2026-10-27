@@ -48,7 +48,6 @@ export const en: LocaleDefinition = {
       participate: "Participate in analytics",
       doNotParticipate: "Do not participate in analytics",
       allow: "Allow analytics",
-      decline: "Decline analytics",
       withdraw: "Withdraw consent",
       close: "Close privacy information",
       statusLabel: "Current choice:",

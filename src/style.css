@@ -77,9 +77,12 @@ dialog::backdrop { background: #02091280; }
 dialog:not([open]) { display: none; }
 dialog > button:first-child { align-items: center; background: #102b38d9; border: 1px solid #547984; border-radius: 50%; display: inline-flex; float: right; font-size: 1.35rem; height: 2.25rem; justify-content: center; line-height: 1; padding: 0; width: 2.25rem; }
 dialog[data-detail-panel] { bottom: 4rem; left: auto; margin: 0; max-height: calc(100vh - 5rem); right: 1rem; top: auto; width: min(27rem, calc(100vw - 2rem)); }
-.privacy-actions { display: grid; gap: .5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.privacy-actions { display: grid; gap: .5rem; }
 .privacy-actions button { background: #183d4b; border: 1px solid #6da3a0; border-radius: 999px; color: #edf4eb; min-height: 2.6rem; padding: .5rem .75rem; }
-.privacy-actions button:hover { background: #286454; }
+.privacy-actions [data-consent-choice="accepted"] { background: #286454; border-color: #6da3a0; }
+.privacy-actions [data-consent-choice="accepted"]:hover { background: #347764; }
+.privacy-actions [data-consent-choice="declined"] { background: #743940; border-color: #c98484; }
+.privacy-actions [data-consent-choice="declined"]:hover { background: #8a464d; }
 .privacy-dialog { inset: 50% auto auto 50%; margin: 0; max-height: calc(100vh - 2rem); transform: translate(-50%, -50%); width: min(38rem, calc(100vw - 2rem)); }
 .privacy-dialog h2 { font: 1.8rem/1.08 Georgia, serif; margin: .35rem 0 .7rem; }
 .privacy-dialog h3 { color: #9ed6c8; font-size: .82rem; letter-spacing: .08em; margin: 1.1rem 0 .4rem; text-transform: uppercase; }

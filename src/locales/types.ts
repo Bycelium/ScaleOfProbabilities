@@ -60,7 +60,6 @@ export type UiTranslation = Readonly<{
     participate: string;
     doNotParticipate: string;
     allow: string;
-    decline: string;
     withdraw: string;
     close: string;
     statusLabel: string;

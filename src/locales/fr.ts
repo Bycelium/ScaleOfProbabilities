@@ -48,7 +48,6 @@ export const fr: LocaleDefinition = {
       participate: "Participer",
       doNotParticipate: "Ne pas participer",
       allow: "Autoriser la mesure",
-      decline: "Refuser la mesure",
       withdraw: "Retirer le consentement",
       close: "Fermer les informations de confidentialité",
       statusLabel: "Choix actuel :",

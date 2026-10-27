@@ -48,7 +48,6 @@ export const zh: LocaleDefinition = {
       participate: "参与",
       doNotParticipate: "不参与",
       allow: "允许分析",
-      decline: "拒绝分析",
       withdraw: "撤回同意",
       close: "关闭隐私信息",
       statusLabel: "当前选择：",
