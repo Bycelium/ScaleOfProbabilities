@@ -104,6 +104,7 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "french-scrabble-blank-rack": degrees(226),
   "stellar-hydrogen-mass": degrees(135),
   "stellar-helium-mass": degrees(157),
+  "lunar-eclipse-year": degrees(152),
   "solar-eclipse-year": degrees(225),
   "frozen-freshwater": degrees(280),
   "red-dwarf-star": degrees(170),

@@ -226,6 +226,7 @@ test("keeps stellar hydrogen and its nearby landmarks selectable at their exact 
     "roulette-two-dozens-columns",
     "four-dice-any-match",
     "red-dwarf-star",
+    "lunar-eclipse-year",
     "rain-hilo",
   ] as const;
   for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }]) {
