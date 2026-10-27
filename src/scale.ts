@@ -802,8 +802,8 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     active = item;
     restoreFocus = document.activeElement as HTMLElement;
     populateDetails(item);
-    dialog.querySelector<HTMLElement>("[data-detail-content]")!.scrollTop = 0;
     showDialog();
+    dialog.querySelector<HTMLElement>("[data-detail-content]")!.scrollTop = 0;
     sceneOrigin = undefined;
     render();
     dialog.querySelector<HTMLButtonElement>("[data-close-detail]")!.focus();
