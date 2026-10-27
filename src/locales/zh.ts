@@ -45,6 +45,7 @@ export const zh: LocaleDefinition = {
       review: "隐私",
       participationLabel: "可选分析选择",
       participationDescription: "可选分析会统计访问、国家或地区、设备、语言、打开的示例和大致可见时长，以改进网站及其翻译。",
+      more: "（详见隐私信息）",
       participate: "参与",
       doNotParticipate: "不参与",
       allow: "允许分析",

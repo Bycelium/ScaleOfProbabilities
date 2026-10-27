@@ -167,7 +167,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       <h2 data-how-to-use>${locale.ui.howToUse}</h2>
       <p data-intro-navigation>${locale.ui.introNavigation}</p>
     </div>
-    <footer class="intro-actions"><div data-intro-consent${privacyAvailable ? "" : " hidden"}><p data-intro-consent-description>${locale.ui.privacy.participationDescription}</p><div class="intro-consent" role="group" aria-label="${locale.ui.privacy.participationLabel}"><button type="button" data-consent-choice="accepted" aria-pressed="${analytics.getConsent() === "accepted"}">${locale.ui.privacy.participate}</button><button type="button" data-consent-choice="declined" aria-pressed="${analytics.getConsent() === "declined"}">${locale.ui.privacy.doNotParticipate}</button></div></div><div class="intro-primary-actions"><button type="button" data-open-privacy data-privacy-from-intro>${locale.ui.privacy.review}</button><button data-dismiss-intro${privacyAvailable && analytics.getConsent() === "unknown" ? " disabled" : ""}>${locale.ui.explore}</button></div><p class="intro-credit"><span data-credit-prefix>${locale.ui.creditPrefix}</span> <a href="https://www.htwins.net/scale2/" data-credit-title>${locale.ui.creditTitle}</a>, <span data-credit-by>${locale.ui.creditBy}</span></p></footer>
+    <footer class="intro-actions"><div data-intro-consent${privacyAvailable ? "" : " hidden"}><p><span data-intro-consent-description>${locale.ui.privacy.participationDescription}</span> <button type="button" class="intro-privacy-link" data-open-privacy data-privacy-from-description>${locale.ui.privacy.more}</button></p><div class="intro-consent" role="group" aria-label="${locale.ui.privacy.participationLabel}"><button type="button" data-consent-choice="accepted">${locale.ui.privacy.participate}</button><button type="button" data-consent-choice="declined">${locale.ui.privacy.doNotParticipate}</button></div></div><div class="intro-primary-actions"><button type="button" data-open-privacy data-privacy-from-intro>${locale.ui.privacy.review}</button><button data-dismiss-intro${privacyAvailable && analytics.getConsent() === "unknown" ? " disabled" : ""}>${locale.ui.explore}</button></div><p class="intro-credit"><span data-credit-prefix>${locale.ui.creditPrefix}</span> <a href="https://www.htwins.net/scale2/" data-credit-title>${locale.ui.creditTitle}</a>, <span data-credit-by>${locale.ui.creditBy}</span></p></footer>
   </dialog>
   <dialog class="privacy-dialog" data-privacy-dialog aria-modal="true" aria-labelledby="privacy-heading"><button type="button" data-close-privacy aria-label="${locale.ui.privacy.close}">×</button><h2 id="privacy-heading" tabindex="-1" data-privacy-title>${locale.ui.privacy.title}</h2><p class="privacy-status"><strong data-privacy-dialog-status-label>${locale.ui.privacy.statusLabel}</strong> <span data-privacy-dialog-status></span></p><section aria-labelledby="privacy-analytics-heading"><h3 id="privacy-analytics-heading" data-privacy-analytics-heading>${locale.ui.privacy.analyticsHeading}</h3><p data-privacy-analytics-description>${locale.ui.privacy.analyticsDescription}</p><div class="privacy-actions" data-privacy-actions><button type="button" data-consent-choice="accepted">${locale.ui.privacy.allow}</button></div><p data-privacy-identifier-note>${locale.ui.privacy.identifierNote}</p><p data-privacy-sample-note>${locale.ui.privacy.sampleNote}</p><p data-privacy-retention-note>${locale.ui.privacy.retentionNote}</p><p data-privacy-choice-description>${locale.ui.privacy.choiceDescription}</p></section><section aria-labelledby="privacy-controller-heading"><h3 id="privacy-controller-heading" data-privacy-controller-heading>${locale.ui.privacy.controllerHeading}</h3><p data-privacy-controller-description>${locale.ui.privacy.controllerDescription}</p><p><a data-privacy-registry href="https://annuaire-entreprises.data.gouv.fr/entreprise/bycelium-919837187" target="_blank" rel="noreferrer">${locale.ui.privacy.registry}</a></p><p><span data-privacy-rights-contact>${locale.ui.privacy.rightsContact}</span> <a href="mailto:gdpr@bycelium.com">gdpr@bycelium.com</a><br><span data-privacy-general-contact>${locale.ui.privacy.generalContact}</span> <a href="mailto:contact@bycelium.com">contact@bycelium.com</a></p></section><section aria-labelledby="privacy-providers-heading"><h3 id="privacy-providers-heading" data-privacy-providers-heading>${locale.ui.privacy.providersHeading}</h3><p data-privacy-providers-description>${locale.ui.privacy.providersDescription}</p><p><a data-privacy-provider-policy href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noreferrer">${locale.ui.privacy.providerPrivacy}</a> · <a data-privacy-provider-dpa href="https://vercel.com/legal/dpa" target="_blank" rel="noreferrer">${locale.ui.privacy.providerDpa}</a></p><p data-privacy-technical-logs>${locale.ui.privacy.technicalLogs}</p></section><section aria-labelledby="privacy-rights-heading"><h3 id="privacy-rights-heading" data-privacy-rights-heading>${locale.ui.privacy.rightsHeading}</h3><p data-privacy-rights-description>${locale.ui.privacy.rightsDescription}</p><p><a data-privacy-cnil href="https://www.cnil.fr/en/contact-us" target="_blank" rel="noreferrer">${locale.ui.privacy.cnil}</a></p></section><section aria-labelledby="privacy-local-heading"><h3 id="privacy-local-heading" data-privacy-local-heading>${locale.ui.privacy.localHeading}</h3><p data-privacy-local-description>${locale.ui.privacy.localDescription}</p></section></dialog>
   <dialog data-detail-panel aria-labelledby="detail-heading"><button data-close-detail aria-label="${locale.ui.closeDetails}">×</button><div data-detail-content><div data-detail-art></div><p class="eyebrow" data-detail-kind></p><h2 id="detail-heading" data-detail-title></h2><p data-detail-explanation></p><section class="detail-related" data-detail-related hidden><h3 data-explore-on-scale>${locale.ui.exploreOnScale}</h3><div data-detail-related-links></div></section><dl><div><dt data-calculation-label>${locale.ui.calculation}</dt><dd data-detail-calculation></dd></div><div data-detail-diagnostic-section hidden><dt data-diagnostic-label></dt><dd data-detail-diagnostic hidden></dd></div><div><dt data-assumptions-label>${locale.ui.assumptions}</dt><dd data-detail-assumptions></dd></div><div data-detail-advice-section hidden><dt data-advice-label>${locale.ui.securityAdvice}</dt><dd data-detail-advice></dd></div><div><dt data-sources-label>${locale.ui.sources}</dt><dd data-detail-sources></dd></div></dl></div></dialog></div>`;
@@ -188,6 +188,8 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   const introPreferencesToggle = introPreferences.querySelector<HTMLButtonElement>('[data-preferences-toggle="intro"]')!;
   const privacyDialog = root.querySelector<HTMLDialogElement>("[data-privacy-dialog]")!;
   const introConsent = root.querySelector<HTMLElement>("[data-intro-consent]")!;
+  const introChoiceGroup = introConsent.querySelector<HTMLElement>(".intro-consent")!;
+  const introChoiceButtons = [...introConsent.querySelectorAll<HTMLButtonElement>("[data-consent-choice]")];
   const dismissIntroButton = introDialog.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!;
   const returnButton = root.querySelector<HTMLButtonElement>("[data-return-zero]")!;
   const gapCaption = root.querySelector<HTMLElement>("[data-gap-caption]")!;
@@ -801,9 +803,25 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     root.querySelector<HTMLElement>("[data-privacy-actions]")!.hidden = !privacyAvailable;
     introConsent.hidden = !privacyAvailable;
     dismissIntroButton.disabled = privacyAvailable && consent === "unknown";
-    for (const choice of introConsent.querySelectorAll<HTMLButtonElement>("[data-consent-choice]")) {
-      choice.setAttribute("aria-pressed", String(choice.dataset.consentChoice === consent));
+    const focusedChoice = introChoiceButtons.find(choice => document.activeElement === choice);
+    if (consent === "unknown") {
+      introChoiceGroup.hidden = false;
+      introChoiceGroup.classList.remove("single-choice");
+      introChoiceButtons[0]!.hidden = false;
+      introChoiceButtons[0]!.textContent = locale.ui.privacy.participate;
+      introChoiceButtons[1]!.hidden = false;
+      introChoiceButtons[1]!.textContent = locale.ui.privacy.doNotParticipate;
+    } else if (consent === "declined") {
+      introChoiceGroup.hidden = false;
+      introChoiceGroup.classList.add("single-choice");
+      introChoiceButtons[0]!.hidden = false;
+      introChoiceButtons[0]!.textContent = locale.ui.privacy.allow;
+      introChoiceButtons[1]!.hidden = true;
+    } else {
+      introChoiceGroup.hidden = true;
+      introChoiceGroup.classList.remove("single-choice");
     }
+    if (focusedChoice && introDialog.open && (consent === "accepted" || focusedChoice.hidden)) dismissIntroButton.focus();
     const withdraw = consent === "accepted";
     privacyAction.dataset.consentChoice = withdraw ? "declined" : "accepted";
     privacyAction.textContent = withdraw ? locale.ui.privacy.withdraw : locale.ui.privacy.allow;
@@ -955,8 +973,9 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     dismissIntroButton.textContent = locale.ui.explore;
     introConsent.querySelector<HTMLElement>("[role=group]")!.setAttribute("aria-label", locale.ui.privacy.participationLabel);
     introConsent.querySelector<HTMLElement>("[data-intro-consent-description]")!.textContent = locale.ui.privacy.participationDescription;
-    introConsent.querySelector<HTMLButtonElement>('[data-consent-choice="accepted"]')!.textContent = locale.ui.privacy.participate;
-    introConsent.querySelector<HTMLButtonElement>('[data-consent-choice="declined"]')!.textContent = locale.ui.privacy.doNotParticipate;
+    introConsent.querySelector<HTMLButtonElement>("[data-privacy-from-description]")!.textContent = locale.ui.privacy.more;
+    introChoiceButtons[0]!.textContent = locale.ui.privacy.participate;
+    introChoiceButtons[1]!.textContent = locale.ui.privacy.doNotParticipate;
     privacyDialog.querySelector<HTMLButtonElement>("[data-close-privacy]")!.setAttribute("aria-label", locale.ui.privacy.close);
     privacyDialog.querySelector<HTMLElement>("[data-privacy-title]")!.textContent = locale.ui.privacy.title;
     privacyDialog.querySelector<HTMLElement>("[data-privacy-dialog-status-label]")!.textContent = locale.ui.privacy.statusLabel;

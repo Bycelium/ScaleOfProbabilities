@@ -45,6 +45,7 @@ export const en: LocaleDefinition = {
       review: "Privacy",
       participationLabel: "Optional analytics choice",
       participationDescription: "Optional analytics measures visits, country, device, languages, examples opened and approximate visible time to improve the site and its translations.",
+      more: "(See Privacy for more)",
       participate: "Participate in analytics",
       doNotParticipate: "Do not participate in analytics",
       allow: "Allow analytics",

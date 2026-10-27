@@ -118,10 +118,15 @@ dialog[data-detail-panel] { bottom: 4rem; left: auto; margin: 0; max-height: cal
 .scale-intro [data-dismiss-intro]:disabled { background: #18323b; border-color: #465f64; color: #8fa09f; cursor: default; }
 .scale-intro [data-privacy-from-intro] { background: #183d4b; border: 1px solid #6da3a0; border-radius: 999px; color: #edf4eb; padding: .6rem 1rem; }
 .intro-actions > [data-intro-consent] { flex: 1 1 100%; }
-.intro-actions [data-intro-consent-description] { color: #bfd0cd; font-size: .82rem; line-height: 1.35; margin: 0 0 .45rem; }
+.intro-actions > [data-intro-consent] > p { color: #bfd0cd; font-size: .82rem; line-height: 1.35; margin: 0 0 .45rem; }
 .intro-consent { display: grid; gap: .5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.intro-consent.single-choice { grid-template-columns: 1fr; }
 .intro-consent button { background: #183d4b; border: 1px solid #6da3a0; border-radius: .7rem; color: #edf4eb; min-height: 2.6rem; padding: .5rem .75rem; }
-.intro-consent button[aria-pressed="true"] { background: #286454; border-color: #9ed6b8; }
+.intro-consent [data-consent-choice="accepted"] { background: #286454; border-color: #9ed6b8; }
+.intro-consent [data-consent-choice="accepted"]:hover { background: #347764; }
+.intro-consent [data-consent-choice="declined"] { background: #743940; border-color: #c98484; }
+.intro-consent [data-consent-choice="declined"]:hover { background: #8a464d; }
+.intro-privacy-link { background: none; border: 0; color: #9ed6c8; font: inherit; padding: 0; text-decoration: underline; }
 .intro-primary-actions { display: flex; gap: .5rem; }
 .scale-intro .intro-credit { font-size: .78rem; margin: 0 0 0 auto; text-align: right; }
 .intro-credit a { color: #9ed6c8; }

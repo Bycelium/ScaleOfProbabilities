@@ -57,6 +57,7 @@ export type UiTranslation = Readonly<{
     review: string;
     participationLabel: string;
     participationDescription: string;
+    more: string;
     participate: string;
     doNotParticipate: string;
     allow: string;

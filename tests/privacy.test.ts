@@ -81,7 +81,10 @@ describe("privacy and analytics choices", () => {
     const choices = [...consent.querySelectorAll<HTMLButtonElement>("[data-consent-choice]")];
     expect(consent.hidden).toBe(false);
     expect(consent.querySelector("[data-intro-consent-description]")?.textContent).toContain("examples opened and approximate visible time");
+    const inlinePrivacy = consent.querySelector<HTMLButtonElement>("[data-privacy-from-description]")!;
+    expect(inlinePrivacy.textContent).toBe("(See Privacy for more)");
     expect(choices.map(choice => choice.textContent)).toEqual(["Participate in analytics", "Do not participate in analytics"]);
+    expect(choices.every(choice => !choice.hasAttribute("aria-pressed"))).toBe(true);
     expect(choices.every(choice => choice.parentElement === choices[0].parentElement)).toBe(true);
     expect(explore.disabled).toBe(true);
     const privacyButton = intro.querySelector<HTMLButtonElement>("[data-privacy-from-intro]")!;
@@ -106,7 +109,7 @@ describe("privacy and analytics choices", () => {
     intro.dispatchEvent(new Event("cancel", { cancelable: true }));
     expect(intro.open).toBe(true);
 
-    privacyButton.click();
+    inlinePrivacy.click();
     const privacy = document.querySelector<HTMLDialogElement>("[data-privacy-dialog]")!;
     expect(privacy.open).toBe(true);
     const privacyAction = privacy.querySelector<HTMLButtonElement>('[data-consent-choice]')!;
@@ -116,12 +119,14 @@ describe("privacy and analytics choices", () => {
     privacy.dispatchEvent(new Event("cancel", { cancelable: true }));
     expect(privacy.open).toBe(false);
     expect(intro.open).toBe(true);
-    expect(document.activeElement).toBe(privacyButton);
+    expect(document.activeElement).toBe(inlinePrivacy);
 
+    choices[0].focus();
     choices[0].click();
     expect(mocked.setConsent).toHaveBeenCalledWith("accepted");
-    expect(choices[0].getAttribute("aria-pressed")).toBe("true");
     expect(explore.disabled).toBe(false);
+    expect(consent.querySelector<HTMLElement>(".intro-consent")?.hidden).toBe(true);
+    expect(document.activeElement).toBe(explore);
     privacyButton.click();
     expect(privacy.open).toBe(true);
     expect(privacy.querySelector("[data-privacy-dialog-status]")?.textContent).toBe("Analytics allowed");
@@ -150,6 +155,16 @@ describe("privacy and analytics choices", () => {
     expect(privacy.open).toBe(false);
     expect(document.activeElement).toBe(privacyButton);
     expect(intro.open).toBe(true);
+    expect(consent.querySelector<HTMLElement>(".intro-consent")?.hidden).toBe(false);
+    expect(choices[0].hidden).toBe(false);
+    expect(choices[0].dataset.consentChoice).toBe("accepted");
+    expect(choices[0].textContent).toBe("Allow analytics");
+    expect(choices[1].hidden).toBe(true);
+    choices[0].focus();
+    choices[0].click();
+    expect(mocked.setConsent).toHaveBeenLastCalledWith("accepted");
+    expect(consent.querySelector<HTMLElement>(".intro-consent")?.hidden).toBe(true);
+    expect(document.activeElement).toBe(explore);
     explore.click();
     expect(intro.open).toBe(false);
 
@@ -217,6 +232,8 @@ describe("privacy and analytics choices", () => {
     expect(document.querySelector("[data-privacy-provider-policy]")?.textContent).toBe("Informations de confidentialité de Vercel Web Analytics");
 
     document.querySelector<HTMLButtonElement>("[data-open-intro]")!.click();
+    expect(document.querySelector<HTMLElement>(".intro-consent")?.hidden).toBe(true);
+    expect(document.querySelector<HTMLButtonElement>("[data-privacy-from-description]")?.textContent).toBe("(Voir Confidentialité pour en savoir plus)");
     expect(detail.open).toBe(true);
     expect(mocked.analytics.setExampleVisible).toHaveBeenLastCalledWith(false);
     document.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.click();
@@ -243,8 +260,12 @@ describe("privacy and analytics choices", () => {
     expect(privacy.open).toBe(false);
     expect(intro.open).toBe(true);
     expect(document.activeElement).toBe(review);
-    intro.querySelector<HTMLButtonElement>('[data-consent-choice="declined"]')!.click();
-    intro.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.click();
+    const decline = intro.querySelector<HTMLButtonElement>('[data-consent-choice="declined"]')!;
+    const explore = intro.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!;
+    decline.focus();
+    decline.click();
+    expect(document.activeElement).toBe(explore);
+    explore.click();
     expect(intro.open).toBe(false);
     dispose();
 
@@ -254,5 +275,7 @@ describe("privacy and analytics choices", () => {
     saved.notify("unknown");
     expect(document.querySelector<HTMLDialogElement>("[data-scale-intro]")?.open).toBe(true);
     expect(document.querySelector<HTMLButtonElement>("[data-dismiss-intro]")?.disabled).toBe(true);
+    expect(document.querySelector<HTMLElement>(".intro-consent")?.hidden).toBe(false);
+    expect(document.querySelectorAll(".intro-consent [data-consent-choice]:not([hidden])")).toHaveLength(2);
   });
 });

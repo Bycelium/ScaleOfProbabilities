@@ -45,6 +45,7 @@ export const fr: LocaleDefinition = {
       review: "Confidentialité",
       participationLabel: "Choix relatif à la mesure d’audience facultative",
       participationDescription: "La mesure d’audience facultative mesure les visites, le pays, l’appareil, les langues, les exemples ouverts et leur durée d’affichage approximative afin d’améliorer le site et ses traductions.",
+      more: "(Voir Confidentialité pour en savoir plus)",
       participate: "Participer",
       doNotParticipate: "Ne pas participer",
       allow: "Autoriser la mesure",
