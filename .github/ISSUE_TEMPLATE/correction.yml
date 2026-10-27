@@ -1,0 +1,49 @@
+name: Correction
+description: Report a typo, translation, source, or factual correction.
+title: "Correction: "
+labels: ["correction"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What needs correction?
+      options:
+        - Typo or wording
+        - Translation
+        - Source or citation
+        - Factual information or probability model
+    validations:
+      required: true
+  - type: input
+    id: event
+    attributes:
+      label: Affected event or page
+      description: Name the event, About dialog section, or other location.
+    validations:
+      required: true
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: Give the language shown, or write “all languages” for shared content.
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current text or information
+      description: Copy the relevant text, value, or source citation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed correction
+      description: Explain the replacement text or corrected information.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Source or evidence, if applicable
+      description: Add a link and date for source, factual, or probability-model corrections. A typo does not need a source.
