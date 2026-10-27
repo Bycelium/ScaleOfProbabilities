@@ -57,7 +57,6 @@ export const zhSources = {
   "nasa-moon-period": { label: "NASA：月球朔望周期" },
   "french-scrabble-federation-letter-distribution": { label: "法国拼字游戏联合会：字母分布" },
   "international-french-language-classic-scrabble-rules": { label: "国际法语经典拼字游戏规则" },
-  "hasbro-english-scrabble-letter-distribution": { label: "孩之宝：英语拼字游戏字母分布" },
   "nasa-solar-eclipse": { label: "NASA GSFC：2001–2100 年日食", note: "Fred Espenak（NASA GSFC）的日食预测" },
   "usgs-water-science-school-ice-snow-glaciers-and-the-water-cycle": { label: "USGS 水科学学院：冰、雪、冰川与水循环", note: "引用 Gleick 1996 的淡水分布表" },
   "nasa-stars-and-red-dwarfs": { label: "NASA：恒星与红矮星" },

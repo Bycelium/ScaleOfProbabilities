@@ -57,7 +57,6 @@ export const frSources = {
   "nasa-moon-period": { label: "NASA : période synodique lunaire" },
   "french-scrabble-federation-letter-distribution": { label: "Fédération française de Scrabble : répartition des lettres" },
   "international-french-language-classic-scrabble-rules": { label: "Règlement international du Scrabble classique francophone" },
-  "hasbro-english-scrabble-letter-distribution": { label: "Hasbro : répartition des lettres du Scrabble anglais" },
   "nasa-solar-eclipse": { label: "NASA GSFC : éclipses solaires de 2001 à 2100", note: "Prédictions d’éclipses par Fred Espenak (GSFC de la NASA)" },
   "usgs-water-science-school-ice-snow-glaciers-and-the-water-cycle": { label: "USGS Water Science School : glace, neige, glaciers et cycle de l’eau", note: "tableau de répartition de l’eau douce citant Gleick 1996" },
   "nasa-stars-and-red-dwarfs": { label: "NASA : étoiles et naines rouges" },

@@ -141,6 +141,10 @@ export const catalogueSlots = {
   "birthday-30": 142,
   "birthday-40": 143,
   "birthday-60": 144,
+  "french-scrabble-vowel": 145,
+  "french-scrabble-consonant-rack": 146,
+  "french-scrabble-blank": 147,
+  "french-scrabble-blank-rack": 148,
 } as const;
 
 export type LandmarkId = keyof typeof catalogueSlots;
