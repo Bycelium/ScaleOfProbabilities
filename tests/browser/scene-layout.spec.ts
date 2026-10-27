@@ -137,6 +137,35 @@ for (const [name, viewport] of [
   });
 }
 
+test("shows captions for readable mobile artwork beyond the former depth window", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const observed: { id: string; distance: number; artSize: number; titleInsideViewport: boolean }[] = [];
+  for (const depth of [-7, -3, 0, 3, 7]) {
+    await openScene(page, "en", depth);
+    observed.push(...await page.locator(".scale").evaluate((scale, { center, landmarks }) => {
+      const scaleBox = scale.getBoundingClientRect();
+      return [...scale.querySelectorAll<HTMLElement>("[data-landmark]")].flatMap(button => {
+        const title = button.querySelector<HTMLElement>(".landmark-title")!;
+        const art = button.querySelector<HTMLImageElement>(".art img")!.getBoundingClientRect();
+        const titleBox = title.getBoundingClientRect();
+        const item = button.dataset.landmark!;
+        const landmark = landmarks.find(candidate => candidate.id === item)!;
+        const distance = Math.abs(landmark.position - center);
+        const artInsideViewport = art.width >= 32 && art.height >= 32
+          && art.left >= scaleBox.left && art.right <= scaleBox.right && art.top >= scaleBox.top && art.bottom <= scaleBox.bottom;
+        const titleInsideViewport = !title.hidden
+          && titleBox.left >= scaleBox.left + 4 && titleBox.right <= scaleBox.right - 4
+          && titleBox.top >= scaleBox.top + 4 && titleBox.bottom <= scaleBox.bottom - 4;
+        return distance > 1.7 && artInsideViewport && !title.hidden
+          ? [{ id: item, distance, artSize: Math.min(art.width, art.height), titleInsideViewport }]
+          : [];
+      });
+    }, { center: depth, landmarks: displayLandmarks.map(item => ({ id: item.id, position: item.position })) }));
+  }
+  expect(observed).not.toEqual([]);
+  expect(observed.every(candidate => candidate.artSize >= 32 && candidate.titleInsideViewport)).toBe(true);
+});
+
 test("renders compact family connectors through their exact members", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 740 });
   const inspectAtDepth = async (depth: number) => {

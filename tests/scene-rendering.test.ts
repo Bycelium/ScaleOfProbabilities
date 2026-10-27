@@ -121,7 +121,7 @@ describe("scene rendering performance", () => {
     for (const button of document.querySelectorAll<HTMLElement>("[data-landmark]")) {
       const landmark = displayLandmarks.find(item => item.id === button.dataset.landmark)!;
       const projectedSize = landmark.size * 0.76 * 10 ** ((landmark.position - settledCenter) / 10);
-      const eligible = !button.hidden && projectedSize >= 32 && Math.abs(landmark.position - settledCenter) <= 1.7;
+      const eligible = !button.hidden && projectedSize >= 32;
       const title = button.querySelector<HTMLElement>(".landmark-title")!;
       if (!eligible) expect(title.hidden).toBe(true);
       if (!title.hidden) {
@@ -199,7 +199,7 @@ describe("scene rendering performance", () => {
       expect(button.getAttribute("aria-label")).toBe(initialLabels.get(button.dataset.landmark!));
       const landmark = displayLandmarks.find(item => item.id === button.dataset.landmark)!;
       const projectedSize = landmark.size * 0.76 * 10 ** ((landmark.position - arrivedCenter) / 10);
-      const eligible = !button.hidden && projectedSize >= 32 && Math.abs(landmark.position - arrivedCenter) <= 1.7;
+      const eligible = !button.hidden && projectedSize >= 32;
       const title = button.querySelector<HTMLElement>(".landmark-title")!;
       if (eligible && title.hidden) suppressedEligibleTitles += 1;
       if (!title.hidden) expect(title.style.transform).toBe("scale(1) translate(var(--title-x), var(--title-y))");
