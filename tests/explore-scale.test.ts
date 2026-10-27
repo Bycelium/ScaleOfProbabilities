@@ -189,8 +189,9 @@ describe("public probability exploration", () => {
     const tickRing = drawnGuideAt(-1)!;
     expect(spoke).not.toBeNull();
     expect(readout.querySelector(".probability")?.textContent).toBe("Probability: 50%");
-    expect(readout.querySelector(".odds")?.textContent).toBe("Odds: 1 to 1");
+    expect(document.querySelector("[data-current-readout-stack] .odds")?.textContent).toBe("Odds: 1 to 1");
     expect(current.textContent).toContain("0 dBan");
+    expect(document.querySelector<HTMLElement>('[data-tick="0"] small')?.hidden).toBe(true);
     expect(Number.parseFloat(tick.style.left)).toBe(600);
     expect(Number.parseFloat(tick.style.top)).toBeCloseTo(160 - tickRing.radius, 8);
     expect(document.querySelector<HTMLElement>("[data-ruler]")?.style.getPropertyValue("--axis-gradient")).toBe("");
@@ -2001,7 +2002,7 @@ describe("public probability exploration", () => {
     expect(scale.dataset.fastForward).toBe("inward");
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     clock.advanceTo(1000);
-    expect(document.querySelector("[data-center-marker]")?.textContent).not.toContain("0 dBan");
+    expect(document.querySelector("[data-current-depth-marker]")?.textContent).not.toContain("0 dBan");
     expect(Number(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity"))).toBeGreaterThan(.9);
     clock.advanceTo(2000);
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("0 dBan");

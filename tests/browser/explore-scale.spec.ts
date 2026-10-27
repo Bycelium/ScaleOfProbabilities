@@ -16,10 +16,36 @@ const sceneArtworkText = (page: Page, id: string, key: string) => page.locator(`
 
 const expectTravelCaptionClear = async (page: Page) => {
   const caption = (await page.locator("[data-gap-caption]").boundingBox())!;
-  const readout = (await page.locator("[data-center-marker]").boundingBox())!;
+  const readout = (await page.locator("[data-depth-readout]").boundingBox())!;
   const controls = (await page.locator(".explorer-tools").boundingBox())!;
   expect(caption.y).toBeGreaterThanOrEqual(readout.y + readout.height);
   expect(caption.y + caption.height).toBeLessThanOrEqual(controls.y);
+};
+
+const readoutLayout = (page: Page) => page.locator("[data-center-marker]").evaluate(marker => {
+  const bounds = (selector: string) => {
+    const box = marker.querySelector<HTMLElement>(selector)!.getBoundingClientRect();
+    return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, opacity: Number(getComputedStyle(marker.querySelector<HTMLElement>(selector)!).opacity) };
+  };
+  const probability = bounds("[data-depth-readout]");
+  const stack = bounds("[data-current-readout-stack]");
+  const stackParts = [".readout-label", "[data-odds-value]", "strong"].map(selector => bounds(`[data-current-readout-stack] ${selector}`));
+  const overlaps = [...document.querySelectorAll<HTMLElement>(".spoke-tick small:not([hidden]), .spoke-event-marker small:not([hidden])")]
+    .some(label => {
+      const box = label.getBoundingClientRect();
+      return box.left < stack.right && box.right > stack.left && box.top < stack.bottom && box.bottom > stack.top;
+    });
+  return { probability, stack, stackParts, overlaps, width: innerWidth };
+});
+
+const expectReadoutInViewport = async (page: Page) => {
+  const layout = await readoutLayout(page);
+  for (const readout of [layout.probability, layout.stack, ...layout.stackParts]) {
+    expect(readout.left).toBeGreaterThanOrEqual(0);
+    expect(readout.right).toBeLessThanOrEqual(layout.width);
+  }
+  expect(layout.overlaps).toBe(false);
+  return layout;
 };
 
 for (const [name, viewport] of [["desktop", { width: 1365, height: 900 }], ["mobile", { width: 390, height: 844 }]] as const) {
@@ -117,7 +143,7 @@ test("explores radial depth and switches an open explanation to French", async (
 
   const scale = page.locator(".scale");
   await expect(page.locator("[data-center-marker] .probability")).toHaveText("Probability: 50%");
-  await expect(page.locator("[data-center-marker] .odds")).toContainText("Odds: 1 to 1");
+  await expect(page.locator("[data-current-readout-stack] .odds")).toContainText("Odds: 1 to 1");
   await expect(page.locator("[data-current-depth-marker]")).toContainText("0 dBan");
   await expect(page.locator("[data-current-depth-ring]")).toBeVisible();
   await expect(page.locator("[data-depth-spoke]")).toBeVisible();
@@ -170,7 +196,7 @@ test("explores radial depth and switches an open explanation to French", async (
   await expect(preferencesMenu.locator('[data-locale-choice="fr"]')).toBeFocused();
   await expect(page.locator("[data-center-marker] .probability")).toContainText(" %");
   await expect(page.locator("[data-center-marker] .probability")).toContainText("Probabilité :");
-  await expect(page.locator("[data-center-marker] .odds")).toContainText("Cote :");
+  await expect(page.locator("[data-current-readout-stack] .odds")).toContainText("Cote :");
   await capture(page, testInfo, "desktop-french-open-details");
 
   await preferencesMenu.locator("[data-all-references]").check();
@@ -233,7 +259,7 @@ test("keeps French depth exploration readable and tappable on mobile", async ({ 
   expect(await sceneArtworkText(page, "weekday", "weekdayWeekend")).toBe("S D");
 
   await page.goto("/?needle#d=-80.27101362442018");
-  const currentBadge = page.locator("[data-current-depth-marker] strong");
+  const currentBadge = page.locator("[data-current-readout-stack]");
   const currentBox = await currentBadge.boundingBox();
   expect(currentBox).not.toBeNull();
   const overlap = await page.locator(".spoke-tick small:visible, .spoke-event-marker small:visible").evaluateAll((labels, badge) => {
@@ -249,10 +275,14 @@ test("keeps French depth exploration readable and tappable on mobile", async ({ 
   await page.goto("/?extreme#d=525.36");
   await expect(page.locator("[data-center-marker] .probability")).toContainText("(100 −");
   await expect(page.locator("[data-center-marker] .probability")).toContainText(" %");
-  const readoutBox = await page.locator("[data-center-marker]").boundingBox();
+  const readoutBox = await page.locator("[data-depth-readout]").boundingBox();
   expect(readoutBox).not.toBeNull();
   expect(readoutBox!.x).toBeGreaterThanOrEqual(0);
   expect(readoutBox!.x + readoutBox!.width).toBeLessThanOrEqual(320);
+  const stackBox = await page.locator("[data-current-readout-stack]").boundingBox();
+  expect(stackBox).not.toBeNull();
+  expect(stackBox!.x).toBeGreaterThanOrEqual(0);
+  expect(stackBox!.x + stackBox!.width).toBeLessThanOrEqual(320);
   await capture(page, testInfo, "mobile-french-extreme");
 
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -260,6 +290,55 @@ test("keeps French depth exploration readable and tappable on mobile", async ({ 
   const travelCaption = page.locator("[data-gap-caption]");
   await expect(travelCaption).toBeVisible();
   await expectTravelCaptionClear(page);
+});
+
+test("crossfades split readouts and keeps every locale within the mobile ruler", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("probability-scale-locale", "en");
+    sessionStorage.setItem("probability-scale-intro-seen", "true");
+  });
+
+  const opacityByDepth = new Map<number, Awaited<ReturnType<typeof expectReadoutInViewport>>>();
+  for (const depth of [0, 30, -30, 40, -40]) {
+    await page.goto(`/?readout=${depth}&locale=en#d=${depth}`);
+    const layout = await expectReadoutInViewport(page);
+    opacityByDepth.set(depth, layout);
+    if (depth === 0) await capture(page, testInfo, "desktop-readout-zero");
+    if (depth === 40) await capture(page, testInfo, "desktop-readout-plus-40");
+  }
+  const central = opacityByDepth.get(0)!;
+  const positiveIntermediate = opacityByDepth.get(30)!;
+  const negativeIntermediate = opacityByDepth.get(-30)!;
+  const positiveExtreme = opacityByDepth.get(40)!;
+  const negativeExtreme = opacityByDepth.get(-40)!;
+  expect(central.probability.opacity).toBeGreaterThan(central.stack.opacity);
+  expect(positiveExtreme.probability.opacity).toBeLessThan(positiveExtreme.stack.opacity);
+  expect(negativeExtreme.probability.opacity).toBeLessThan(negativeExtreme.stack.opacity);
+  expect(positiveIntermediate.probability.opacity).toBeLessThan(central.probability.opacity);
+  expect(positiveIntermediate.probability.opacity).toBeGreaterThan(positiveExtreme.probability.opacity);
+  expect(positiveIntermediate.stack.opacity).toBeGreaterThan(central.stack.opacity);
+  expect(positiveIntermediate.stack.opacity).toBeLessThan(positiveExtreme.stack.opacity);
+  expect(positiveIntermediate.probability.opacity).toBeCloseTo(negativeIntermediate.probability.opacity, 2);
+  expect(positiveIntermediate.stack.opacity).toBeCloseTo(negativeIntermediate.stack.opacity, 2);
+  expect(positiveExtreme.probability.opacity).toBeGreaterThan(0);
+  expect(negativeExtreme.stack.opacity).toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 320, height: 640 });
+  for (const locale of ["en", "fr", "es", "zh"] as const) {
+    await page.goto("/");
+    await page.evaluate(code => {
+      localStorage.setItem("probability-scale-locale", code);
+      sessionStorage.setItem("probability-scale-intro-seen", "true");
+    }, locale);
+    for (const depth of [0, -80.27101362442018, 63.27, 525.36, -769.3]) {
+      await page.goto(`/?readout=${depth}&locale=${locale}#d=${depth}`);
+      await expectReadoutInViewport(page);
+      if (locale === "en" && depth === 0) await capture(page, testInfo, "mobile-english-readout-zero");
+      if (locale === "es" && depth === -769.3) await capture(page, testInfo, "mobile-spanish-readout-minus-769-3");
+    }
+  }
 });
 
 test("keeps Chinese and Spanish choices and open details readable on a narrow screen", async ({ page }, testInfo) => {
