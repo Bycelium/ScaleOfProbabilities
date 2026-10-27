@@ -10,7 +10,7 @@ export const matterModels = [
   { id: "nitrogen-molecule", chance: upper(0.2192), size: 89, art: moleculeArtwork("N₂", "#5c82c4", "#89ace4"), sourceIds: ["nasa-earth-fact-sheet"], classification: "Estimate" },
   { id: "oxygen-molecule", chance: lower(0.2095), size: 84, art: moleculeArtwork("O₂", "#d95757", "#ef8981"), sourceIds: ["nasa-earth-fact-sheet"], classification: "Estimate" },
   { id: "argon-atom", chance: lower(0.00934), size: 79, art: atomArtwork("Ar", "#a072bb", "#d9abe9"), sourceIds: ["nasa-earth-fact-sheet"], classification: "Estimate" },
-  { id: "carbon-dioxide-molecule", chance: lower(0.000420), size: 82, art: moleculeArtwork("CO₂", "#3d3d3d", "#df6963", 3), sourceIds: ["nasa-earth-fact-sheet"], classification: "Estimate" },
+  { id: "carbon-dioxide-molecule", chance: lower(0.000420), size: 82, art: moleculeArtwork("CO₂", "#fff", "#df6963", 3), sourceIds: ["nasa-earth-fact-sheet"], classification: "Estimate" },
   { id: "carbon-12", chance: upper(0.0107), size: 89, art: atomArtwork("C", "#737373", "#3d3d3d", "#f1f1f1"), sourceIds: ["nist-isotopic-composition-carbon"], classification: "Estimate" },
   { id: "oxygen-16", chance: upper(0.00243), size: 91, art: atomArtwork("O", "#d95757", "#ef8981"), sourceIds: ["nist-isotopic-composition-oxygen"], classification: "Estimate" },
   { id: "beach-grain", chance: oneIn(2.1220659078919385e15), size: 88, art: artwork("beach", "#dca95a", "#ffe0a0"), sourceIds: ["geometric-example-model"], classification: "Defined model" },
