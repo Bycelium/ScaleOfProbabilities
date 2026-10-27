@@ -8,13 +8,14 @@ import { FakeAnalyticsProvider } from "./helpers/fake-analytics-provider";
 
 class TestResizeObserver {
   static instances: TestResizeObserver[] = [];
+  observedTarget: Element | undefined;
   constructor(private readonly callback: ResizeObserverCallback) {
     TestResizeObserver.instances.push(this);
   }
-  observe(): void {}
+  observe(target: Element): void { this.observedTarget = target; }
   disconnect(): void {}
-  fire(): void {
-    this.callback([], this as unknown as ResizeObserver);
+  fire(entries: ResizeObserverEntry[] = []): void {
+    this.callback(entries, this as unknown as ResizeObserver);
   }
 }
 
@@ -318,6 +319,71 @@ describe("public probability exploration", () => {
 
     expect(coin.style.left).not.toBe(initialLeft);
     expect(Number.parseFloat(coin.style.left)).toBeCloseTo(Number.parseFloat(initialLeft) - 200, 8);
+  });
+
+  it("updates readout collision clearance from measured stack height", () => {
+    history.replaceState(null, "", "#d=2.7");
+    let measuredRootFontSize = "16px";
+    const browserGetComputedStyle = getComputedStyle;
+    vi.stubGlobal("getComputedStyle", (element: Element, pseudoElement?: string | null) => {
+      const computed = browserGetComputedStyle(element, pseudoElement);
+      if (element !== document.documentElement) return computed;
+      return new Proxy(computed, {
+        get(target, property) {
+          return property === "fontSize" ? measuredRootFontSize : Reflect.get(target, property, target);
+        },
+      });
+    });
+    expect(getComputedStyle(document.documentElement).fontSize).toBe("16px");
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains("scale") ? 1600 : 0;
+    });
+    const rendered = render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const readoutStack = document.querySelector<HTMLElement>("[data-current-readout-stack]")!;
+    const readoutObserver = TestResizeObserver.instances.find(observer => observer.observedTarget === readoutStack)!;
+    const tickLabel = document.querySelector<HTMLElement>('[data-tick="4"] small')!;
+    const activeLandmark = document.querySelector<HTMLButtonElement>('[data-landmark="numbered-card"]')!;
+
+    expect(Number(scale.dataset.depth)).toBe(2.7);
+    expect(activeLandmark.hidden).toBe(false);
+    activeLandmark.dispatchEvent(new MouseEvent("mouseenter"));
+    expect(tickLabel.hidden).toBe(false);
+    expect(document.querySelector("[data-event-marker]")).not.toBeNull();
+    expect(Number(scale.dataset.depth)).toBe(2.7);
+
+    readoutObserver.fire([{
+      borderBoxSize: [{ blockSize: 84 }],
+      contentRect: { height: 30 },
+    } as unknown as ResizeObserverEntry]);
+    expect(tickLabel.hidden).toBe(false);
+    expect(document.querySelector("[data-event-marker]")).not.toBeNull();
+
+    measuredRootFontSize = "20px";
+    readoutObserver.fire([{
+      borderBoxSize: [{ blockSize: 180 }],
+      contentRect: { height: 30 },
+    } as unknown as ResizeObserverEntry]);
+    expect(Number(scale.dataset.depth)).toBe(2.7);
+    expect(tickLabel.hidden).toBe(true);
+    expect(document.querySelector("[data-event-marker]")).toBeNull();
+
+    measuredRootFontSize = "invalid";
+    readoutObserver.fire([{
+      borderBoxSize: [],
+      contentRect: { height: 30 },
+    } as unknown as ResizeObserverEntry]);
+    expect(tickLabel.hidden).toBe(false);
+    expect(document.querySelector("[data-event-marker]")).not.toBeNull();
+
+    readoutObserver.fire([{
+      borderBoxSize: [],
+      contentRect: { height: 30 },
+    } as unknown as ResizeObserverEntry]);
+    readoutObserver.fire();
+    expect(Number(scale.dataset.depth)).toBe(2.7);
+    expect(tickLabel.hidden).toBe(false);
+    rendered.dispose();
   });
 
   it("keeps subpixel landmark art keyboard accessible down to its geometric visibility threshold", () => {
