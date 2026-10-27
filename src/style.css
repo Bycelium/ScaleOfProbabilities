@@ -82,6 +82,7 @@ dialog[data-detail-panel] { bottom: 4rem; left: auto; margin: 0; max-height: cal
 .intro-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: .2rem; }
 .intro-actions { align-items: center; border-top: 1px solid #426674; display: flex; flex: none; flex-wrap: wrap; gap: .35rem .75rem; justify-content: space-between; margin-top: .55rem; padding-top: .65rem; }
 .scale-intro h1 { margin-bottom: .9rem; }
+.scale-intro [data-intro-title]:focus { outline: none; }
 .intro-preferences { display: flex; justify-content: flex-end; margin: -.2rem 0 .65rem; }
 .intro-preferences > button { align-items: center; background: #102b38; border: 1px solid #547984; border-radius: 999px; color: inherit; display: inline-flex; gap: .45rem; min-height: 2.75rem; padding: .42rem .75rem; }
 .intro-preferences [data-current-language] { font-weight: 650; }
