@@ -67,7 +67,7 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .landmark .art img { display: block; height: 100%; pointer-events: auto; width: 100%; }
 .landmark-title { pointer-events: auto; }
 .landmark:hover .art, .landmark:focus-visible .art { filter: drop-shadow(0 15px 10px #020b12dd); transform: scale(1.04); }
-.landmark-title { font-family: Georgia, serif; font-size: .92rem; line-height: 1.05; max-width: 10rem; transform: translate(var(--title-x, 0), var(--title-y, 0)); transform-origin: top center; }
+.landmark-title { font-family: Georgia, serif; font-size: .92rem; line-height: 1.05; max-width: 10rem; transform-origin: top center; }
 .scale[data-fast-forward] .landmark-title { visibility: hidden; }
 .gap-caption { animation: gap-in .2s ease-out; background: #0b202de8; border: 1px solid #547984; border-radius: 999px; bottom: 4.6rem; color: #cfe2df; font-size: .82rem; left: 50%; margin: 0; padding: .45rem .8rem; position: absolute; text-align: center; transform: translateX(-50%); white-space: nowrap; z-index: 21; }
 .gap-caption span { color: #f6cf70; font-family: Georgia, serif; }

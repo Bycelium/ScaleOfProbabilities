@@ -426,7 +426,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       && Math.max(...vertical) >= 0 && Math.min(...vertical) <= height;
   };
 
-  const rebuildScene = (nextMetrics: SceneMetrics, visibleCatalogue: readonly DisplayLandmark[]): void => {
+  const rebuildScene = (nextMetrics: SceneMetrics, visibleCatalogue: readonly DisplayLandmark[], measureTitles: boolean): void => {
     const { width, height, referenceDiameter, centerX, centerY } = nextMetrics;
     const compactArtScale = width <= 640 ? 0.76 : 1;
     const originCenter = view.center;
@@ -469,9 +469,12 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       button.tabIndex = 0;
       setStyle(button, "pointer-events", "none");
       setStyle(button, "z-index", String(Math.max(1, Math.min(99, Math.round(zoomFactor * 10)))));
-      setStyle(title, "--title-x", "0px");
-      setStyle(title, "--title-y", "0px");
-      landmarkNodes.set(item.id, { ...existing, baseX: x, baseY: y, baseArtSize: artSize, titleSuppressed: false });
+      const titleSuppressed = "titleSuppressed" in existing ? existing.titleSuppressed : false;
+      landmarkNodes.set(item.id, { ...existing, baseX: x, baseY: y, baseArtSize: artSize, titleSuppressed });
+    }
+    if (!measureTitles) {
+      sceneOrigin = { center: originCenter, metrics: nextMetrics };
+      return;
     }
     const sceneNodes = [...landmarkNodes.values()];
     const readableNodes = sceneNodes.filter(node => node.baseArtSize >= 32
@@ -524,7 +527,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     if (!sceneOrigin || sceneOrigin.metrics !== nextMetrics || Math.abs(view.center - sceneOrigin.center) >= sceneRebaseDecibans(nextMetrics.width)) {
       const visibleCatalogue = availableLandmarks();
       sceneBounds = [Math.min(...visibleCatalogue.map(item => item.position)), Math.max(...visibleCatalogue.map(item => item.position))];
-      rebuildScene(nextMetrics, visibleCatalogue);
+      rebuildScene(nextMetrics, visibleCatalogue, travel === undefined);
     }
     const sceneZoom = 10 ** ((sceneOrigin!.center - view.center) / 10);
     const inverseZoom = 1 / sceneZoom;
@@ -544,7 +547,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       const readable = visible && artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7)
         && (!titleSuppressed || revealSuppressedTitle);
       if (title.hidden === readable) title.hidden = !readable;
-      if (readable) setStyle(title, "transform", `scale(${inverseZoom}) translate(var(--title-x), var(--title-y))`);
+      if (readable) setStyle(title, "transform", `scale(${inverseZoom})`);
       const receded = String(!readable);
       if (button.dataset.receded !== receded) button.dataset.receded = receded;
     }
