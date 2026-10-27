@@ -385,6 +385,31 @@ test("crossfades split readouts and keeps every locale within the mobile ruler",
   }
 });
 
+test("keeps mobile odds labels and values on stable separate lines", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  for (const locale of ["en", "fr", "es", "zh"] as const) {
+    await page.goto("/");
+    await page.evaluate(code => {
+      localStorage.setItem("probability-scale-locale", code);
+      sessionStorage.setItem("probability-scale-intro-seen", "true");
+    }, locale);
+    const positions: { odds: { y: number; height: number }; label: { bottom: number }; value: { y: number } }[] = [];
+    for (const depth of [0, -30, 30, -80.27101362442018, 63.27]) {
+      await page.goto(`/?odds-lines=${depth}&locale=${locale}#d=${depth}`);
+      positions.push(await page.locator("[data-current-readout-stack]").evaluate(stack => {
+        const box = stack.querySelector<HTMLElement>(".odds")!.getBoundingClientRect();
+        const label = stack.querySelector<HTMLElement>("[data-odds-label]")!.getBoundingClientRect();
+        const value = stack.querySelector<HTMLElement>("[data-odds-value]")!.getBoundingClientRect();
+        return { odds: { y: box.y, height: box.height }, label: { bottom: label.bottom }, value: { y: value.y } };
+      }));
+    }
+    expect(positions.every(position => position.value.y >= position.label.bottom)).toBe(true);
+    expect(positions.every(position => position.odds.y === positions[0].odds.y)).toBe(true);
+    expect(positions.every(position => position.odds.height === positions[0].odds.height)).toBe(true);
+    await capture(page, testInfo, `mobile-${locale}-odds-two-lines`);
+  }
+});
+
 test("keeps Chinese and Spanish choices and open details readable on a narrow screen", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 640 });
   await page.goto("/");
