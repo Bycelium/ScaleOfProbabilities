@@ -16,6 +16,8 @@ The atlas supports English, Français, 简体中文, and Español. A saved langu
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) to correct a source or translation, add an event or language, set up the project, and run checks.
 
+Optional production analytics require explicit visitor consent and Vercel Web Analytics. See [the analytics setup and data guide](docs/analytics.md) before enabling it for the Vercel project.
+
 ## Attribution and license
 
 The radial scale was inspired by Cary Huang's [Scale of the Universe 2](https://www.htwins.net/scale2/), created as **carykh**. Probability models and sources are listed in the application.

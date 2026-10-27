@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createAnalytics, type Analytics, type AnalyticsConfig } from "../src/analytics";
 import { catalogueOrder, displayLandmarks, landmarkModels, relatedLandmarkIds, sourceReferences } from "../src/catalogue";
 import { localeChoices } from "../src/locales";
 import { chance, formatOdds, formatProbability, formatProbabilityPercent } from "../src/probability";
 import { createScale } from "../src/scale";
+import { FakeAnalyticsProvider } from "./helpers/fake-analytics-provider";
 
 class TestResizeObserver {
   static instances: TestResizeObserver[] = [];
@@ -83,7 +85,7 @@ const drawnGuideAt = (position: number): DrawnCircle | undefined => {
 
 let scaleWidth = 1200;
 
-const render = (width = 1200, introSeen = true, allReferences = true) => {
+const render = (width = 1200, introSeen = true, allReferences = true, analytics?: Analytics) => {
   scaleWidth = width;
   document.body.innerHTML = '<main id="app"></main>';
   if (introSeen) sessionStorage.setItem("probability-scale-intro-seen", "true");
@@ -96,8 +98,28 @@ const render = (width = 1200, introSeen = true, allReferences = true) => {
     configurable: true,
     get() { return this.classList.contains("scale") ? scaleWidth : 0; },
   });
-  const dispose = createScale(document.querySelector<HTMLElement>("#app")!);
+  const dispose = createScale(document.querySelector<HTMLElement>("#app")!, analytics ? { analytics } : {});
   return { dispose };
+};
+
+const trackedAnalytics = (initialLocale = "en") => {
+  let monotonicTime = 0;
+  const provider = new FakeAnalyticsProvider();
+  const config: AnalyticsConfig = { provider: "vercel" };
+  const analytics = createAnalytics(config, initialLocale, {
+    window,
+    document,
+    wallNow: () => 2_000_000_000_000,
+    monotonicNow: () => monotonicTime,
+    providerFactory: () => provider,
+  });
+  analytics.setConsent("accepted");
+  provider.ready();
+  return {
+    analytics,
+    provider,
+    elapseTo(milliseconds: number): void { monotonicTime = milliseconds; },
+  };
 };
 
 const sceneArtwork = (id: string): Document => {
@@ -311,7 +333,8 @@ describe("public probability exploration", () => {
   });
 
   it("introduces the scale once and reopens the guide from the header", () => {
-    render(1200, false);
+    const recording = trackedAnalytics();
+    const rendered = render(1200, false, true, recording.analytics);
 
     const intro = document.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
     expect(intro.open).toBe(true);
@@ -371,8 +394,25 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLElement>("[data-page-content]")?.inert).toBe(false);
     document.querySelector<HTMLButtonElement>('[data-landmark="coin-heads"]')!.click();
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
+    recording.elapseTo(1_000);
     reopen.click();
-    expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
+    expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
+    recording.elapseTo(4_000);
+    intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
+    recording.elapseTo(5_000);
+    document.querySelector<HTMLDialogElement>("[data-detail-panel]")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "coin-heads", locale: "en" },
+      { type: "site_time", seconds: 1, locale: "en" },
+      { type: "example_time", exampleId: "coin-heads", seconds: 1, locale: "en" },
+      { type: "site_time", seconds: 3, locale: "en" },
+      { type: "site_time", seconds: 1, locale: "en" },
+      { type: "example_time", exampleId: "coin-heads", seconds: 1, locale: "en" },
+    ]);
+    rendered.dispose();
   });
 
   it("uses browser French on first visit and offers every language in About", () => {
@@ -595,11 +635,13 @@ describe("public probability exploration", () => {
 
   it("switches language without losing the current depth or open details", () => {
     history.replaceState(null, "", "#d=-4.8");
-    render();
+    const recording = trackedAnalytics();
+    const rendered = render(1200, true, true, recording.analytics);
     const scale = document.querySelector<HTMLElement>(".scale")!;
     document.querySelector<HTMLButtonElement>('[data-landmark="die-d4-highest"]')!.click();
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
     const depth = scale.dataset.depth;
+    recording.elapseTo(2_000);
 
     const preferencesToggle = document.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!;
     const preferencesMenu = document.querySelector<HTMLElement>("[data-preferences-menu]")!;
@@ -632,9 +674,19 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-intro-direction-rarer]")?.textContent).toBe("− dBan: rarer, toward the center");
     preferencesMenu.querySelector<HTMLInputElement>('[data-locale-choice="fr"]')!.click();
     expect(sceneArtwork("coin-heads").querySelector('[data-art-text="coinSide"]')?.textContent).toBe("P");
+    recording.elapseTo(3_000);
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
     preferencesToggle.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "die-d4-highest", locale: "en" },
+      { type: "site_time", seconds: 2, locale: "en" },
+      { type: "example_time", exampleId: "die-d4-highest", seconds: 2, locale: "en" },
+      { type: "site_time", seconds: 1, locale: "fr" },
+      { type: "example_time", exampleId: "die-d4-highest", seconds: 1, locale: "fr" },
+    ]);
+    rendered.dispose();
 
     document.body.innerHTML = '<main id="app"></main>';
     render();
@@ -828,7 +880,8 @@ describe("public probability exploration", () => {
     vi.useFakeTimers();
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
-    render();
+    const recording = trackedAnalytics();
+    const rendered = render(1200, true, true, recording.analytics);
     const scale = document.querySelector<HTMLElement>(".scale")!;
     const pair = document.querySelector<HTMLButtonElement>('[data-landmark="holdem-one-pair"]')!;
     const pointer = (type: string, clientY = 400) => {
@@ -842,17 +895,26 @@ describe("public probability exploration", () => {
     pair.click();
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
     expect(document.querySelector("[data-gap-caption]")?.textContent).toMatch(/−1\.1 dBan · odds ÷1\.3/);
+    expect(recording.provider.events).toEqual([{ type: "pageview" }]);
     clock.advanceTo(4000);
     const dialog = document.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
     expect(dialog.open).toBe(true);
     expect(Number(scale.dataset.depth)).toBeCloseTo(-1.1, 1);
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("one pair");
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "holdem-one-pair", locale: "en" },
+    ]);
 
     const next = document.querySelector<HTMLButtonElement>('[data-landmark="ace-in-five-cards"]')!;
     next.dispatchEvent(pointer("pointerdown"));
     next.dispatchEvent(pointer("pointerup"));
     next.click();
     expect(dialog.open).toBe(false);
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "holdem-one-pair", locale: "en" },
+    ]);
     clock.advanceTo(8000);
     expect(dialog.open).toBe(true);
     expect(document.querySelector("[data-detail-title]")?.textContent).toBe("At least one ace in five cards");
@@ -867,6 +929,12 @@ describe("public probability exploration", () => {
     next.click();
     expect(dialog.open).toBe(false);
     scale.dispatchEvent(new Event("pointermove", { bubbles: true }));
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "holdem-one-pair", locale: "en" },
+      { type: "example_opened", exampleId: "ace-in-five-cards", locale: "en" },
+    ]);
+    rendered.dispose();
   });
 
   it("accelerates before braking gently toward a selected landmark", () => {
@@ -1109,11 +1177,17 @@ describe("public probability exploration", () => {
     vi.useFakeTimers();
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
-    const rendered = render();
+    const recording = trackedAnalytics();
+    const rendered = render(1200, true, true, recording.analytics);
 
     document.querySelector<HTMLButtonElement>('[data-landmark="holdem-one-pair"]')!.click();
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
+    expect(recording.provider.events).toEqual([{ type: "pageview" }]);
     clock.advanceTo(4000);
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "holdem-one-pair", locale: "en" },
+    ]);
     const relation = document.querySelector<HTMLButtonElement>('[data-related-landmark="holdem-two-pair"]')!;
     expect(relation.querySelector("[data-related-title]")?.textContent).toBe("Texas Hold’em: exactly two pair");
     relation.focus();
@@ -1122,6 +1196,10 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
     expect(document.querySelector("[data-gap-caption]")?.textContent).toMatch(/−.+ dBan · odds ÷/);
     expect(document.activeElement).toBe(document.querySelector(".scale"));
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "holdem-one-pair", locale: "en" },
+    ]);
     clock.advanceTo(8000);
     expect(document.activeElement).toBe(document.querySelector("[data-close-detail]"));
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("−5.1 dBan");
@@ -1130,6 +1208,11 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("exactly two pair");
     expect(document.querySelector('[data-related-landmark="holdem-one-pair"]')).not.toBeNull();
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "holdem-one-pair", locale: "en" },
+      { type: "example_opened", exampleId: "holdem-two-pair", locale: "en" },
+    ]);
     document.querySelector<HTMLButtonElement>('[data-related-landmark="holdem-three-kind"]')!.click();
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
@@ -1138,6 +1221,11 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
     clock.advanceTo(8500);
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "holdem-one-pair", locale: "en" },
+      { type: "example_opened", exampleId: "holdem-two-pair", locale: "en" },
+    ]);
     rendered.dispose();
 
     history.replaceState(null, "", "#d=0");
@@ -2040,12 +2128,17 @@ describe("public probability exploration", () => {
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
     history.replaceState(null, "", "#d=-6.989700043360188");
-    const rendered = render();
+    const recording = trackedAnalytics();
+    const rendered = render(1200, true, true, recording.analytics);
     const scale = document.querySelector<HTMLElement>(".scale")!;
     const returnButton = document.querySelector<HTMLButtonElement>("[data-return-zero]")!;
 
     document.querySelector<HTMLButtonElement>('[data-landmark="two-dice-any-double"]')!.click();
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "two-dice-any-double", locale: "en" },
+    ]);
     returnButton.focus();
     returnButton.click();
 
@@ -2054,9 +2147,16 @@ describe("public probability exploration", () => {
     clock.advanceTo(1000);
     expect(Number(scale.dataset.depth)).toBe(0);
     expect(document.activeElement).toBe(scale);
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    expect(recording.provider.events).toEqual([
+      { type: "pageview" },
+      { type: "example_opened", exampleId: "two-dice-any-double", locale: "en" },
+    ]);
 
     history.replaceState(null, "", "#d=100");
     rendered.dispose();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
     const wheelRendered = render();
     const wheelScale = document.querySelector<HTMLElement>(".scale")!;
     wheelScale.dispatchEvent(new WheelEvent("wheel", { deltaY: 104.4, cancelable: true }));
