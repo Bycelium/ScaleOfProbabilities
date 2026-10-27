@@ -138,6 +138,9 @@ export const wordSelectionArtwork = (color: string): string => {
 export const cryptographicKeyArtwork = (bits: 128 | 256, color: string): string =>
   `<svg class="crypto-key-art" data-bits="${bits}" viewBox="0 0 100 100" aria-hidden="true" style="--art:${color}"><circle cx="31" cy="49" r="20" fill="none" stroke="var(--art)" stroke-width="10"/><path d="M49 49h41M71 49v13M82 49v9" fill="none" stroke="var(--art)" stroke-width="10" stroke-linecap="round"/><circle cx="31" cy="49" r="5" fill="#f6cf70"/><rect x="25" y="76" width="50" height="17" rx="8.5" fill="#172f3d"/><text x="50" y="88" text-anchor="middle" fill="#dcebe6" font-size="12" font-family="monospace" font-weight="700">AES-${bits}</text></svg>`;
 
+export const uuidArtwork = (color: string): string =>
+  `<svg class="uuid-art" viewBox="0 0 100 100" aria-hidden="true" style="--art:${color}"><rect x="9" y="19" width="82" height="62" rx="10" fill="#f7f2e4" stroke="var(--art)" stroke-width="5"/><path d="M22 40h19m7 0h12m7 0h11M22 54h12m7 0h24m7 0h6M22 68h25m7 0h24" fill="none" stroke="var(--art)" stroke-width="5" stroke-linecap="round"/><circle cx="77" cy="26" r="13" fill="var(--art)"/><text x="77" y="31" text-anchor="middle" fill="#fff9e8" font-size="15" font-family="system-ui" font-weight="800">v4</text></svg>`;
+
 type LotteryCountry = "france" | "united-kingdom" | "united-states" | "euromillions";
 type LotteryEvent = "jackpot" | "prize" | "loss";
 

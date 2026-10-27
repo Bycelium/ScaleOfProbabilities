@@ -11,6 +11,8 @@ export const enSources = {
   "fair-independent-dice-model": { label: "Fair independent dice model" },
   "uniform-calendar-month-model": { label: "Uniform calendar-month model" },
   "standard-deck-model": { label: "Standard-deck model" },
+  "ucr-well-shuffled-deck": { label: "John Baez: well-shuffled deck permutations", note: "published 5 February 2013; checked 27 October 2026" },
+  "rfc-9562-uuidv4": { label: "IETF RFC 9562: UUID version 4", note: "published May 2024; checked 27 October 2026" },
   "uniform-seven-day-calendar-model": { label: "Uniform seven-day calendar model" },
   "noaa-ocean-service": { label: "NOAA Ocean Service", note: "coverage estimate" },
   "fair-die-model": { label: "Fair-die model" },

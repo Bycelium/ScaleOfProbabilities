@@ -102,6 +102,7 @@ const declaredRelatedLandmarkIds = {
   "holdem-four-kind": ["holdem-full-house", "holdem-straight-flush"],
   "holdem-straight-flush": ["holdem-four-kind", "holdem-royal-flush"],
   "holdem-royal-flush": ["holdem-straight-flush"],
+  "shuffled-deck-specified-order": ["uuid-v4-pair-collision"],
   "france-loto-main-prize": ["france-loto-main-loss", "france-loto-jackpot"],
   "france-loto-main-loss": ["france-loto-main-prize", "france-loto-jackpot"],
   "france-loto-jackpot": ["france-loto-main-prize", "uk-lotto-jackpot"],

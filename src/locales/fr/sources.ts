@@ -11,6 +11,8 @@ export const frSources = {
   "fair-independent-dice-model": { label: "Modèle de dés équilibrés indépendants" },
   "uniform-calendar-month-model": { label: "Modèle uniforme des mois civils" },
   "standard-deck-model": { label: "Modèle de jeu standard" },
+  "ucr-well-shuffled-deck": { label: "John Baez : permutations d’un jeu bien mélangé", note: "publié le 5 février 2013 ; consulté le 27 octobre 2026" },
+  "rfc-9562-uuidv4": { label: "RFC 9562 de l’IETF : UUID version 4", note: "publiée en mai 2024 ; consultée le 27 octobre 2026" },
   "uniform-seven-day-calendar-model": { label: "Modèle uniforme des sept jours de la semaine" },
   "noaa-ocean-service": { label: "NOAA Ocean Service", note: "estimation de couverture" },
   "fair-die-model": { label: "Modèle de dé équilibré" },

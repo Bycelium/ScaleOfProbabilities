@@ -73,6 +73,13 @@ export const securityEN = {
     calculation: "p = 1 / 2²⁵⁶ ≈ 1 / (1.158 × 10⁷⁷)",
     assumptions: "The AES key is generated uniformly, and the probability covers one independent key guess. Practical data protection also depends on software and key handling.",
   },
+  "uuid-v4-pair-collision": {
+    title: "Two UUIDv4 values collide",
+    shortTitle: "UUIDv4 pair collision",
+    explanation: "UUIDv4 reserves six bits for its version and variant and fills the other 122 with random data. For two independently and uniformly generated UUIDv4 values, the second matches the first with probability 1 in 2¹²². That collision is vastly more likely than repeating one specified deck order, yet remains extraordinarily rare for one pair.",
+    calculation: "p = 1 / 2¹²² = 1 / 5,316,911,983,139,663,491,615,228,241,121,378,304",
+    assumptions: "Both UUIDv4 values use independent, uniform 122-bit random fields from a reliable generator. The model covers one pair. In a large collection, the birthday effect counts many possible pairs and raises the probability of at least one collision.",
+  },
   "exact-hash-day": {
     title: "A preselected Bitcoin hash appears within one day",
     shortTitle: "exact Bitcoin hash in a day",

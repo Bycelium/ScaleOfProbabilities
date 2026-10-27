@@ -9,6 +9,8 @@ export const sourceReferences = {
   "fair-independent-dice-model": { },
   "uniform-calendar-month-model": { },
   "standard-deck-model": { },
+  "ucr-well-shuffled-deck": { href: "https://math.ucr.edu/home/baez/games/games_10.html" },
+  "rfc-9562-uuidv4": { href: "https://www.rfc-editor.org/rfc/rfc9562.html#section-5.4" },
   "uniform-seven-day-calendar-model": { },
   "noaa-ocean-service": { href: "https://oceanservice.noaa.gov/facts/howmanyoceans.html" },
   "fair-die-model": { },

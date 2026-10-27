@@ -11,6 +11,8 @@ export const esSources = {
   "fair-independent-dice-model": { label: "Modelo de dados equilibrados e independientes" },
   "uniform-calendar-month-model": { label: "Modelo uniforme de meses del calendario" },
   "standard-deck-model": { label: "Modelo de baraja estándar" },
+  "ucr-well-shuffled-deck": { label: "John Baez: permutaciones de una baraja bien mezclada", note: "publicado el 5 de febrero de 2013; consultado el 27 de octubre de 2026" },
+  "rfc-9562-uuidv4": { label: "RFC 9562 del IETF: UUID versión 4", note: "publicado en mayo de 2024; consultado el 27 de octubre de 2026" },
   "uniform-seven-day-calendar-model": { label: "Modelo uniforme de calendario de siete días" },
   "noaa-ocean-service": { label: "Servicio Oceánico de la NOAA", note: "estimación de cobertura" },
   "fair-die-model": { label: "Modelo de dado equilibrado" },

@@ -2002,6 +2002,50 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("no cards known in advance");
   });
 
+  it("compares one specified deck order with one UUIDv4 pair collision", () => {
+    history.replaceState(null, "", "#d=-679.1");
+    const first = render(390);
+
+    const item = displayLandmarks.find(candidate => candidate.id === "shuffled-deck-specified-order")!;
+    const model = landmarkModels.find(candidate => candidate.id === item.id)!;
+    expect(item.position).toBeCloseTo(-679.0664839220405, 10);
+    expect(model.chance.tail).toEqual({ kind: "one-in", denominator: 8.065817517094388e67 });
+    expect(model.classification).toBe("Exact model");
+
+    const landmark = document.querySelector<HTMLButtonElement>('[data-landmark="shuffled-deck-specified-order"]')!;
+    const deckArt = sceneArtwork(item.id);
+    expect(deckArt.querySelector(".poker-hand")).toBeNull();
+    expect(deckArt.querySelector("text")?.textContent).toBe("A");
+    landmark.click();
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Reproduce one specified deck order");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("1 / 52!");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("specified before");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("N / 52!");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("whether earlier or later");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("never appeared before");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("neither claim can be guaranteed");
+    expect(document.querySelector<HTMLElement>("[data-detail-related]")?.hidden).toBe(false);
+    expect(document.querySelector('[data-related-landmark="uuid-v4-pair-collision"]')).not.toBeNull();
+    expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a')?.href).toBe("https://math.ucr.edu/home/baez/games/games_10.html");
+    expect(document.querySelector("[data-detail-sources]")?.textContent).toContain("checked 27 October 2026");
+
+    const uuid = displayLandmarks.find(candidate => candidate.id === "uuid-v4-pair-collision")!;
+    expect(uuid.position).toBeCloseTo(-10 * Math.log10(2 ** 122 - 1), 10);
+    expect(uuid.chance.tail).toEqual({ kind: "one-in", denominator: 2 ** 122 });
+    expect(new DOMParser().parseFromString(uuid.art, "image/svg+xml").querySelector(".uuid-art")).not.toBeNull();
+    expect(relatedLandmarkIds[uuid.id]).toContain(item.id);
+    first.dispose();
+    history.replaceState(null, "", `#d=${uuid.position}`);
+    render(390);
+    document.querySelector<HTMLButtonElement>('[data-landmark="uuid-v4-pair-collision"]')!.click();
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Two UUIDv4 values collide");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("1 / 2¹²²");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("one pair");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("birthday effect");
+    expect(document.querySelector('[data-related-landmark="shuffled-deck-specified-order"]')).not.toBeNull();
+    expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a')?.href).toBe("https://www.rfc-editor.org/rfc/rfc9562.html#section-5.4");
+  });
+
   it("shows the authorized main-draw lottery losses as sourced ticket events", () => {
     history.replaceState(null, "", "#d=10.78");
     render(390);

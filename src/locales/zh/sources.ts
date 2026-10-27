@@ -11,6 +11,8 @@ export const zhSources = {
   "fair-independent-dice-model": { label: "公平独立骰子模型" },
   "uniform-calendar-month-model": { label: "均匀公历月份模型" },
   "standard-deck-model": { label: "标准牌组模型" },
+  "ucr-well-shuffled-deck": { label: "John Baez：充分洗匀牌组的排列", note: "2013 年 2 月 5 日发布；2026 年 10 月 27 日查阅" },
+  "rfc-9562-uuidv4": { label: "IETF RFC 9562：UUID 第 4 版", note: "2024 年 5 月发布；2026 年 10 月 27 日查阅" },
   "uniform-seven-day-calendar-model": { label: "均匀七日历法模型" },
   "noaa-ocean-service": { label: "NOAA 海洋服务", note: "覆盖率估计" },
   "fair-die-model": { label: "公平骰子模型" },

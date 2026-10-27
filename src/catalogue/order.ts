@@ -133,6 +133,8 @@ export const catalogueSlots = {
   "drop-olympic-pool": 134,
   "drop-garden-pool": 135,
   "four-dice-all-identical": 136,
+  "shuffled-deck-specified-order": 137,
+  "uuid-v4-pair-collision": 138,
   "birthday-10": 140,
   "birthday-20": 141,
   "birthday-30": 142,

@@ -80,6 +80,14 @@ export const securityZH = {
     assumptions: "AES 密钥均匀生成，概率只涵盖一次独立密钥猜测。实际数据保护还取决于软件和密钥管理。",
   },
 
+  "uuid-v4-pair-collision": {
+    title: "两个 UUIDv4 值发生碰撞",
+    shortTitle: "两个 UUIDv4 碰撞",
+    explanation: "UUIDv4 用六位表示版本和变体，其余 122 位填入随机数据。对两个独立且均匀生成的 UUIDv4，第二个与第一个相同的概率为 1 / 2¹²²。该碰撞远比重现一个指定的 52 张牌牌序更可能发生，但对单独一对 UUIDv4 而言仍极其罕见。",
+    calculation: "p = 1 / 2¹²² = 1 / 5,316,911,983,139,663,491,615,228,241,121,378,304",
+    assumptions: "两个 UUIDv4 都使用可靠生成器产生的独立、均匀 122 位随机字段。本模型只涵盖一对 UUIDv4。对于大量 UUIDv4，生日效应会计算许多可能的配对，从而提高至少发生一次碰撞的概率。",
+  },
+
   "exact-hash-day": {
     title: "预先指定的比特币哈希在一天内出现",
     shortTitle: "一天内出现精确比特币哈希",
