@@ -13,6 +13,7 @@ describe("scene layout", () => {
     expect(landmarkAngle("month-31-days")).toBeCloseTo(58 * Math.PI / 180, 12);
     expect(landmarkAngle("red-dwarf-star")).toBeCloseTo(170 * Math.PI / 180, 12);
     expect(landmarkAngle("rain-hilo")).toBeCloseTo(105 * Math.PI / 180, 12);
+    expect(landmarkAngle("stellar-hydrogen-mass")).toBeCloseTo(135 * Math.PI / 180, 12);
     expect(landmarkAngle("france-loto-main-prize")).toBeCloseTo(105 * Math.PI / 180, 12);
     expect(landmarkAngle("euromillions-main-prize")).toBeCloseTo(75 * Math.PI / 180, 12);
     expect(landmarkAngle("mensik-first-serve-miami-2025")).toBeCloseTo(335 * Math.PI / 180, 12);
@@ -40,6 +41,7 @@ describe("scene layout", () => {
       ["french-scrabble-consonant", "rain-brest-december"],
       ["holdem-one-pair", "full-moon-15-days"],
       ["numbered-card", "ocean-point"],
+      ["numbered-card", "stellar-hydrogen-mass"],
       ["weekday", "yellow-pea"],
       ["weekday", "four-dice-any-match"],
       ["yellow-pea", "four-dice-any-match"],

@@ -224,12 +224,27 @@ test("keeps stellar hydrogen and its nearby landmarks selectable at their exact 
     "ocean-point",
     "mensik-first-serve-miami-2025",
     "roulette-two-dozens-columns",
+    "four-dice-any-match",
+    "red-dwarf-star",
+    "rain-hilo",
   ] as const;
   for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     for (const id of ids) {
       const landmark = displayLandmarks.find(item => item.id === id)!;
       await openScene(page, "en", landmark.position);
+      if (id === "stellar-hydrogen-mass") {
+        const readoutOverlaps = await page.locator(".scale").evaluate((scale, landmarkId) => {
+          const art = scale.querySelector<HTMLElement>(`[data-landmark="${landmarkId}"] .art img`)!.getBoundingClientRect();
+          const overlapArea = (first: DOMRect, second: DOMRect) => Math.max(0, Math.min(first.right, second.right) - Math.max(first.left, second.left))
+            * Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top));
+          return ["[data-depth-readout]", "[data-current-readout-stack]", "[data-current-depth-marker] strong"]
+            .map(selector => scale.querySelector<HTMLElement>(selector)?.getBoundingClientRect())
+            .filter((box): box is DOMRect => box !== undefined)
+            .map(readout => overlapArea(art, readout));
+        }, id);
+        expect(readoutOverlaps, `${id} at ${viewport.width}px`).toEqual([0, 0, 0]);
+      }
       await page.locator(`[data-landmark="${id}"] .art img`).click();
       await expect(page.locator("[data-detail-panel][open]")).toBeVisible();
       await expect(page.locator("[data-detail-title]")).toHaveText(landmark.title);
