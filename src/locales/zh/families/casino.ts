@@ -6,7 +6,7 @@ export const casinoZH = {
   "roulette-straight-up": {
     title: "轮盘单号下注获胜",
     shortTitle: "轮盘·单号",
-    explanation: "选定的单号下注覆盖一个数字，即单零轮盘 37 个格之一。获胜净赢 €3,500 并退回 €100 本金，否则损失 €100 本金。长期平均每下注 €100 损失 €2.70。",
+    explanation: "在单零轮盘上选一个数字：平均每 37 次旋转命中一次。",
     calculation: "p = 1/37；预期净收益 = [(1 × €3,500) − (36 × €100)] / 37 = −€100/37 ≈ 每 €100 为 −€2.70",
     assumptions: roulette,
   },
@@ -14,7 +14,7 @@ export const casinoZH = {
   "roulette-split": {
     title: "轮盘分注获胜",
     shortTitle: "轮盘·分注",
-    explanation: "选定的分注覆盖布局中相邻的两个数字，即 37 个格中的两个。获胜净赢 €1,700 并退回 €100 本金，否则损失本金。长期平均每下注 €100 损失 €2.70。",
+    explanation: "把分注押在两个相邻数字之间：任一个数字出现都赢，覆盖 37 个格中的两个。",
     calculation: "p = 2/37；预期净收益 = [(2 × €1,700) − (35 × €100)] / 37 = −€100/37 ≈ 每 €100 为 −€2.70",
     assumptions: roulette,
   },
@@ -22,7 +22,7 @@ export const casinoZH = {
   "roulette-street": {
     title: "轮盘街注获胜",
     shortTitle: "轮盘·街注",
-    explanation: "选定的街注覆盖布局中一排三个数字，即 37 个格中的三个。获胜净赢 €1,100 并退回 €100 本金，否则损失本金。长期平均每下注 €100 损失 €2.70。",
+    explanation: "覆盖布局中的一排三个数字：轮盘 37 个格中有三个能让街注获胜。",
     calculation: "p = 3/37；预期净收益 = [(3 × €1,100) − (34 × €100)] / 37 = −€100/37 ≈ 每 €100 为 −€2.70",
     assumptions: roulette,
   },
@@ -30,7 +30,7 @@ export const casinoZH = {
   "roulette-corner": {
     title: "轮盘角注获胜",
     shortTitle: "轮盘·角注",
-    explanation: "选定的角注覆盖布局中在一角相接的四个数字，即 37 个格中的四个。获胜净赢 €800 并退回 €100 本金，否则损失本金。长期平均每下注 €100 损失 €2.70。",
+    explanation: "把筹码放在四个数字相接的角上：这四个格中任一个出现都赢得角注。",
     calculation: "p = 4/37；预期净收益 = [(4 × €800) − (33 × €100)] / 37 = −€100/37 ≈ 每 €100 为 −€2.70",
     assumptions: roulette,
   },
@@ -38,7 +38,7 @@ export const casinoZH = {
   "roulette-six-line": {
     title: "轮盘六线注获胜",
     shortTitle: "轮盘·六线注",
-    explanation: "选定的六线注覆盖布局中相邻两排的六个数字，即 37 个格中的六个。获胜净赢 €500 并退回 €100 本金，否则损失本金。长期平均每下注 €100 损失 €2.70。",
+    explanation: "覆盖布局中相邻的两排：轮盘 37 个格中有六个能让六线注获胜。",
     calculation: "p = 6/37；预期净收益 = [(6 × €500) − (31 × €100)] / 37 = −€100/37 ≈ 每 €100 为 −€2.70",
     assumptions: roulette,
   },
@@ -46,7 +46,7 @@ export const casinoZH = {
   "roulette-dozen-column": {
     title: "轮盘十二数注或列注获胜",
     shortTitle: "轮盘·十二数或列",
-    explanation: "选定的十二数或一列覆盖单零轮盘 37 个格中的 12 个。获胜净赢 €200 并退回 €100 本金，否则损失本金。长期平均每下注 €100 损失 €2.70。",
+    explanation: "选择一个十二数或一列：单零轮盘 37 个格中有 12 个能让下注获胜。",
     calculation: "p = 12/37；预期净收益 = [(12 × €200) − (25 × €100)] / 37 = −€100/37 ≈ 每 €100 为 −€2.70",
     assumptions: roulette,
   },
@@ -54,7 +54,7 @@ export const casinoZH = {
   "roulette-even-money": {
     title: "轮盘押红获胜",
     shortTitle: "轮盘·红",
-    explanation: "押红覆盖单零轮盘 37 个格中的 18 个。黑、奇、偶、小和大是等价的等额赔率选项。红色净赢 €100 并退回本金；黑色损失 €100；零退回 €50，即净损失 €50。长期平均每下注 €100 损失 €1.35。",
+    explanation: "押红时，轮盘 37 个格中有 18 个获胜。按法国的减半损失规则，零会退回一半本金。",
     calculation: "p = 18/37；预期净收益 = [(18 × €100) − (18 × €100) − €50] / 37 = −€100/74 ≈ 每 €100 为 −€1.35",
     assumptions: roulette,
   },
@@ -62,7 +62,7 @@ export const casinoZH = {
   "roulette-two-dozens-columns": {
     title: "轮盘两个十二数或两列下注获胜",
     shortTitle: "轮盘·24 格",
-    explanation: "将 €100 总本金分成两个 €50，押在两个选定的十二数或列上，可覆盖单零轮盘 37 格中的 24 格。命中覆盖数字返还 €150，净赚 €50；其余含零的 13 个数字损失全部本金。长期平均每下注 €100 损失 €2.70。",
+    explanation: "把本金分押在两个十二数或两列上：轮盘 37 个格中有 24 个会产生净收益。",
     calculation: "p = 24/37；预期净收益 = [(24 × €50) − (13 × €100)] / 37 = −€100/37 ≈ 每 €100 为 −€2.70",
     assumptions: roulette,
   },

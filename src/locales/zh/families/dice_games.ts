@@ -12,7 +12,7 @@ export const dice_gamesZH = {
   "four-dice-any-six": {
     title: "四枚骰子至少出现一个六",
     shortTitle: "至少一个六",
-    explanation: "四枚公平骰子的 1,296 种可能结果中，有 671 种至少含一个六。计算先数没有六的结果，再从全部结果中扣除。",
+    explanation: "掷四枚公平骰子，至少出现一个六的情况约占 52%。",
     calculation: "p = 1 − (5/6)⁴ = 671 / 1296",
     assumptions: "四枚公平六面骰子相互独立。",
   },
@@ -20,7 +20,7 @@ export const dice_gamesZH = {
   "three-dice-sum-ten": {
     title: "三枚骰子点数和至少为 10",
     shortTitle: "骰子点数和 ≥ 10",
-    explanation: "三枚公平骰子的 216 种有序结果中，恰有 135 种点数和至少为 10。",
+    explanation: "掷三枚公平骰子，平均每八次有五次的点数和达到 10 或以上。",
     calculation: "p = 135 / 216 = 5/8",
     assumptions: "三枚公平六面骰子相互独立，将朝上面的点数相加。",
   },
@@ -60,7 +60,7 @@ export const dice_gamesZH = {
   "two-dice-any-double": {
     title: "两枚骰子点数相同",
     shortTitle: "两枚骰子相同",
-    explanation: "36 个等可能对子中有 6 个相同，从 1–1 到 6–6。",
+    explanation: "掷两枚公平骰子，平均每六次有一次点数相同，从 1–1 到 6–6。",
     calculation: "p = 6 个相同对子 / 36 个等可能对子 = 1/6",
     assumptions: "两枚公平六面骰子相互独立。",
   },
@@ -76,7 +76,7 @@ export const dice_gamesZH = {
   "three-dice-any-triple": {
     title: "三枚骰子点数全相同",
     shortTitle: "三枚骰子相同",
-    explanation: "216 个等可能三元组中有 6 个全相同，从 1–1–1 到 6–6–6。",
+    explanation: "三枚公平骰子约每 36 次会有一次全部同点，从 1–1–1 到 6–6–6。",
     calculation: "p = 6 个相同三元组 / 216 个等可能结果 = 1/36",
     assumptions: "三枚公平六面骰子相互独立。",
   },
@@ -100,7 +100,7 @@ export const dice_gamesZH = {
   "first-roll-yahtzee": {
     title: "第一次投掷即得 Yams/Yahtzee",
     shortTitle: "首投 Yams",
-    explanation: "五枚骰子首投的 7,776 种结果中有 6 种是五枚同点，即 Yams 或 Yahtzee。第一枚落定后，其余四枚都必须与它相同。",
+    explanation: "五枚公平骰子的第一投平均约 1,296 次才会直接得到一次 Yams 或 Yahtzee。",
     calculation: "p = 6 组全同结果 / 6⁵ 种结果 = 1/1296",
     assumptions: "五枚公平六面骰子相互独立。",
   },
@@ -108,7 +108,7 @@ export const dice_gamesZH = {
   "rubik-state": {
     title: "两个打乱的 3 × 3 魔方状态相同",
     shortTitle: "两个相同的打乱魔方",
-    explanation: "两个独立打乱的 3 × 3 魔方各有 43,252,003,274,489,856,000 个合法状态。对齐相同颜色的中心块后，第二个魔方在所有状态中只有一个状态与第一个相同。",
+    explanation: "独立打乱两个 3 × 3 魔方并对齐中心块。两个魔方每块零件都落在相同位置的概率约为 43,252,003,274,489,856,000 分之一。",
     calculation: "p = 1 个相同状态 / 43,252,003,274,489,856,000 个合法状态",
     assumptions: "每个魔方都从合法的 3 × 3 × 3 状态中独立且均匀地抽取。对齐相同颜色的中心块会消除整个魔方的旋转；手动打乱只用于说明这个均匀状态模型。",
   },

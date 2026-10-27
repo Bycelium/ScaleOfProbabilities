@@ -11,14 +11,14 @@ export const dice_gamesEN = {
   "four-dice-any-six": {
     title: "At least one six among four dice",
     shortTitle: "at least one six",
-    explanation: "Of the 1,296 possible rolls of four fair dice, 671 contain at least one six. The calculation counts rolls with no six first, then subtracts them from all possible rolls.",
+    explanation: "Roll four fair dice and at least one six appears in about 52% of rolls.",
     calculation: "p = 1 − (5/6)⁴ = 671 / 1296",
     assumptions: "The four fair six-sided dice roll independently.",
   },
   "three-dice-sum-ten": {
     title: "Three dice sum to at least 10",
     shortTitle: "dice sum ≥ 10",
-    explanation: "Exactly 135 of the 216 ordered results for three fair dice have a total of at least 10.",
+    explanation: "Roll three fair dice: their total reaches 10 or more in five out of eight rolls on average.",
     calculation: "p = 135 / 216 = 5/8",
     assumptions: "The three fair six-sided dice roll independently, and their top faces are added.",
   },
@@ -53,7 +53,7 @@ export const dice_gamesEN = {
   "two-dice-any-double": {
     title: "Two dice show the same number",
     shortTitle: "two dice match",
-    explanation: "Six of the 36 equally likely pairs match, from 1–1 through 6–6.",
+    explanation: "Roll two fair dice and matching faces appear once in six rolls on average, from 1–1 through 6–6.",
     calculation: "p = 6 matching pairs / 36 equally likely pairs = 1/6",
     assumptions: "The two fair six-sided dice roll independently.",
   },
@@ -67,7 +67,7 @@ export const dice_gamesEN = {
   "three-dice-any-triple": {
     title: "Three dice all match",
     shortTitle: "three dice match",
-    explanation: "Six of the 216 equally likely triples match, from 1–1–1 through 6–6–6.",
+    explanation: "Three fair dice all show the same face about once in 36 rolls, from 1–1–1 through 6–6–6.",
     calculation: "p = 6 matching triples / 216 equally likely rolls = 1/36",
     assumptions: "The three fair six-sided dice roll independently.",
   },
@@ -88,14 +88,14 @@ export const dice_gamesEN = {
   "first-roll-yahtzee": {
     title: "Yams/Yahtzee on the first roll",
     shortTitle: "first-roll Yams",
-    explanation: "Six of the 7,776 possible first rolls are five of a kind, the Yams or Yahtzee result. After the first die lands, each of the other four must match it.",
+    explanation: "A first roll of five fair dice produces an instant Yams or Yahtzee only about once in 1,296 tries.",
     calculation: "p = 6 matching sets / 6⁵ possible rolls = 1/1296",
     assumptions: "Five fair six-sided dice roll independently.",
   },
   "rubik-state": {
     title: "Two shuffled 3 × 3 cubes match",
     shortTitle: "two matching scrambled cubes",
-    explanation: "Two independently mixed 3 × 3 Rubik’s Cubes each have 43,252,003,274,489,856,000 legal states. Once like-coloured centres are aligned, the second cube has one matching state among all of them.",
+    explanation: "Scramble two 3 × 3 Rubik’s Cubes independently and align their centres. The chance that every piece ends in the same place on both cubes is about one in 43 quintillion.",
     calculation: "p = 1 matching state / 43,252,003,274,489,856,000 legal states",
     assumptions: "Each cube is sampled independently and uniformly from legal 3 × 3 × 3 states. Aligning like-coloured centres removes whole-cube rotations; a physical hand shuffle only illustrates this uniform-state model.",
   },

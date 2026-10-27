@@ -6,7 +6,7 @@ Read this guide before changing catalogue landmarks, probabilities, source-backe
 
 - Do not fabricate opposite events. Populate the likely side with independently meaningful events, including common compositions and naturally likely outcomes. A sourced failure event is valid when its setup and outcome are independently meaningful, such as one lottery line winning no main-draw prize.
 - Prefer relatable, unitary events. State model assumptions, link sources, and date estimates whose inputs change.
-- Describe each event first in concise, approachable language for a general reader. Use natural sentences and precise terms; keep model detail in the panel. Avoid instructional templates, compressed fragments, and patronizing definitions.
+- Describe each event first in one to three concise, approachable sentences for a general reader. Open with a concrete situation, consequence, or surprising scale when the event supports one. Keep formulas, long denominators, counting methods, and model qualifications in the calculation and assumptions fields. Avoid instructional templates, compressed fragments, patronizing definitions, invented comparisons, and forced questions.
 - Explain chances through clear odds or frequencies that name the sampled unit and timeframe. Use average language for estimates and conditional, unit-appropriate counts in English and French. Do not make bare assertions that imply an event is inevitable.
 
 ## Observed estimates and teaching models
@@ -28,7 +28,9 @@ Read this guide before changing catalogue landmarks, probabilities, source-backe
 - Keep the needle-in-a-hay-bale example conditional on uniform point sampling and stated cylindrical needle and bale dimensions. Do not present its volume ratio as the chance of finding a needle by hand.
 - Model pool drops as uniform selection of one specified equal-volume portion. State faucet-drop volume and pool-water dimensions; make garden dimensions explicit and use the named competition pool for sourced dimensions.
 - State uniform phase and a fixed synodic month for astronomy period examples. Global eclipse-year examples sample distinct calendar years from the stated NASA catalogue and distinguish total, partial, hybrid, and penumbral types. The local total-eclipse example is a long-run return-interval estimate for one representative fixed place, without weather or a named-location forecast.
-- State the sampling measure for composition examples. Sample the eight planets uniformly and Solar System matter in proportion to mass for the Sun; the freshwater example samples water by water-equivalent volume.
+- State the sampling measure for composition examples. Stellar composition examples sample equal-mass portions from an approximate representative 70% hydrogen, 28% helium, and 2% heavier-element mixture; do not present those shares as atom counts, exact values for every star, or an empirical galactic aggregate. Sample Solar System matter in proportion to mass for the Sun, and sample freshwater by water-equivalent volume.
+- Keep astronomy population estimates tied to their denominators. The observed Earth-sized exoplanet share covers confirmed planets with a known radius in a dated archive snapshot and inherits detection bias. The main-sequence share samples stars by count. The stellar-black-hole share samples ordinary baryonic mass and serves as a rounded order-of-magnitude model.
+- Present the massive-moon result as a simulation estimate. Distinguish its sensitivity range from a confidence interval or measured galactic frequency, and retain the host-planet and moon-mass thresholds.
 
 ## Games, weather, sport, and Enigma
 

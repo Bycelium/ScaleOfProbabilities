@@ -11,14 +11,14 @@ export const dice_gamesFR = {
   "four-dice-any-six": {
     title: "Au moins un six avec quatre dés",
     shortTitle: "un six avec quatre dés",
-    explanation: "Parmi les 1 296 lancers possibles de quatre dés équilibrés, 671 contiennent au moins un six. Le calcul compte d’abord les lancers sans six, puis les retranche de tous les résultats possibles.",
+    explanation: "Lancez quatre dés équilibrés : au moins un six apparaît dans environ 52 % des lancers.",
     calculation: "p = 1 − (5/6)⁴ = 671 / 1 296",
     assumptions: "Les quatre dés équilibrés à six faces sont lancés indépendamment.",
   },
   "three-dice-sum-ten": {
     title: "La somme de trois dés atteint au moins 10",
     shortTitle: "somme des dés ≥ 10",
-    explanation: "Exactement 135 des 216 résultats ordonnés de trois dés équilibrés donnent une somme d’au moins 10.",
+    explanation: "Lancez trois dés équilibrés : leur somme atteint au moins 10 dans cinq lancers sur huit en moyenne.",
     calculation: "p = 135 / 216 = 5/8",
     assumptions: "Les trois dés équilibrés à six faces sont lancés indépendamment et leurs faces supérieures sont additionnées.",
   },
@@ -53,7 +53,7 @@ export const dice_gamesFR = {
   "two-dice-any-double": {
     title: "Deux dés affichent le même nombre",
     shortTitle: "deux dés identiques",
-    explanation: "Six des 36 paires équiprobables sont identiques, de 1–1 à 6–6.",
+    explanation: "Lancez deux dés équilibrés : leurs faces correspondent une fois sur six en moyenne, de 1–1 à 6–6.",
     calculation: "p = 6 paires identiques / 36 paires équiprobables = 1/6",
     assumptions: "Les deux dés équilibrés à six faces sont lancés indépendamment.",
   },
@@ -67,7 +67,7 @@ export const dice_gamesFR = {
   "three-dice-any-triple": {
     title: "Trois dés affichent le même nombre",
     shortTitle: "trois dés identiques",
-    explanation: "Six des 216 triplets équiprobables sont identiques, de 1–1–1 à 6–6–6.",
+    explanation: "Trois dés équilibrés montrent tous la même face environ une fois sur 36, de 1–1–1 à 6–6–6.",
     calculation: "p = 6 triplets identiques / 216 résultats équiprobables = 1/36",
     assumptions: "Les trois dés équilibrés à six faces sont lancés indépendamment.",
   },
@@ -88,14 +88,14 @@ export const dice_gamesFR = {
   "first-roll-yahtzee": {
     title: "Yams/Yahtzee au premier lancer",
     shortTitle: "Yams au premier lancer",
-    explanation: "Six des 7 776 premiers lancers possibles sont des quintuplets identiques, le résultat du Yams ou du Yahtzee.",
+    explanation: "Un premier lancer de cinq dés équilibrés donne un Yams ou Yahtzee immédiat seulement une fois sur 1 296 environ.",
     calculation: "p = 6 quintuplets identiques / 6⁵ résultats = 1/1 296",
     assumptions: "Les cinq dés équilibrés à six faces sont lancés indépendamment. Aucun dé n’est relancé.",
   },
   "rubik-state": {
     title: "Deux cubes 3 × 3 mélangés sont identiques",
     shortTitle: "deux cubes mélangés identiques",
-    explanation: "Deux Rubik’s Cubes 3 × 3 mélangés indépendamment ont chacun 43 252 003 274 489 856 000 états légaux. Une fois les centres de même couleur alignés, le second cube ne possède qu’un état correspondant parmi tous ces états.",
+    explanation: "Mélangez indépendamment deux Rubik’s Cubes 3 × 3 et alignez leurs centres. La chance que chaque pièce occupe la même place sur les deux cubes vaut environ une sur 43 milliards de milliards.",
     calculation: "p = 1 état correspondant / 43 252 003 274 489 856 000 états légaux",
     assumptions: "Chaque cube est tiré indépendamment et uniformément parmi les états légaux 3 × 3 × 3. Aligner les centres de même couleur élimine les rotations globales ; un mélange manuel ne fait qu’illustrer ce modèle uniforme.",
   },

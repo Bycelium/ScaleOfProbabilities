@@ -40,8 +40,6 @@ describe("scene layout", () => {
       ["french-scrabble-consonant", "rain-brest-december"],
       ["holdem-one-pair", "full-moon-15-days"],
       ["numbered-card", "ocean-point"],
-      ["numbered-card", "planet-with-moon"],
-      ["ocean-point", "planet-with-moon"],
       ["weekday", "yellow-pea"],
       ["weekday", "four-dice-any-match"],
       ["yellow-pea", "four-dice-any-match"],
@@ -67,11 +65,11 @@ describe("scene layout", () => {
     const candidates: TitleCandidate[] = [
       { id: "coin-heads", priority: 0, title: box(10, 10, 30, 20), obstructions: [] },
       { id: "birthday-30", priority: 1, title: box(25, 10, 45, 20), obstructions: [] },
-      { id: "solar-terrestrial", priority: 2, title: box(60, 10, 80, 20), obstructions: [box(78, 0, 90, 30)] },
+      { id: "earth-sized-observed-exoplanet", priority: 2, title: box(60, 10, 80, 20), obstructions: [box(78, 0, 90, 30)] },
       { id: "full-moon-15-days", priority: 3, title: box(100, 10, 120, 20), obstructions: [] },
     ];
     const suppressed = suppressedTitleIds(candidates);
-    expect([...suppressed]).toEqual(["birthday-30", "solar-terrestrial"]);
+    expect([...suppressed]).toEqual(["birthday-30", "earth-sized-observed-exoplanet"]);
     expect(suppressedTitleIds(candidates, 0)).toEqual(suppressed);
   });
 

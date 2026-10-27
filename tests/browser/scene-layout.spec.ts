@@ -8,8 +8,6 @@ const densePairs = [
   ["french-scrabble-consonant", "rain-brest-december"],
   ["holdem-one-pair", "full-moon-15-days"],
   ["numbered-card", "ocean-point"],
-  ["numbered-card", "planet-with-moon"],
-  ["ocean-point", "planet-with-moon"],
   ["weekday", "yellow-pea"],
   ["weekday", "four-dice-any-match"],
   ["yellow-pea", "four-dice-any-match"],
@@ -81,8 +79,8 @@ const auditScene = (page: Page) => page.locator(".scale").evaluate((scale, pairs
     const coversArt = visibleArt.some(art => art.closest("[data-landmark]") !== owner && overlapArea(labelBox, art.getBoundingClientRect()) > 1);
     return outside || coversArt ? [owner.dataset.landmark] : [];
   });
-  const coin = box("coin-heads");
-  const planet = box("solar-terrestrial");
+  const equalFirst = box("die-six");
+  const equalSecond = box("two-dice-any-double");
   const fourDice = box("four-dice-any-six");
   const scrabble = box("french-scrabble-consonant");
   const readoutBoxes = ["[data-depth-readout]", "[data-current-readout-stack]", "[data-current-depth-marker] strong"]
@@ -95,9 +93,9 @@ const auditScene = (page: Page) => page.locator(".scale").evaluate((scale, pairs
     worstRadiusError: Math.max(0, ...radiusErrors.map(item => item.error)),
     labelProblems,
     globalOverlaps,
-    equalProbabilityCenterDistance: coin && planet ? Math.hypot(
-      coin.left + coin.width / 2 - (planet.left + planet.width / 2),
-      coin.top + coin.height / 2 - (planet.top + planet.height / 2),
+    equalProbabilityCenterDistance: equalFirst && equalSecond ? Math.hypot(
+      equalFirst.left + equalFirst.width / 2 - (equalSecond.left + equalSecond.width / 2),
+      equalFirst.top + equalFirst.height / 2 - (equalSecond.top + equalSecond.height / 2),
     ) : null,
     readoutOverlaps,
     scrabbleReadoutOverlaps,
@@ -196,6 +194,26 @@ test("keeps every French Scrabble tile icon selectable at its exact depth", asyn
       await expect(page.locator("[data-detail-panel][open]")).toBeVisible();
       await expect(page.locator("[data-detail-title]")).toHaveText(landmark.title);
     }
+  }
+});
+
+test("keeps every new astronomy icon selectable at its exact depth on compact mobile", async ({ page }) => {
+  const ids = [
+    "earth-sized-observed-exoplanet",
+    "terrestrial-massive-moon",
+    "stellar-hydrogen-mass",
+    "stellar-helium-mass",
+    "stellar-hydrogen-helium-mass",
+    "main-sequence-star",
+    "stellar-black-hole-baryonic-mass",
+  ] as const;
+  await page.setViewportSize({ width: 320, height: 740 });
+  for (const id of ids) {
+    const landmark = displayLandmarks.find(item => item.id === id)!;
+    await openScene(page, "en", landmark.position);
+    await page.locator(`[data-landmark="${id}"] .art img`).click();
+    await expect(page.locator("[data-detail-panel][open]")).toBeVisible();
+    await expect(page.locator("[data-detail-title]")).toHaveText(landmark.title);
   }
 });
 

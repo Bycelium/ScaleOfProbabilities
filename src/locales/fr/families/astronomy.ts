@@ -1,12 +1,12 @@
 import type { LandmarkCopyFamily } from "../../types";
 
 export const astronomyFR = {
-  "solar-terrestrial": {
-    title: "Une planète tellurique du Système solaire",
-    shortTitle: "une planète tellurique",
-    explanation: "Quatre des huit planètes du Système solaire sont telluriques : Mercure, Vénus, la Terre et Mars.",
-    calculation: "p = 4 planètes telluriques / 8 planètes = 1/2",
-    assumptions: "Chacune des huit planètes a la même probabilité d’être choisie. Les planètes naines sont exclues. La masse, la taille et la population des planètes n’interviennent pas.",
+  "earth-sized-observed-exoplanet": {
+    title: "Une exoplanète de taille terrestre ou inférieure",
+    shortTitle: "exoplanète observée de taille terrestre",
+    explanation: "Des mondes de la taille de la Terre se cachent parmi les géantes. Environ 12 % des exoplanètes confirmées dont on connaît le rayon ne dépassent pas 1,25 fois celui de la Terre.",
+    calculation: "p = 558 / 4 826 ≈ 0,1156",
+    assumptions: "Cette estimation historique échantillonne les planètes confirmées dont le rayon est connu dans l’instantané du 27 octobre 2026 des archives d’exoplanètes de la NASA. Les biais de détection et de mesure façonnent ce catalogue observé. Le seuil de rayon ne prouve ni une composition rocheuse ni l’habitabilité, et le résultat ne décrit pas la composition de toutes les planètes de la galaxie.",
   },
   "full-moon-15-days": {
     title: "Une pleine Lune pendant un séjour de 15 jours",
@@ -29,12 +29,47 @@ export const astronomyFR = {
     calculation: "p ≈ 0,73",
     assumptions: "Les étoiles sont échantillonnées dans la population estimée de la Voie lactée. Il ne s’agit pas d’une sélection parmi les étoiles visibles à l’œil nu, où la luminosité modifie la répartition.",
   },
-  "planet-with-moon": {
-    title: "Une planète du Système solaire avec une lune",
-    shortTitle: "une planète avec une lune",
-    explanation: "Six des huit planètes du Système solaire possèdent au moins une lune naturelle connue. Mercure et Vénus sont les deux seules qui n’en ont pas.",
-    calculation: "p = 6 planètes avec des lunes / 8 planètes = 3/4",
-    assumptions: "Chaque planète a la même probabilité d’être choisie. Le nombre de lunes autour de chaque planète ne modifie pas l’échantillonnage.",
+  "terrestrial-massive-moon": {
+    title: "Une planète tellurique simulée forme une lune massive",
+    shortTitle: "planète tellurique avec lune massive",
+    explanation: "Dans les impacts simulés par Elser et ses collègues, un résultat analogue au couple Terre–Lune apparaît pour environ une planète tellurique sur 12.",
+    calculation: "p ≈ 15 / 180 ≈ 1/12 ≈ 0,083 ; plage de sensibilité ≈ 1/45 à 1/4",
+    assumptions: "L’estimation nominale de l’étude de 2011 compte 15 correspondances parmi environ 180 planètes simulées, avec une planète hôte de plus de 0,5 masse terrestre et une lune de plus de 0,5 masse lunaire. La plage de 1/45 à 1/4 provient de choix de sensibilité ; ce n’est ni un intervalle de confiance ni une fréquence galactique mesurée. Les conditions initiales et le petit échantillon simulé ajoutent de l’incertitude. Des rendements extrêmes d’accrétion des satellites élargissent encore les résultats, de presque aucun système à environ 60 systèmes sur 180, soit près d’un tiers.",
+  },
+  "stellar-hydrogen-mass": {
+    title: "De l’hydrogène dans une étoile",
+    shortTitle: "hydrogène dans une étoile commune",
+    explanation: "Une étoile commune représentative contient environ 70 % d’hydrogène en masse.",
+    calculation: "p ≈ 0,70 en masse",
+    assumptions: "Le mélange représentatif de la NASA contient environ 70 % d’hydrogène, 28 % d’hélium et 2 % d’éléments plus lourds en masse. Le modèle échantillonne des portions de masse égale, pas des atomes. Cette composition pédagogique approximative ne donne ni la valeur exacte de chaque étoile ni un agrégat empirique de toute la galaxie.",
+  },
+  "stellar-helium-mass": {
+    title: "De l’hélium dans une étoile",
+    shortTitle: "hélium dans une étoile commune",
+    explanation: "Une étoile commune représentative contient environ 28 % d’hélium en masse.",
+    calculation: "p ≈ 0,28 en masse",
+    assumptions: "Le mélange représentatif de la NASA contient environ 70 % d’hydrogène, 28 % d’hélium et 2 % d’éléments plus lourds en masse. Le modèle échantillonne des portions de masse égale, pas des atomes. Cette composition pédagogique approximative ne donne ni la valeur exacte de chaque étoile ni un agrégat empirique de toute la galaxie.",
+  },
+  "stellar-hydrogen-helium-mass": {
+    title: "Hydrogène ou hélium dans une étoile",
+    shortTitle: "hydrogène ou hélium dans une étoile",
+    explanation: "Une étoile commune représentative se compose presque entièrement de deux éléments : environ 98 % d’hydrogène ou d’hélium en masse.",
+    calculation: "p ≈ 0,70 + 0,28 = 0,98 en masse",
+    assumptions: "Le mélange représentatif de la NASA contient environ 70 % d’hydrogène, 28 % d’hélium et 2 % d’éléments plus lourds en masse. Le modèle échantillonne des portions de masse égale, pas des atomes. Cette composition pédagogique approximative ne donne ni la valeur exacte de chaque étoile ni un agrégat empirique de toute la galaxie.",
+  },
+  "main-sequence-star": {
+    title: "Une étoile choisie au hasard est sur la séquence principale",
+    shortTitle: "étoile de la séquence principale",
+    explanation: "Environ neuf étoiles sur dix sont sur la séquence principale et fusionnent activement l’hydrogène dans leur cœur.",
+    calculation: "p ≈ 0,90 en nombre d’étoiles",
+    assumptions: "Il s’agit d’une fraction approximative en nombre d’étoiles. Elle ne représente ni une part de la masse stellaire ni une part de la durée de vie d’une étoile. Les populations stellaires peuvent différer.",
+  },
+  "stellar-black-hole-baryonic-mass": {
+    title: "La matière cosmique ordinaire dans les trous noirs stellaires",
+    shortTitle: "matière dans les trous noirs stellaires",
+    explanation: "Un modèle du cosmos actuel place environ 1 % de la matière ordinaire dans les trous noirs laissés par les étoiles.",
+    calculation: "p ≈ 0,01 de la masse baryonique, comme ordre de grandeur arrondi",
+    assumptions: "L’étude de 2022 de Sicilia et ses collègues modélise au plus environ 1 % de la matière ordinaire, ou baryonique, dans les trous noirs issus d’étoiles dans le cosmos local actuel. La valeur arrondie sert d’ordre de grandeur plutôt que de recensement exact. La matière noire et l’énergie noire sont exclues du dénominateur ; les trous noirs supermassifs et primordiaux ne sont pas modélisés.",
   },
   "lunar-eclipse-year": {
     title: "Une année avec une éclipse lunaire partielle ou totale",
@@ -53,14 +88,14 @@ export const astronomyFR = {
   "sun-mass": {
     title: "La part du Soleil dans la masse du Système solaire",
     shortTitle: "la part de masse du Soleil",
-    explanation: "La NASA estime que le Soleil contient environ 99,85 % de la masse du Système solaire, soit 99,85 unités sur 100.",
+    explanation: "Échantillonnez la matière du Système solaire en proportion de sa masse : environ 99,85 % appartient au Soleil.",
     calculation: "p ≈ 0,9985",
     assumptions: "L’échantillonnage est proportionnel à la masse. Il ne s’agit pas d’un choix uniforme parmi le Soleil, les planètes, les lunes et les petits corps. Le pourcentage publié est arrondi.",
   },
   "solar-eclipse-local-year": {
     title: "Une éclipse totale de Soleil chez soi dans l’année",
     shortTitle: "éclipse totale chez soi · un an",
-    explanation: "Pour un lieu fixe représentatif, l’estimation à long terme compte en moyenne une année avec une éclipse totale de Soleil au-dessus du lieu pour 374 années sans éclipse totale. La NASA indique un intervalle moyen d’environ 375 ans entre deux éclipses totales au même endroit.",
+    explanation: "Pour un lieu fixe représentatif, une éclipse totale de Soleil au-dessus du site arrive environ une année sur 375 à long terme.",
     calculation: "p ≈ 1/375 à partir de l’intervalle de retour moyen à long terme",
     assumptions: "Il s’agit d’une approximation annuelle fondée sur la fréquence pour un lieu fixe représentatif. Les intervalles et les fréquences locales réelles varient. Les nuages sont hors de l’événement. L’estimation ne prédit rien pour une ville ou une année précises.",
   },

@@ -1,12 +1,12 @@
 import type { LandmarkCopyFamily } from "../../types";
 
 export const astronomyES = {
-  "solar-terrestrial": {
-    title: "Un planeta terrestre del Sistema Solar",
-    shortTitle: "un planeta terrestre",
-    explanation: "Cuatro de los ocho planetas del Sistema Solar son terrestres: Mercurio, Venus, la Tierra y Marte.",
-    calculation: "p = 4 planetas terrestres / 8 planetas = 1/2",
-    assumptions: "Cada uno de los ocho planetas tiene la misma probabilidad de ser elegido. Se excluyen los planetas enanos y los planetas no se ponderan por masa, tamaño ni población.",
+  "earth-sized-observed-exoplanet": {
+    title: "Un exoplaneta del tamaño de la Tierra o menor",
+    shortTitle: "exoplaneta observada de tamaño terrestre",
+    explanation: "Mundos del tamaño de la Tierra se esconden entre los gigantes. Cerca del 12 % de los exoplanetas confirmados con radio conocido no superan 1,25 veces el radio terrestre.",
+    calculation: "p = 558 / 4826 ≈ 0,1156",
+    assumptions: "Esta estimación histórica muestrea planetas confirmados con radio conocido en la instantánea del 27 de octubre de 2026 del Archivo de Exoplanetas de la NASA. Los sesgos de detección y medición moldean el catálogo observado. El umbral de radio no demuestra una composición rocosa ni habitabilidad, y el resultado no describe la composición de todos los planetas de la galaxia.",
   },
   "full-moon-15-days": {
     title: "Luna llena durante una estancia de 15 días",
@@ -29,12 +29,47 @@ export const astronomyES = {
     calculation: "p ≈ 0,73",
     assumptions: "Las estrellas se muestrean de la población estimada de la Vía Láctea. La selección no se limita a las estrellas visibles a simple vista, donde el brillo cambia la composición.",
   },
-  "planet-with-moon": {
-    title: "Un planeta del Sistema Solar con luna",
-    shortTitle: "un planeta con luna",
-    explanation: "Seis de los ocho planetas del Sistema Solar tienen al menos una luna natural conocida. Mercurio y Venus son los dos que no tienen lunas.",
-    calculation: "p = 6 planetas con lunas / 8 planetas = 3/4",
-    assumptions: "Cada planeta tiene la misma probabilidad de ser elegido. El número de lunas que rodean cada planeta no influye en el muestreo.",
+  "terrestrial-massive-moon": {
+    title: "Un planeta terrestre simulado forma una luna masiva",
+    shortTitle: "planeta terrestre con luna masiva",
+    explanation: "En los impactos simulados por Elser y sus colegas, un resultado parecido al sistema Tierra–Luna apareció en cerca de uno de cada 12 planetas terrestres.",
+    calculation: "p ≈ 15 / 180 ≈ 1/12 ≈ 0,083; intervalo de sensibilidad ≈ 1/45 a 1/4",
+    assumptions: "La estimación nominal del estudio de 2011 cuenta 15 coincidencias entre unos 180 planetas simulados, con un planeta anfitrión de más de 0,5 masas terrestres y una luna de más de 0,5 masas lunares. El intervalo de 1/45 a 1/4 procede de elecciones de sensibilidad; no es un intervalo de confianza ni una frecuencia galáctica medida. Las condiciones iniciales y la pequeña muestra simulada añaden incertidumbre. Los extremos de eficiencia de acreción de satélites amplían los resultados desde casi ningún sistema hasta unos 60 sistemas de 180, cerca de un tercio.",
+  },
+  "stellar-hydrogen-mass": {
+    title: "Hidrógeno en una estrella",
+    shortTitle: "hidrógeno en una estrella común",
+    explanation: "Una estrella común representativa contiene cerca del 70 % de hidrógeno por masa.",
+    calculation: "p ≈ 0,70 por masa",
+    assumptions: "La mezcla representativa de la NASA contiene cerca del 70 % de hidrógeno, el 28 % de helio y el 2 % de elementos más pesados por masa. El modelo muestrea porciones de igual masa, no átomos. Es una composición didáctica aproximada, no un valor exacto para cada estrella ni un agregado empírico de toda la galaxia.",
+  },
+  "stellar-helium-mass": {
+    title: "Helio en una estrella",
+    shortTitle: "helio en una estrella común",
+    explanation: "Una estrella común representativa contiene cerca del 28 % de helio por masa.",
+    calculation: "p ≈ 0,28 por masa",
+    assumptions: "La mezcla representativa de la NASA contiene cerca del 70 % de hidrógeno, el 28 % de helio y el 2 % de elementos más pesados por masa. El modelo muestrea porciones de igual masa, no átomos. Es una composición didáctica aproximada, no un valor exacto para cada estrella ni un agregado empírico de toda la galaxia.",
+  },
+  "stellar-hydrogen-helium-mass": {
+    title: "Hidrógeno o helio en una estrella",
+    shortTitle: "hidrógeno o helio en una estrella",
+    explanation: "Casi toda una estrella común representativa está formada por solo dos elementos: cerca del 98 % de hidrógeno o helio por masa.",
+    calculation: "p ≈ 0,70 + 0,28 = 0,98 por masa",
+    assumptions: "La mezcla representativa de la NASA contiene cerca del 70 % de hidrógeno, el 28 % de helio y el 2 % de elementos más pesados por masa. El modelo muestrea porciones de igual masa, no átomos. Es una composición didáctica aproximada, no un valor exacto para cada estrella ni un agregado empírico de toda la galaxia.",
+  },
+  "main-sequence-star": {
+    title: "Una estrella elegida al azar está en la secuencia principal",
+    shortTitle: "estrella de la secuencia principal",
+    explanation: "Cerca de nueve de cada diez estrellas están en la secuencia principal y fusionan hidrógeno activamente en sus núcleos.",
+    calculation: "p ≈ 0,90 por número de estrellas",
+    assumptions: "Esta es una fracción aproximada por número de estrellas. No representa una proporción de masa estelar ni de la vida de una estrella, y cada población estelar puede diferir.",
+  },
+  "stellar-black-hole-baryonic-mass": {
+    title: "Materia cósmica ordinaria en agujeros negros estelares",
+    shortTitle: "materia en agujeros negros estelares",
+    explanation: "Un modelo del cosmos actual sitúa cerca del 1 % de la materia ordinaria en agujeros negros dejados por estrellas.",
+    calculation: "p ≈ 0,01 de la masa bariónica, como orden de magnitud redondeado",
+    assumptions: "El estudio de 2022 de Sicilia y sus colegas modeliza como máximo cerca del 1 % de la materia ordinaria, o bariónica, en agujeros negros remanentes de estrellas en el cosmos local actual. El valor redondeado sirve como orden de magnitud, no como censo exacto. La materia oscura y la energía oscura quedan fuera del denominador; no se modelizan los agujeros negros supermasivos ni primordiales.",
   },
   "lunar-eclipse-year": {
     title: "Un año con un eclipse lunar parcial o total",
@@ -53,14 +88,14 @@ export const astronomyES = {
   "sun-mass": {
     title: "La proporción de masa del Sistema Solar que contiene el Sol",
     shortTitle: "la proporción de masa del Sol",
-    explanation: "La NASA estima que el Sol contiene aproximadamente el 99,85 % de la masa del Sistema Solar, es decir, 99,85 unidades de cada 100.",
+    explanation: "Muestrea la materia del Sistema Solar en proporción a su masa: cerca del 99,85 % pertenece al Sol.",
     calculation: "p ≈ 0,9985",
     assumptions: "El muestreo es proporcional a la masa. No es una elección uniforme entre el Sol, los planetas, las lunas y los cuerpos menores. El porcentaje publicado está redondeado.",
   },
   "solar-eclipse-local-year": {
     title: "Un eclipse solar total donde vives durante un año",
     shortTitle: "eclipse total donde vives · año",
-    explanation: "En un lugar fijo representativo, la estimación a largo plazo da en promedio un año con un eclipse solar total por cada 374 años sin uno. La NASA indica un intervalo medio de unos 375 años entre eclipses totales en un mismo lugar.",
+    explanation: "En un lugar fijo representativo, un eclipse solar total sobre el sitio ocurre cerca de un año de cada 375 a largo plazo.",
     calculation: "p ≈ 1/375 a partir del intervalo medio de retorno a largo plazo",
     assumptions: "Esta es una aproximación anual basada en frecuencias para un lugar fijo representativo. Los intervalos y las tasas locales reales varían. Las nubes quedan fuera del suceso y la estimación no es un pronóstico para una ciudad o un año concretos.",
   },
