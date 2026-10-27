@@ -25,7 +25,7 @@ Read this guide before changing the scale scene, readout, navigation, details, A
 
 ## Travel and selection
 
-- Use one interruptible travel controller for every journey. Wheel, pinch, swipe, and arrow input immediately travel to the next landmark in that direction. Illustration clicks, related actions, and Return to 0 dBan provide explicit targets through the same lifecycle.
+- Use one interruptible travel controller for every journey. Vertical wheel or trackpad input, a one-finger vertical swipe, and the Up and Down arrow keys immediately travel to the next landmark in that direction. Ignore horizontal, multi-touch, and pinch gestures. Illustration clicks, related actions, and Return to 0 dBan provide explicit targets through the same lifecycle.
 - Preserve continuous momentum, accelerate across long distances, brake smoothly, and cancel a pending arrival when the participant reverses direction. Respect reduced motion by moving immediately. Show radial travel streaks only near peak speed on substantial journeys.
 - Show signed dBan distance and an odds multiplier or divisor for directed or substantial travel.
 - Provide one explicit Return to 0 dBan control away from the opening position. It targets exactly 0 through the shared controller and never runs on a timer. Do not add other global resets, jump controls, or clickable overviews.

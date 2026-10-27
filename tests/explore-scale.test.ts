@@ -185,7 +185,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-event-marker]")).toBeNull();
     coin.dispatchEvent(new MouseEvent("mouseleave"));
     expect(document.querySelector("[data-event-marker]")).toBeNull();
-    coin.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    coin.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     expect(Number(document.querySelector<HTMLElement>(".scale")?.dataset.depth)).toBeGreaterThan(0);
     const ordinaryScaleKey = new KeyboardEvent("keydown", { key: "a", bubbles: true, cancelable: true });
     document.querySelector<HTMLElement>(".scale")!.dispatchEvent(ordinaryScaleKey);
@@ -820,7 +820,7 @@ describe("public probability exploration", () => {
     }
   });
 
-  it("travels through radial probability depth by wheel, diagonal pinch, touch swipe, and arrows", () => {
+  it("travels through radial probability depth by vertical wheel, touch swipe, and Up and Down arrows", () => {
     const clock = new TestFrameClock();
     render();
     const scale = document.querySelector<HTMLElement>(".scale")!;
@@ -830,53 +830,44 @@ describe("public probability exploration", () => {
     clock.advanceTo(8);
     expect(dive.defaultPrevented).toBe(true);
     expect(Number(scale.dataset.depth)).toBeLessThan(0);
-    scale.dispatchEvent(new WheelEvent("wheel", { deltaX: 30, bubbles: true, cancelable: true }));
-    clock.advanceTo(16);
-    const afterWheel = Number(scale.dataset.depth);
 
     const pointer = (type: string, pointerId: number, clientX: number, clientY: number, pointerType = "touch") => {
       const event = new Event(type, { bubbles: true, cancelable: true });
       Object.defineProperties(event, { clientX: { value: clientX }, clientY: { value: clientY }, pointerId: { value: pointerId }, pointerType: { value: pointerType } });
       return event;
     };
-    const beforeMouseDrag = Number(scale.dataset.depth);
     scale.dispatchEvent(pointer("pointerdown", 9, 500, 300, "mouse"));
+    const afterWheel = Number(scale.dataset.depth);
+    const horizontalWheel = new WheelEvent("wheel", { deltaX: 30, deltaY: 5, bubbles: true, cancelable: true });
+    scale.dispatchEvent(horizontalWheel);
+    const pinchWheel = new WheelEvent("wheel", { deltaY: 30, ctrlKey: true, bubbles: true, cancelable: true });
+    scale.dispatchEvent(pinchWheel);
+    clock.advanceTo(16);
+    expect(horizontalWheel.defaultPrevented).toBe(false);
+    expect(pinchWheel.defaultPrevented).toBe(false);
+    expect(Number(scale.dataset.depth)).toBe(afterWheel);
+
     scale.dispatchEvent(pointer("pointermove", 9, 500, 220, "mouse"));
     scale.dispatchEvent(pointer("pointerup", 9, 500, 220, "mouse"));
     clock.advanceTo(24);
-    expect(Number(scale.dataset.depth)).toBe(beforeMouseDrag);
-    scale.dispatchEvent(pointer("pointerdown", 1, 400, 400));
-    scale.dispatchEvent(pointer("pointerdown", 2, 600, 600));
-    const beforeStationaryPinch = Number(scale.dataset.depth);
-    scale.dispatchEvent(pointer("pointermove", 2, 600, 600));
-    expect(clock.pendingFrames).toBe(0);
-    expect(Number(scale.dataset.depth)).toBe(beforeStationaryPinch);
-    scale.dispatchEvent(pointer("pointermove", 2, 800, 800));
-    clock.advanceTo(32);
-    expect(Number(scale.dataset.depth)).toBeLessThan(afterWheel);
-    scale.dispatchEvent(pointer("pointerup", 2, 800, 800));
-    scale.dispatchEvent(pointer("pointerup", 1, 400, 400));
-    scale.dispatchEvent(pointer("pointerup", 99, 0, 0));
-    const afterPinch = Number(scale.dataset.depth);
-    scale.dispatchEvent(pointer("pointermove", 2, 900, 900));
-    clock.advanceTo(40);
-    expect(Number(scale.dataset.depth)).toBe(afterPinch);
+    expect(Number(scale.dataset.depth)).toBe(afterWheel);
 
     scale.dispatchEvent(pointer("pointerdown", 3, 500, 300));
     scale.dispatchEvent(pointer("pointermove", 3, 500, 260));
-    clock.advanceTo(48);
-    expect(Number(scale.dataset.depth)).toBeLessThan(afterPinch);
+    scale.dispatchEvent(pointer("pointermove", 3, 500, 260));
+    clock.advanceTo(32);
+    expect(Number(scale.dataset.depth)).toBeLessThan(afterWheel);
     scale.dispatchEvent(pointer("pointermove", 3, 500, 250));
-    clock.advanceTo(56);
+    clock.advanceTo(40);
     scale.dispatchEvent(pointer("pointerup", 3, 500, 250));
     scale.dispatchEvent(pointer("pointerdown", 5, 0, 0));
     scale.dispatchEvent(pointer("pointerup", 5, 0, 0));
     const beforeArrow = Number(scale.dataset.depth);
-    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     expect(Number(scale.dataset.depth)).toBeGreaterThan(beforeArrow);
   });
 
-  it("uses all four arrow keys from the scene or a landmark without hijacking controls", () => {
+  it("uses Up and Down from the scene while leaving horizontal arrows and controls alone", () => {
     vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
     render();
@@ -895,11 +886,17 @@ describe("public probability exploration", () => {
     coin.click();
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")!.open).toBe(true);
     coin.focus();
-    press(coin, "ArrowLeft");
+    const beforeHorizontalArrows = depth();
+    for (const key of ["ArrowLeft", "ArrowRight"]) {
+      const horizontalArrow = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+      coin.dispatchEvent(horizontalArrow);
+      expect(horizontalArrow.defaultPrevented).toBe(false);
+      expect(depth()).toBe(beforeHorizontalArrows);
+      expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")!.open).toBe(true);
+    }
+    press(coin, "ArrowDown");
     expect(depth()).toBeLessThan(0);
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")!.open).toBe(false);
-    press(coin, "ArrowRight");
-    expect(depth()).toBeGreaterThan(-1);
 
     const preferencesToggle = document.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!;
     preferencesToggle.click();
@@ -914,9 +911,9 @@ describe("public probability exploration", () => {
     expect(languageArrow.defaultPrevented).toBe(false);
     expect(depth()).toBeCloseTo(beforeControl);
 
-    press(document.body, "ArrowRight", { ctrlKey: true });
+    press(document.body, "ArrowUp", { ctrlKey: true });
     expect(depth()).toBeCloseTo(beforeControl);
-    const handled = new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true });
+    const handled = new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true, cancelable: true });
     handled.preventDefault();
     document.body.dispatchEvent(handled);
     expect(depth()).toBeCloseTo(beforeControl);
@@ -1167,39 +1164,43 @@ describe("public probability exploration", () => {
     expect(Number(scale.dataset.depth)).toBeGreaterThan(afterIdleInput);
   });
 
-  it("uses the latest pinch direction while leaving a touch tap at rest", () => {
+  it("ignores horizontal and multi-touch gestures until every finger lifts", () => {
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
     history.replaceState(null, "", "#d=0.02");
     render(390);
     const scale = document.querySelector<HTMLElement>(".scale")!;
-    const pointer = (type: string, pointerId: number, clientX: number) => {
+    const pointer = (type: string, pointerId: number, clientX: number, clientY: number) => {
       const event = new Event(type, { bubbles: true, cancelable: true });
-      Object.defineProperties(event, { clientX: { value: clientX }, clientY: { value: 300 }, pointerId: { value: pointerId }, pointerType: { value: "touch" } });
+      Object.defineProperties(event, { clientX: { value: clientX }, clientY: { value: clientY }, pointerId: { value: pointerId }, pointerType: { value: "touch" } });
       return event;
     };
 
-    scale.dispatchEvent(pointer("pointerdown", 1, 200));
-    scale.dispatchEvent(pointer("pointerup", 1, 200));
+    scale.dispatchEvent(pointer("pointerdown", 1, 200, 300));
+    scale.dispatchEvent(pointer("pointerup", 1, 200, 300));
     expect(Number(scale.dataset.depth)).toBeCloseTo(0.02, 10);
     expect(clock.pendingFrames).toBe(0);
 
-    scale.dispatchEvent(pointer("pointerdown", 2, 100));
-    scale.dispatchEvent(pointer("pointerdown", 3, 300));
-    scale.dispatchEvent(pointer("pointermove", 3, 299));
-    clock.advanceTo(4);
-    const afterFirstPinch = Number(scale.dataset.depth);
-    scale.dispatchEvent(pointer("pointermove", 3, 298));
-    clock.advanceTo(8);
-    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterFirstPinch);
+    scale.dispatchEvent(pointer("pointerdown", 2, 100, 300));
+    scale.dispatchEvent(pointer("pointermove", 2, 140, 304));
+    scale.dispatchEvent(pointer("pointermove", 2, 180, 302));
+    scale.dispatchEvent(pointer("pointerup", 2, 180, 302));
+    expect(Number(scale.dataset.depth)).toBeCloseTo(0.02, 10);
+    expect(clock.pendingFrames).toBe(0);
 
-    scale.dispatchEvent(pointer("pointermove", 3, 302));
-    const afterReverseInput = Number(scale.dataset.depth);
-    const expectedTarget = displayLandmarks
-      .filter(item => item.position < afterReverseInput - 30 * Math.log10(202 / 198) - 1e-9)
-      .sort((first, second) => second.position - first.position)[0].position;
-    clock.advanceTo(1000);
-    expect(Number(scale.dataset.depth)).toBeCloseTo(expectedTarget, 10);
+    scale.dispatchEvent(pointer("pointerdown", 3, 100, 300));
+    scale.dispatchEvent(pointer("pointerdown", 4, 300, 300));
+    scale.dispatchEvent(pointer("pointermove", 4, 250, 240));
+    scale.dispatchEvent(pointer("pointerup", 4, 250, 240));
+    scale.dispatchEvent(pointer("pointermove", 3, 100, 220));
+    expect(Number(scale.dataset.depth)).toBeCloseTo(0.02, 10);
+    expect(clock.pendingFrames).toBe(0);
+    scale.dispatchEvent(pointer("pointercancel", 3, 100, 220));
+
+    scale.dispatchEvent(pointer("pointerdown", 5, 100, 300));
+    scale.dispatchEvent(pointer("pointermove", 5, 100, 340));
+    clock.advanceTo(8);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(0.02);
   });
 
   it("adds five familiar exact outcomes across the positive opening range", () => {
@@ -1261,7 +1262,7 @@ describe("public probability exploration", () => {
     landmark.dispatchEvent(new MouseEvent("mouseleave"));
     expect(document.querySelector("[data-current-depth-marker]")?.textContent).toContain("+3.9 dBan");
     for (let step = 0; step < 10; step += 1) {
-      document.querySelector<HTMLElement>(".scale")!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+      document.querySelector<HTMLElement>(".scale")!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
     }
     expect(document.querySelector("[data-event-marker]")).toBeNull();
   });
@@ -1309,7 +1310,7 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-related-landmark="holdem-three-kind"]')!.click();
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
-    document.querySelector<HTMLElement>(".scale")!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    document.querySelector<HTMLElement>(".scale")!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
     clock.advanceTo(8500);
@@ -1697,7 +1698,7 @@ describe("public probability exploration", () => {
     history.replaceState(null, "", "#d=20");
     render();
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("+20 dBan");
-    document.querySelector<HTMLElement>(".scale")!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    document.querySelector<HTMLElement>(".scale")!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
 
     history.replaceState(null, "", "/");
     render();
@@ -2109,7 +2110,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector<HTMLParagraphElement>("[data-gap-caption]")?.hidden).toBe(true);
   });
 
-  it("fast-forwards sparse pinch and swipe travel with an interruptible depth effect", () => {
+  it("fast-forwards sparse vertical swipes with an interruptible depth effect", () => {
     const clock = new TestFrameClock();
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
     const pointer = (type: string, pointerId: number, clientX: number, clientY: number) => {
@@ -2119,11 +2120,10 @@ describe("public probability exploration", () => {
     };
 
     history.replaceState(null, "", "#d=100");
-    const pinched = render(390);
+    const swiped = render(390);
     const scale = document.querySelector<HTMLElement>(".scale")!;
     scale.dispatchEvent(pointer("pointerdown", 1, 100, 300));
-    scale.dispatchEvent(pointer("pointerdown", 2, 300, 300));
-    scale.dispatchEvent(pointer("pointermove", 2, 250, 300));
+    scale.dispatchEvent(pointer("pointermove", 1, 100, 360));
     clock.advanceTo(16);
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     expect(scale.dataset.fastForward).toBe("outward");
@@ -2133,21 +2133,11 @@ describe("public probability exploration", () => {
     clock.advanceTo(3000);
     expect(document.querySelector<HTMLElement>("[data-hyperspace]")!.style.getPropertyValue("--hyperspace-opacity")).toBe("0");
     const beforeReverse = Number(scale.dataset.depth);
-    scale.dispatchEvent(pointer("pointermove", 2, 350, 300));
+    scale.dispatchEvent(pointer("pointermove", 1, 100, 200));
     clock.advanceTo(3016);
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
     expect(scale.dataset.fastForward).toBe("inward");
     expect(Number(scale.dataset.depth)).toBeLessThan(beforeReverse);
-    pinched.dispose();
-
-    history.replaceState(null, "", "#d=100");
-    const swiped = render(390);
-    const swipeScale = document.querySelector<HTMLElement>(".scale")!;
-    swipeScale.dispatchEvent(pointer("pointerdown", 3, 200, 200));
-    swipeScale.dispatchEvent(pointer("pointermove", 3, 200, 260));
-    clock.advanceTo(3032);
-    expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(false);
-    expect(swipeScale.dataset.fastForward).toBe("outward");
     swiped.dispose();
 
     history.replaceState(null, "", "#d=100");
@@ -2155,8 +2145,7 @@ describe("public probability exploration", () => {
     const reduced = render(390);
     const reducedScale = document.querySelector<HTMLElement>(".scale")!;
     reducedScale.dispatchEvent(pointer("pointerdown", 4, 100, 300));
-    reducedScale.dispatchEvent(pointer("pointerdown", 5, 300, 300));
-    reducedScale.dispatchEvent(pointer("pointermove", 5, 250, 300));
+    reducedScale.dispatchEvent(pointer("pointermove", 4, 100, 360));
     expect(Number(reducedScale.dataset.depth)).toBeGreaterThan(250);
     expect(reducedScale.dataset.fastForward).toBeUndefined();
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
@@ -2202,16 +2191,16 @@ describe("public probability exploration", () => {
     expect(document.activeElement).toBe(scale);
     expect(clock.cancelled).toHaveLength(0);
 
-    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     returnButton.click();
     clock.advanceTo(2700);
-    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
     clock.advanceTo(2716);
-    const afterLeft = Number(scale.dataset.depth);
-    expect(afterLeft).toBeLessThan(0);
-    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    const afterDown = Number(scale.dataset.depth);
+    expect(afterDown).toBeLessThan(0);
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     clock.advanceTo(2732);
-    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterLeft);
+    expect(Number(scale.dataset.depth)).toBeGreaterThan(afterDown);
     expect(clock.pendingFrames).toBe(1);
 
     vi.stubGlobal("matchMedia", () => ({ matches: true }));
@@ -2221,7 +2210,7 @@ describe("public probability exploration", () => {
     expect(document.activeElement).toBe(scale);
 
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
-    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     returnButton.click();
     rendered.dispose();
     expect(clock.pendingFrames).toBe(0);
@@ -2251,7 +2240,7 @@ describe("public probability exploration", () => {
     expect(Number(scale.dataset.depth)).toBe(0);
     expect(document.activeElement).toBe(scale);
     vi.stubGlobal("matchMedia", () => ({ matches: true }));
-    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     expect(recording.provider.events).toEqual([
       { type: "pageview" },
       { type: "example_opened", exampleId: "two-dice-any-double", locale: "en" },
@@ -2270,22 +2259,21 @@ describe("public probability exploration", () => {
     wheelRendered.dispose();
 
     history.replaceState(null, "", "#d=100");
-    const pinchRendered = render(390);
-    const pinchScale = document.querySelector<HTMLElement>(".scale")!;
-    const pointer = (type: string, pointerId: number, clientX: number) => {
+    const swipeRendered = render(390);
+    const swipeScale = document.querySelector<HTMLElement>(".scale")!;
+    const pointer = (type: string, pointerId: number, clientY: number) => {
       const event = new Event(type, { bubbles: true, cancelable: true });
-      Object.defineProperties(event, { clientX: { value: clientX }, clientY: { value: 300 }, pointerId: { value: pointerId }, pointerType: { value: "touch" } });
+      Object.defineProperties(event, { clientX: { value: 180 }, clientY: { value: clientY }, pointerId: { value: pointerId }, pointerType: { value: "touch" } });
       return event;
     };
-    pinchScale.dispatchEvent(pointer("pointerdown", 1, 100));
-    pinchScale.dispatchEvent(pointer("pointerdown", 2, 300));
-    pinchScale.dispatchEvent(pointer("pointermove", 2, 250));
-    const beforeQuietInterval = Number(pinchScale.dataset.depth);
+    swipeScale.dispatchEvent(pointer("pointerdown", 1, 300));
+    swipeScale.dispatchEvent(pointer("pointermove", 1, 360));
+    const beforeQuietInterval = Number(swipeScale.dataset.depth);
     clock.advanceTo(4080);
-    expect(Number(pinchScale.dataset.depth)).toBeGreaterThan(beforeQuietInterval);
+    expect(Number(swipeScale.dataset.depth)).toBeGreaterThan(beforeQuietInterval);
     clock.advanceTo(7000);
-    expect(Number(pinchScale.dataset.depth)).toBeCloseTo(289.1, 1);
-    pinchRendered.dispose();
+    expect(Number(swipeScale.dataset.depth)).toBeCloseTo(289.1, 1);
+    swipeRendered.dispose();
   });
 
   it("keeps the current extreme readout authoritative on the spoke", () => {
@@ -2308,7 +2296,7 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!.click();
     document.querySelector<HTMLInputElement>("[data-all-references]")!.click();
     const scale = document.querySelector<HTMLElement>(".scale")!;
-    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
     expect(Number(scale.dataset.depth)).toBeGreaterThan(0);
 
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("storage unavailable"); });
@@ -2327,7 +2315,7 @@ describe("public probability exploration", () => {
     const upper = render();
     const scale = document.querySelector<HTMLElement>(".scale")!;
     scale.focus();
-    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
 
     expect(Number(scale.dataset.depth)).toBe(maximum);
     expect(document.querySelector("[data-center-marker]")?.textContent).not.toMatch(/Infinity|100%/);
@@ -2343,7 +2331,7 @@ describe("public probability exploration", () => {
     sessionStorage.setItem("probability-scale-view-v1", JSON.stringify({ center: -9999 }));
     render();
     const lowerScale = document.querySelector<HTMLElement>(".scale")!;
-    lowerScale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+    lowerScale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
     clock.advanceTo(32);
     expect(Number(lowerScale.dataset.depth)).toBe(minimum);
     expect(document.querySelector("[data-center-marker]")?.textContent).not.toMatch(/Infinity|100%/);
