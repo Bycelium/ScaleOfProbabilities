@@ -4,6 +4,8 @@ import { catalogueSlots } from "./catalogue/order";
 import { fillTemplate } from "./locales/helpers";
 import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabilityPercent } from "./probability";
 import { createPreferencesMenu } from "./preferences-menu";
+import { createAnalytics, type Analytics } from "./analytics";
+import { getAnalyticsConfig } from "./analytics-config";
 
 type View = { center: number };
 type SceneMetrics = Readonly<{ width: number; height: number; referenceDiameter: number; centerX: number; centerY: number }>;
@@ -34,6 +36,10 @@ const POSITIVE = [74, 185, 137] as const;
 const SCENE_REBASE_DECIBANS = 2;
 const MIN_TRAVEL_DURATION = 220;
 const DEFAULT_CURRENT_STACK_HEIGHT = 84;
+
+export type ScaleDependencies = Readonly<{
+  analytics?: Analytics;
+}>;
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.max(minimum, Math.min(maximum, value));
 const trimDecimal = (value: number): string => value.toFixed(1).replace(/\.0$/, "");
@@ -110,8 +116,12 @@ const sourceList = (sources: readonly Source[]): DocumentFragment => {
   return fragment;
 };
 
-export function createScale(root: HTMLElement): () => void {
+export function createScale(root: HTMLElement, dependencies: ScaleDependencies = {}): () => void {
   let locale = resolveInitialLocale();
+  const analyticsConfig = dependencies.analytics ? null : getAnalyticsConfig();
+  const analytics = dependencies.analytics ?? createAnalytics(analyticsConfig, locale.code);
+  let analyticsLocale = locale.code;
+  const privacyAvailable = analytics.available;
   let allReferences = loadAllReferences();
   const initiallyAvailable = displayLandmarks.filter(item => {
     const regionalLocales = regionalLandmarkLocales[item.id];
@@ -134,6 +144,7 @@ export function createScale(root: HTMLElement): () => void {
   const pointers = new Map<number, { x: number; y: number }>();
   let pinchStart: { distance: number } | undefined;
   let introRestoreFocus: HTMLElement | undefined;
+  let privacyRestoreFocus: HTMLElement | undefined;
   let suppressLandmarkClick = false;
   let lastPersistedCenter = view.center;
 
@@ -156,8 +167,9 @@ export function createScale(root: HTMLElement): () => void {
       <h2 data-how-to-use>${locale.ui.howToUse}</h2>
       <p data-intro-navigation>${locale.ui.introNavigation}</p>
     </div>
-    <footer class="intro-actions"><button data-dismiss-intro>${locale.ui.explore}</button><p class="intro-credit"><span data-credit-prefix>${locale.ui.creditPrefix}</span> <a href="https://www.htwins.net/scale2/" data-credit-title>${locale.ui.creditTitle}</a>, <span data-credit-by>${locale.ui.creditBy}</span></p></footer>
+    <footer class="intro-actions"><div data-intro-consent${privacyAvailable ? "" : " hidden"}><p data-intro-consent-description>${locale.ui.privacy.participationDescription}</p><div class="intro-consent" role="group" aria-label="${locale.ui.privacy.participationLabel}"><button type="button" data-consent-choice="accepted" aria-pressed="${analytics.getConsent() === "accepted"}">${locale.ui.privacy.participate}</button><button type="button" data-consent-choice="declined" aria-pressed="${analytics.getConsent() === "declined"}">${locale.ui.privacy.doNotParticipate}</button></div></div><div class="intro-primary-actions"><button type="button" data-open-privacy data-privacy-from-intro>${locale.ui.privacy.review}</button><button data-dismiss-intro${privacyAvailable && analytics.getConsent() === "unknown" ? " disabled" : ""}>${locale.ui.explore}</button></div><p class="intro-credit"><span data-credit-prefix>${locale.ui.creditPrefix}</span> <a href="https://www.htwins.net/scale2/" data-credit-title>${locale.ui.creditTitle}</a>, <span data-credit-by>${locale.ui.creditBy}</span></p></footer>
   </dialog>
+  <dialog class="privacy-dialog" data-privacy-dialog aria-modal="true" aria-labelledby="privacy-heading"><button type="button" data-close-privacy aria-label="${locale.ui.privacy.close}">×</button><h2 id="privacy-heading" tabindex="-1" data-privacy-title>${locale.ui.privacy.title}</h2><p class="privacy-status"><strong data-privacy-dialog-status-label>${locale.ui.privacy.statusLabel}</strong> <span data-privacy-dialog-status></span></p><section aria-labelledby="privacy-analytics-heading"><h3 id="privacy-analytics-heading" data-privacy-analytics-heading>${locale.ui.privacy.analyticsHeading}</h3><p data-privacy-analytics-description>${locale.ui.privacy.analyticsDescription}</p><div class="privacy-actions" data-privacy-actions><button type="button" data-consent-choice="accepted">${locale.ui.privacy.allow}</button><button type="button" data-consent-choice="declined">${locale.ui.privacy.decline}</button></div><p data-privacy-identifier-note>${locale.ui.privacy.identifierNote}</p><p data-privacy-sample-note>${locale.ui.privacy.sampleNote}</p><p data-privacy-retention-note>${locale.ui.privacy.retentionNote}</p><p data-privacy-choice-description>${locale.ui.privacy.choiceDescription}</p></section><section aria-labelledby="privacy-controller-heading"><h3 id="privacy-controller-heading" data-privacy-controller-heading>${locale.ui.privacy.controllerHeading}</h3><p data-privacy-controller-description>${locale.ui.privacy.controllerDescription}</p><p><a data-privacy-registry href="https://annuaire-entreprises.data.gouv.fr/entreprise/bycelium-919837187" target="_blank" rel="noreferrer">${locale.ui.privacy.registry}</a></p><p><span data-privacy-rights-contact>${locale.ui.privacy.rightsContact}</span> <a href="mailto:gdpr@bycelium.com">gdpr@bycelium.com</a><br><span data-privacy-general-contact>${locale.ui.privacy.generalContact}</span> <a href="mailto:contact@bycelium.com">contact@bycelium.com</a></p></section><section aria-labelledby="privacy-providers-heading"><h3 id="privacy-providers-heading" data-privacy-providers-heading>${locale.ui.privacy.providersHeading}</h3><p data-privacy-providers-description>${locale.ui.privacy.providersDescription}</p><p><a data-privacy-provider-policy href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noreferrer">${locale.ui.privacy.providerPrivacy}</a> · <a data-privacy-provider-dpa href="https://vercel.com/legal/dpa" target="_blank" rel="noreferrer">${locale.ui.privacy.providerDpa}</a></p><p data-privacy-technical-logs>${locale.ui.privacy.technicalLogs}</p></section><section aria-labelledby="privacy-rights-heading"><h3 id="privacy-rights-heading" data-privacy-rights-heading>${locale.ui.privacy.rightsHeading}</h3><p data-privacy-rights-description>${locale.ui.privacy.rightsDescription}</p><p><a data-privacy-cnil href="https://www.cnil.fr/en/contact-us" target="_blank" rel="noreferrer">${locale.ui.privacy.cnil}</a></p></section><section aria-labelledby="privacy-local-heading"><h3 id="privacy-local-heading" data-privacy-local-heading>${locale.ui.privacy.localHeading}</h3><p data-privacy-local-description>${locale.ui.privacy.localDescription}</p></section></dialog>
   <dialog data-detail-panel aria-labelledby="detail-heading"><button data-close-detail aria-label="${locale.ui.closeDetails}">×</button><div data-detail-content><div data-detail-art></div><p class="eyebrow" data-detail-kind></p><h2 id="detail-heading" data-detail-title></h2><p data-detail-explanation></p><section class="detail-related" data-detail-related hidden><h3 data-explore-on-scale>${locale.ui.exploreOnScale}</h3><div data-detail-related-links></div></section><dl><div><dt data-calculation-label>${locale.ui.calculation}</dt><dd data-detail-calculation></dd></div><div data-detail-diagnostic-section hidden><dt data-diagnostic-label></dt><dd data-detail-diagnostic hidden></dd></div><div><dt data-assumptions-label>${locale.ui.assumptions}</dt><dd data-detail-assumptions></dd></div><div data-detail-advice-section hidden><dt data-advice-label>${locale.ui.securityAdvice}</dt><dd data-detail-advice></dd></div><div><dt data-sources-label>${locale.ui.sources}</dt><dd data-detail-sources></dd></div></dl></div></dialog></div>`;
 
   const page = root.querySelector<HTMLElement>("[data-page-content]")!;
@@ -174,6 +186,9 @@ export function createScale(root: HTMLElement): () => void {
   const toolbarPreferencesToggle = root.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!;
   const introPreferences = introDialog.querySelector<HTMLElement>(".intro-preferences")!;
   const introPreferencesToggle = introPreferences.querySelector<HTMLButtonElement>('[data-preferences-toggle="intro"]')!;
+  const privacyDialog = root.querySelector<HTMLDialogElement>("[data-privacy-dialog]")!;
+  const introConsent = root.querySelector<HTMLElement>("[data-intro-consent]")!;
+  const dismissIntroButton = introDialog.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!;
   const returnButton = root.querySelector<HTMLButtonElement>("[data-return-zero]")!;
   const gapCaption = root.querySelector<HTMLElement>("[data-gap-caption]")!;
   const hyperspace = root.querySelector<HTMLElement>("[data-hyperspace]")!;
@@ -724,14 +739,17 @@ export function createScale(root: HTMLElement): () => void {
     sceneOrigin = undefined;
     render();
     dialog.querySelector<HTMLButtonElement>("[data-close-detail]")!.focus();
+    analytics.openExample(item.id);
   };
 
   const closeDetails = (returnFocus = true): void => {
+    const wasOpen = dialog.open;
     dialog.removeAttribute("open");
     selected = undefined;
     if (active && !landmarkIsAvailable(active)) active = undefined;
     sceneOrigin = undefined;
     render();
+    if (wasOpen) analytics.closeExample();
     if (!returnFocus) return;
     if (restoreFocus?.isConnected && !restoreFocus.hidden) restoreFocus.focus();
     else scale.focus();
@@ -762,36 +780,66 @@ export function createScale(root: HTMLElement): () => void {
   };
   dialog.addEventListener("keydown", onDialogKeydown);
   const onRootKeydown = (event: KeyboardEvent): void => {
-    if (event.key !== "Escape" || !dialog.open) return;
+    if (event.key !== "Escape" || event.defaultPrevented || !dialog.open) return;
     event.preventDefault();
     closeDetails();
   };
   root.addEventListener("keydown", onRootKeydown);
 
-  const closeIntro = (): void => {
+  const consentStatus = (): string => {
+    if (!privacyAvailable) return locale.ui.privacy.statusUnavailable;
+    const consent = analytics.getConsent();
+    if (consent === "accepted") return locale.ui.privacy.statusAccepted;
+    if (consent === "declined") return locale.ui.privacy.statusDeclined;
+    return locale.ui.privacy.statusUnknown;
+  };
+  const renderPrivacyState = (): void => {
+    const consent = analytics.getConsent();
+    const status = consentStatus();
+    root.querySelector<HTMLElement>("[data-privacy-dialog-status]")!.textContent = status;
+    root.querySelector<HTMLElement>("[data-privacy-actions]")!.hidden = !privacyAvailable;
+    introConsent.hidden = !privacyAvailable;
+    dismissIntroButton.disabled = privacyAvailable && consent === "unknown";
+    for (const choice of introConsent.querySelectorAll<HTMLButtonElement>("[data-consent-choice]")) {
+      choice.setAttribute("aria-pressed", String(choice.dataset.consentChoice === consent));
+    }
+    privacyDialog.querySelector<HTMLButtonElement>('[data-consent-choice="declined"]')!.textContent = consent === "accepted"
+      ? locale.ui.privacy.withdraw
+      : locale.ui.privacy.decline;
+  };
+  const syncExampleVisibility = (): void => {
+    analytics.setExampleVisible(dialog.open && !introDialog.open && !privacyDialog.open);
+  };
+  const showIntro = (captureRestore = true): void => {
+    preferencesMenu.close(false);
+    if (captureRestore) {
+      /* v8 ignore next -- document.activeElement is always an HTMLElement in supported browser documents. */
+      introRestoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+    }
+    page.inert = true;
+    try { introDialog.showModal(); } catch { introDialog.setAttribute("open", ""); }
+    syncExampleVisibility();
+    introDialog.querySelector<HTMLElement>("h1")!.focus();
+  };
+  const hideIntro = (remember = true, restore = true, clearRestore = true, allowUnanswered = false): void => {
+    if (!allowUnanswered && privacyAvailable && analytics.getConsent() === "unknown") {
+      introConsent.querySelector<HTMLButtonElement>("[data-consent-choice]")!.focus();
+      return;
+    }
     preferencesMenu.close(false);
     try { introDialog.close(); } catch { introDialog.removeAttribute("open"); }
     page.inert = false;
-    try { sessionStorage.setItem(INTRO_STORAGE_KEY, "true"); } catch { /* The guide can reopen without storage. */ }
-    introRestoreFocus?.focus();
-    introRestoreFocus = undefined;
-  };
-  const openIntro = (): void => {
-    preferencesMenu.close(false);
-    /* v8 ignore next -- document.activeElement is always an HTMLElement in supported browser documents. */
-    introRestoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-    page.inert = true;
-    try { introDialog.showModal(); } catch { introDialog.setAttribute("open", ""); }
-    introDialog.querySelector<HTMLElement>("h1")!.focus();
-  };
-  const onIntroKeydown = (event: KeyboardEvent): void => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeIntro();
-      return;
+    if (remember) {
+      try { sessionStorage.setItem(INTRO_STORAGE_KEY, "true"); } catch { /* The guide can reopen without storage. */ }
     }
+    if (restore) introRestoreFocus?.focus();
+    if (clearRestore) introRestoreFocus = undefined;
+    syncExampleVisibility();
+  };
+  const closeIntro = (): void => hideIntro();
+  const trapModalFocus = (event: KeyboardEvent, modal: HTMLDialogElement): void => {
     if (event.key !== "Tab") return;
-    const focusable = [...introDialog.querySelectorAll<HTMLElement>('button, summary, a[href], input:not([disabled]), select:not([disabled])')]
+    const focusable = [...modal.querySelectorAll<HTMLElement>('button:not([disabled]), summary, a[href], input:not([disabled]), select:not([disabled])')]
       .filter(element => !element.closest("[hidden]") && !(element instanceof HTMLInputElement && element.type === "radio" && !element.checked));
     const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
     const nextIndex = event.shiftKey
@@ -799,6 +847,14 @@ export function createScale(root: HTMLElement): () => void {
       : (currentIndex + 1) % focusable.length;
     event.preventDefault();
     focusable[nextIndex]?.focus();
+  };
+  const onIntroKeydown = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeIntro();
+      return;
+    }
+    trapModalFocus(event, introDialog);
   };
   const onIntroCancel = (event: Event): void => {
     event.preventDefault();
@@ -810,18 +866,65 @@ export function createScale(root: HTMLElement): () => void {
   };
   const reopenIntro = (): void => {
     preferencesMenu.close(false);
-    if (dialog.open) closeDetails(false);
     introRestoreFocus = introButton;
+    showIntro(false);
+  };
+  const openPrivacy = (opener: HTMLElement): void => {
+    privacyRestoreFocus = opener;
+    hideIntro(false, false, false, true);
     page.inert = true;
-    try { introDialog.showModal(); } catch { introDialog.setAttribute("open", ""); }
-    introDialog.querySelector<HTMLElement>("h1")!.focus();
+    try { privacyDialog.showModal(); } catch { privacyDialog.setAttribute("open", ""); }
+    syncExampleVisibility();
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-title]")!.focus();
+  };
+  const closePrivacy = (): void => {
+    try { privacyDialog.close(); } catch { privacyDialog.removeAttribute("open"); }
+    showIntro(false);
+    privacyRestoreFocus!.focus();
+    privacyRestoreFocus = undefined;
+  };
+  const onPrivacyKeydown = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closePrivacy();
+      return;
+    }
+    trapModalFocus(event, privacyDialog);
+  };
+  const onPrivacyCancel = (event: Event): void => {
+    event.preventDefault();
+    closePrivacy();
+  };
+  const onPrivacyClick = (event: Event): void => {
+    const target = event.target as Element;
+    const choice = target.closest<HTMLButtonElement>("[data-consent-choice]");
+    if (choice) {
+      analytics.setConsent(choice.dataset.consentChoice === "accepted" ? "accepted" : "declined");
+      renderPrivacyState();
+      return;
+    }
+    const opener = target.closest<HTMLElement>("[data-open-privacy]");
+    if (opener) openPrivacy(opener);
   };
   introButton.addEventListener("click", reopenIntro);
   introDialog.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.addEventListener("click", closeIntro);
   introDialog.addEventListener("keydown", onIntroKeydown);
   introDialog.addEventListener("cancel", onIntroCancel);
+  privacyDialog.querySelector<HTMLButtonElement>("[data-close-privacy]")!.addEventListener("click", closePrivacy);
+  privacyDialog.addEventListener("keydown", onPrivacyKeydown);
+  privacyDialog.addEventListener("cancel", onPrivacyCancel);
+  root.addEventListener("click", onPrivacyClick);
+  const onConsentChange = (): void => {
+    renderPrivacyState();
+    if (privacyAvailable && analytics.getConsent() === "unknown" && !introDialog.open && !privacyDialog.open) showIntro();
+  };
+  const unsubscribeConsent = analytics.subscribe(onConsentChange);
 
   const applyLocale = (): void => {
+    if (analyticsLocale !== locale.code) {
+      analytics.setLocale(locale.code);
+      analyticsLocale = locale.code;
+    }
     document.documentElement.lang = locale.code;
     document.title = locale.ui.title;
     introButton.textContent = locale.ui.about;
@@ -834,6 +937,7 @@ export function createScale(root: HTMLElement): () => void {
     introDialog.querySelector<HTMLElement>("[data-intro-title]")!.textContent = locale.ui.title;
     introDialog.querySelector<HTMLElement>("[data-how-to-use]")!.textContent = locale.ui.howToUse;
     introDialog.querySelector<HTMLElement>("[data-intro-navigation]")!.textContent = locale.ui.introNavigation;
+    introDialog.querySelector<HTMLElement>("[data-privacy-from-intro]")!.textContent = locale.ui.privacy.review;
     introDialog.querySelector<HTMLElement>("[data-intro-direction-rarer]")!.textContent = locale.ui.introDirectionRarer;
     introDialog.querySelector<HTMLElement>("[data-intro-direction-likely]")!.textContent = locale.ui.introDirectionLikely;
     introDialog.querySelector<HTMLElement>("[data-intro-probability]")!.innerHTML = locale.ui.probabilityExplanation;
@@ -847,7 +951,37 @@ export function createScale(root: HTMLElement): () => void {
     introDialog.querySelector<HTMLElement>("[data-credit-prefix]")!.textContent = locale.ui.creditPrefix;
     introDialog.querySelector<HTMLElement>("[data-credit-title]")!.textContent = locale.ui.creditTitle;
     introDialog.querySelector<HTMLElement>("[data-credit-by]")!.textContent = locale.ui.creditBy;
-    introDialog.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.textContent = locale.ui.explore;
+    dismissIntroButton.textContent = locale.ui.explore;
+    introConsent.querySelector<HTMLElement>("[role=group]")!.setAttribute("aria-label", locale.ui.privacy.participationLabel);
+    introConsent.querySelector<HTMLElement>("[data-intro-consent-description]")!.textContent = locale.ui.privacy.participationDescription;
+    introConsent.querySelector<HTMLButtonElement>('[data-consent-choice="accepted"]')!.textContent = locale.ui.privacy.participate;
+    introConsent.querySelector<HTMLButtonElement>('[data-consent-choice="declined"]')!.textContent = locale.ui.privacy.doNotParticipate;
+    privacyDialog.querySelector<HTMLButtonElement>("[data-close-privacy]")!.setAttribute("aria-label", locale.ui.privacy.close);
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-title]")!.textContent = locale.ui.privacy.title;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-dialog-status-label]")!.textContent = locale.ui.privacy.statusLabel;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-controller-heading]")!.textContent = locale.ui.privacy.controllerHeading;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-controller-description]")!.textContent = locale.ui.privacy.controllerDescription;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-registry]")!.textContent = locale.ui.privacy.registry;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-rights-contact]")!.textContent = locale.ui.privacy.rightsContact;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-general-contact]")!.textContent = locale.ui.privacy.generalContact;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-analytics-heading]")!.textContent = locale.ui.privacy.analyticsHeading;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-analytics-description]")!.textContent = locale.ui.privacy.analyticsDescription;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-identifier-note]")!.textContent = locale.ui.privacy.identifierNote;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-sample-note]")!.textContent = locale.ui.privacy.sampleNote;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-retention-note]")!.textContent = locale.ui.privacy.retentionNote;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-choice-description]")!.textContent = locale.ui.privacy.choiceDescription;
+    privacyDialog.querySelector<HTMLButtonElement>('[data-consent-choice="accepted"]')!.textContent = locale.ui.privacy.allow;
+    privacyDialog.querySelector<HTMLButtonElement>('[data-consent-choice="declined"]')!.textContent = locale.ui.privacy.decline;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-providers-heading]")!.textContent = locale.ui.privacy.providersHeading;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-providers-description]")!.textContent = locale.ui.privacy.providersDescription;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-provider-policy]")!.textContent = locale.ui.privacy.providerPrivacy;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-provider-dpa]")!.textContent = locale.ui.privacy.providerDpa;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-technical-logs]")!.textContent = locale.ui.privacy.technicalLogs;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-rights-heading]")!.textContent = locale.ui.privacy.rightsHeading;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-rights-description]")!.textContent = locale.ui.privacy.rightsDescription;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-cnil]")!.textContent = locale.ui.privacy.cnil;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-local-heading]")!.textContent = locale.ui.privacy.localHeading;
+    privacyDialog.querySelector<HTMLElement>("[data-privacy-local-description]")!.textContent = locale.ui.privacy.localDescription;
     closeButton.setAttribute("aria-label", locale.ui.closeDetails);
     dialog.querySelector<HTMLElement>("[data-explore-on-scale]")!.textContent = locale.ui.exploreOnScale;
     dialog.querySelector<HTMLElement>("[data-calculation-label]")!.textContent = locale.ui.calculation;
@@ -857,6 +991,7 @@ export function createScale(root: HTMLElement): () => void {
     sceneOrigin = undefined;
     render();
     if (selected && dialog.open) populateDetails(selected);
+    renderPrivacyState();
   };
 
   function selectLocale(code: LocaleCode): void {
@@ -1071,7 +1206,7 @@ export function createScale(root: HTMLElement): () => void {
       : event.key === "ArrowLeft" || event.key === "ArrowDown"
         ? -1
         : 0;
-    if (direction === 0 || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || introDialog.open) return;
+    if (direction === 0 || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || introDialog.open || privacyDialog.open) return;
     const target = event.target;
     const navigatesScene = target === document.body
       || target === document.documentElement
@@ -1174,9 +1309,9 @@ export function createScale(root: HTMLElement): () => void {
   document.addEventListener("visibilitychange", persistWhenHidden);
   applyLocale();
   try {
-    if (sessionStorage.getItem(INTRO_STORAGE_KEY) !== "true") openIntro();
+    if (sessionStorage.getItem(INTRO_STORAGE_KEY) !== "true" || (privacyAvailable && analytics.getConsent() === "unknown")) showIntro();
   } catch {
-    openIntro();
+    showIntro();
   }
 
   return () => {
@@ -1192,12 +1327,18 @@ export function createScale(root: HTMLElement): () => void {
     toolbarPreferencesToggle.removeEventListener("click", openToolbarPreferences);
     introPreferencesToggle.removeEventListener("click", openIntroPreferences);
     preferencesMenu.destroy();
+    privacyDialog.querySelector<HTMLButtonElement>("[data-close-privacy]")!.removeEventListener("click", closePrivacy);
+    privacyDialog.removeEventListener("keydown", onPrivacyKeydown);
+    privacyDialog.removeEventListener("cancel", onPrivacyCancel);
+    root.removeEventListener("click", onPrivacyClick);
     scale.removeEventListener("wheel", onWheel);
     document.removeEventListener("keydown", onKeydown);
     window.removeEventListener("pagehide", persistOnPageHide);
     document.removeEventListener("visibilitychange", persistWhenHidden);
     if (travelFrame !== undefined) cancelTravel();
     else persistView();
+    unsubscribeConsent();
+    analytics.dispose();
     pointers.clear();
   };
 }
