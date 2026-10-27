@@ -169,6 +169,7 @@ dl { margin: 1.2rem 0 0; }
 dl > div { border-top: 1px solid #426674; padding: .62rem 0; }
 dt { color: #9ed6c8; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; }
 dd { color: #d8e6e4; line-height: 1.4; margin: .3rem 0 0; }
+[data-detail-calculation] { overflow-wrap: anywhere; }
 dd ul { margin: 0; padding-left: 1.1rem; }
 dd li + li { margin-top: .3rem; }
 dd a { color: #9ed6c8; }
