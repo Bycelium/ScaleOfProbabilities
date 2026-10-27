@@ -68,6 +68,7 @@ h1 { font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.4rem); font-weig
 .landmark-title { pointer-events: auto; }
 .landmark:hover .art, .landmark:focus-visible .art { filter: drop-shadow(0 15px 10px #020b12dd); transform: scale(1.04); }
 .landmark-title { font-family: Georgia, serif; font-size: .92rem; line-height: 1.05; max-width: 10rem; transform: translate(var(--title-x, 0), var(--title-y, 0)); transform-origin: top center; }
+.scale[data-fast-forward] .landmark-title { visibility: hidden; }
 .gap-caption { animation: gap-in .2s ease-out; background: #0b202de8; border: 1px solid #547984; border-radius: 999px; bottom: 4.6rem; color: #cfe2df; font-size: .82rem; left: 50%; margin: 0; padding: .45rem .8rem; position: absolute; text-align: center; transform: translateX(-50%); white-space: nowrap; z-index: 21; }
 .gap-caption span { color: #f6cf70; font-family: Georgia, serif; }
 .gap-caption sup { font-size: .7em; }
@@ -183,6 +184,8 @@ dd a { color: #9ed6c8; }
   .explorer-tools { bottom: .5rem; right: .5rem; }
   .read-scale, .return-zero, .language-toggle, dialog > button:first-child { min-height: 2.75rem; min-width: 2.75rem; }
   .scale { margin-inline: -.5rem; }
+  .landmark .art, .landmark:hover .art, .landmark:focus-visible .art { filter: none; }
+  .landmark .art { transition-property: transform; }
   .landmark-title { font-size: .78rem; max-width: 7.5rem; }
   .depth-readout .probability { font-size: 1.35rem; }
   .current-readout-stack { max-width: calc(50vw - 1.5rem); white-space: normal; }

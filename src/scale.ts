@@ -34,6 +34,7 @@ const NEUTRAL = [134, 147, 140] as const;
 const NEGATIVE = [226, 105, 112] as const;
 const POSITIVE = [74, 185, 137] as const;
 const SCENE_REBASE_DECIBANS = 2;
+const COMPACT_SCENE_REBASE_DECIBANS = 5;
 const MIN_TRAVEL_DURATION = 220;
 const DEFAULT_CURRENT_STACK_HEIGHT = 84;
 
@@ -57,6 +58,7 @@ const axisColor = (position: number): string => {
   const channels = NEUTRAL.map((channel, index) => Math.round(channel + (target[index] - channel) * strength));
   return `rgb(${channels.join(" ")})`;
 };
+const sceneRebaseDecibans = (width: number): number => width <= 640 ? COMPACT_SCENE_REBASE_DECIBANS : SCENE_REBASE_DECIBANS;
 
 const initialView = (minimum: number, maximum: number): View => {
   const match = location.hash.match(/^#d=(-?\d+(?:\.\d+)?)$/);
@@ -454,7 +456,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   };
 
   const sceneIntersectsAtSomeZoom = (baseX: number, baseY: number, baseSize: number, { width, height, centerX, centerY }: SceneMetrics): boolean => {
-    const minimumZoom = 10 ** (-SCENE_REBASE_DECIBANS / 10);
+    const minimumZoom = 10 ** (-sceneRebaseDecibans(width) / 10);
     const maximumZoom = 1 / minimumZoom;
     const horizontal = [minimumZoom, maximumZoom].flatMap(zoom => {
       const x = centerX + (baseX - centerX) * zoom;
@@ -474,7 +476,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     const { width, referenceDiameter, centerX, centerY } = nextMetrics;
     const compactArtScale = width <= 640 ? 0.76 : 1;
     const originCenter = view.center;
-    const maximumSceneZoom = 10 ** (SCENE_REBASE_DECIBANS / 10);
+    const maximumSceneZoom = 10 ** (sceneRebaseDecibans(width) / 10);
     const projected = visibleCatalogue.flatMap(item => {
       const depth = item.position - originCenter;
       const zoomFactor = 10 ** (depth / 10);
@@ -522,7 +524,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   };
 
   const updateSceneProjection = (nextMetrics: SceneMetrics): void => {
-    if (!sceneOrigin || sceneOrigin.metrics !== nextMetrics || Math.abs(view.center - sceneOrigin.center) >= SCENE_REBASE_DECIBANS) {
+    if (!sceneOrigin || sceneOrigin.metrics !== nextMetrics || Math.abs(view.center - sceneOrigin.center) >= sceneRebaseDecibans(nextMetrics.width)) {
       const visibleCatalogue = availableLandmarks();
       sceneBounds = [Math.min(...visibleCatalogue.map(item => item.position)), Math.max(...visibleCatalogue.map(item => item.position))];
       rebuildScene(nextMetrics, visibleCatalogue);
@@ -533,12 +535,14 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     const sceneZoomText = String(sceneZoom);
     if (depthScene.dataset.sceneZoom !== sceneZoomText) depthScene.dataset.sceneZoom = sceneZoomText;
     const { width, height, centerX, centerY, referenceDiameter } = nextMetrics;
+    const updateTitles = travel === undefined;
     for (const { button, title, item, baseX, baseY, baseArtSize } of landmarkNodes.values()) {
       const artSize = baseArtSize * sceneZoom;
       const x = centerX + (baseX - centerX) * sceneZoom;
       const y = centerY + (baseY - centerY) * sceneZoom;
       const visible = artSize >= 0.5 && x + artSize / 2 >= 0 && x - artSize / 2 <= width && y + artSize / 2 >= 0 && y - artSize / 2 <= height;
       if (button.hidden === visible) button.hidden = !visible;
+      if (!updateTitles) continue;
       const readable = visible && artSize >= 32 && (width > 640 || Math.abs(item.position - view.center) <= 1.7);
       if (title.hidden === readable) title.hidden = !readable;
       if (readable) setStyle(title, "transform", `scale(${inverseZoom}) translate(var(--title-x), var(--title-y))`);
@@ -1238,7 +1242,12 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   document.addEventListener("keydown", onKeydown);
 
   scale.addEventListener("pointerdown", event => {
+    const interruptedTravel = travelFrame !== undefined || travel !== undefined || pendingInput !== undefined;
     cancelTravel();
+    if (interruptedTravel) {
+      sceneOrigin = undefined;
+      render();
+    }
     lastTravelInputAt = undefined;
     if (dialog.open) closeDetails(false);
     if (pointers.size === 0) {
