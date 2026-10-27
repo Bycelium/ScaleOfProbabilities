@@ -7,7 +7,7 @@ type FamilyRailDefinition = Readonly<{
   angle: number;
   members: readonly LandmarkId[];
   memberAngles?: Readonly<Partial<Record<LandmarkId, number>>>;
-  path: "line" | "polyline";
+  path: "line" | "polyline" | "branched";
 }>;
 
 export const familyRailDefinitions = [
@@ -22,7 +22,7 @@ export const familyRailDefinitions = [
   },
   {
     id: "polyhedral-highest-face",
-    angle: degrees(225),
+    angle: degrees(200),
     members: ["die-d4-highest", "die-six", "die-d12-highest", "die-d20-highest"],
     path: "line",
   },
@@ -72,7 +72,7 @@ export const familyRailDefinitions = [
       "holdem-flush": degrees(238),
       "holdem-full-house": degrees(262),
     },
-    path: "polyline",
+    path: "branched",
   },
 ] as const satisfies readonly FamilyRailDefinition[];
 

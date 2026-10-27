@@ -38,7 +38,7 @@ export const cardsEN = {
   },
   "shuffled-deck-specified-order": {
     title: "Reproduce one specified deck order",
-    shortTitle: "repeat a specified deck order",
+    shortTitle: "exact deck shuffle",
     explanation: "An ordinary 52-card deck has 52! possible orders—about 8.07 × 10⁶⁷. A well-shuffled deck therefore has only a 1 in 52! chance of reproducing one specified order seen earlier. With so many possibilities, a well-shuffled order very probably has never appeared before and will never be repeated on human timescales, although neither claim can be guaranteed.",
     calculation: "p = 1 / 52! = 1 / 80,658,175,170,943,878,571,660,636,856,403,766,975,289,505,440,883,277,824,000,000,000,000 ≈ 1.24 × 10⁻⁶⁸",
     assumptions: "The deck contains 52 distinct cards and no jokers. The earlier order is specified before an independent shuffle, and every permutation is equally likely. The number of distinct deck orders produced across human history is unknown. Conditional on any finite set of N distinct comparison orders fixed as targets, whether earlier or later, the chance of matching one is N / 52!.",
