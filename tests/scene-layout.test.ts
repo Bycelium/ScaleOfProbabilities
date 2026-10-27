@@ -9,7 +9,7 @@ describe("scene layout", () => {
     expect(landmarkAngle("drop-garden-pool")).toBeCloseTo(expectedDefault, 12);
     expect(landmarkAngle("coin-heads")).toBeCloseTo(80 * Math.PI / 180, 12);
     expect(landmarkAngle("four-dice-any-six")).toBeCloseTo(225 * Math.PI / 180, 12);
-    expect(landmarkAngle("french-scrabble-consonant")).toBeCloseTo(320 * Math.PI / 180, 12);
+    expect(landmarkAngle("french-scrabble-consonant")).toBeCloseTo(325 * Math.PI / 180, 12);
     expect(landmarkAngle("month-31-days")).toBeCloseTo(58 * Math.PI / 180, 12);
     expect(landmarkAngle("red-dwarf-star")).toBeCloseTo(170 * Math.PI / 180, 12);
     expect(landmarkAngle("rain-hilo")).toBeCloseTo(105 * Math.PI / 180, 12);

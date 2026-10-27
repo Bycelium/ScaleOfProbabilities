@@ -98,7 +98,7 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "yellow-pea": degrees(50),
   "solar-terrestrial": degrees(40),
   "full-moon-15-days": degrees(145),
-  "french-scrabble-consonant": degrees(320),
+  "french-scrabble-consonant": degrees(325),
   "solar-eclipse-year": degrees(225),
   "frozen-freshwater": degrees(280),
   "red-dwarf-star": degrees(170),
