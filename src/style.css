@@ -79,7 +79,10 @@ dialog { background: #0b202d; border: 1px solid #6da3a0; border-radius: 1.1rem; 
 dialog::backdrop { background: #02091280; }
 dialog:not([open]) { display: none; }
 dialog > button:first-child { align-items: center; background: #102b38d9; border: 1px solid #547984; border-radius: 50%; display: inline-flex; float: right; font-size: 1.35rem; height: 2.25rem; justify-content: center; line-height: 1; padding: 0; width: 2.25rem; }
-dialog[data-detail-panel] { bottom: 4rem; left: auto; margin: 0; max-height: calc(100vh - 5rem); right: 1rem; top: auto; width: min(27rem, calc(100vw - 2rem)); }
+dialog[data-detail-panel] { bottom: 4rem; left: auto; margin: 0; max-height: calc(100vh - 5rem); overflow: hidden; right: 1rem; top: auto; width: min(27rem, calc(100vw - 2rem)); }
+dialog[data-detail-panel][open] { display: flex; flex-direction: column; }
+dialog[data-detail-panel] > [data-close-detail] { align-self: flex-end; flex: none; float: none; }
+[data-detail-content] { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: .25rem; }
 .privacy-actions { display: grid; gap: .5rem; }
 .privacy-actions button { background: #183d4b; border: 1px solid #6da3a0; border-radius: 999px; color: #edf4eb; min-height: 2.6rem; padding: .5rem .75rem; }
 .privacy-actions [data-consent-choice="accepted"] { background: #286454; border-color: #6da3a0; }
