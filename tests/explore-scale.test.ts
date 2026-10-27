@@ -2298,7 +2298,8 @@ describe("public probability exploration", () => {
     const landmark = document.querySelector<HTMLButtonElement>('[data-landmark="shuffled-deck-specified-order"]')!;
     const deckArt = sceneArtwork(item.id);
     expect(deckArt.querySelector(".poker-hand")).toBeNull();
-    expect(deckArt.querySelector("text")?.textContent).toBe("A");
+    expect(deckArt.querySelector(".deck-stack-art[data-card-count='52']")).not.toBeNull();
+    expect(deckArt.querySelector("text")).toBeNull();
     landmark.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Reproduce one specified deck order");
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("1 / 52!");
