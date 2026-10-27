@@ -9,11 +9,32 @@ export const basicsFR = {
     calculation: "p = 1 côté choisi / 2 côtés = 1/2",
     assumptions: "La pièce a autant de chances de tomber sur pile que sur face et ne reste pas sur la tranche.",
   },
-  "birthday-23": {
-    title: "Un anniversaire commun parmi 23 personnes",
-    shortTitle: "un anniversaire commun",
-    explanation: "Un groupe modélisé de 23 personnes a un peu plus de chances de contenir un anniversaire commun que 23 dates toutes différentes. Toutes les paires possibles comptent.",
-    calculation: "p = 1 − ∏ₖ₌₀²² (365 − k) / 365",
+  "birthday-10": {
+    title: "Un anniversaire commun parmi 10 personnes",
+    shortTitle: "anniversaire commun parmi 10",
+    explanation: "Dans ce modèle, sur 100 groupes de 10 personnes, environ 12 auraient au moins un anniversaire commun. Toutes les paires possibles comptent.",
+    calculation: "p = 1 − ∏ₖ₌₀⁹ (365 − k) / 365 ≈ 0,11694818",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-20": {
+    title: "Un anniversaire commun parmi 20 personnes",
+    shortTitle: "anniversaire commun parmi 20",
+    explanation: "Dans ce modèle, sur 100 groupes de 20 personnes, environ 41 auraient au moins un anniversaire commun. Le calcul retranche la probabilité que les 20 dates diffèrent.",
+    calculation: "p = 1 − ∏ₖ₌₀¹⁹ (365 − k) / 365 ≈ 0,41143838",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-30": {
+    title: "Un anniversaire commun parmi 30 personnes",
+    shortTitle: "anniversaire commun parmi 30",
+    explanation: "Dans ce modèle, sur 100 groupes de 30 personnes, environ 71 auraient au moins un anniversaire commun. Le calcul retranche la probabilité que les 30 dates diffèrent.",
+    calculation: "p = 1 − ∏ₖ₌₀²⁹ (365 − k) / 365 ≈ 0,70631624",
+    assumptions: birthdayAssumptions,
+  },
+  "birthday-40": {
+    title: "Un anniversaire commun parmi 40 personnes",
+    shortTitle: "anniversaire commun parmi 40",
+    explanation: "Dans ce modèle, sur 100 groupes de 40 personnes, environ 89 auraient au moins un anniversaire commun. Le calcul retranche la probabilité que les 40 dates diffèrent.",
+    calculation: "p = 1 − ∏ₖ₌₀³⁹ (365 − k) / 365 ≈ 0,89123181",
     assumptions: birthdayAssumptions,
   },
   "month-31-days": {
@@ -47,22 +68,15 @@ export const basicsFR = {
   "birthday-50": {
     title: "Un anniversaire commun parmi 50 personnes",
     shortTitle: "anniversaire commun parmi 50",
-    explanation: "Environ 97 groupes modélisés sur 100 de 50 personnes contiennent au moins un anniversaire commun. Le calcul retranche la probabilité que toutes les dates diffèrent.",
+    explanation: "Dans ce modèle, sur 100 groupes de 50 personnes, environ 97 auraient au moins un anniversaire commun. Le calcul retranche la probabilité que les 50 dates diffèrent.",
     calculation: "p = 1 − ∏ₖ₌₀⁴⁹ (365 − k) / 365 ≈ 0,97037358",
     assumptions: birthdayAssumptions,
   },
-  "birthday-70": {
-    title: "Un anniversaire commun parmi 70 personnes",
-    shortTitle: "anniversaire commun parmi 70",
-    explanation: "Environ 1 189 groupes modélisés de 70 personnes contiennent un anniversaire commun pour un groupe où les 70 dates diffèrent. Le calcul retranche la faible probabilité que toutes les dates diffèrent.",
-    calculation: "p ≈ 0,999159576",
-    assumptions: birthdayAssumptions,
-  },
-  "birthday-79": {
-    title: "Un anniversaire commun parmi 79 personnes",
-    shortTitle: "anniversaire commun parmi 79",
-    explanation: "Environ 9 146 groupes modélisés de 79 personnes contiennent un anniversaire commun pour un groupe où les 79 dates diffèrent. Le calcul retranche la très faible probabilité que toutes les dates diffèrent.",
-    calculation: "p ≈ 0,999890668",
+  "birthday-60": {
+    title: "Un anniversaire commun parmi 60 personnes",
+    shortTitle: "anniversaire commun parmi 60",
+    explanation: "Dans ce modèle, sur 100 groupes de 60 personnes, plus de 99 auraient au moins un anniversaire commun. Le calcul retranche la faible probabilité que les 60 dates diffèrent.",
+    calculation: "p = 1 − ∏ₖ₌₀⁵⁹ (365 − k) / 365 ≈ 0,99412266",
     assumptions: birthdayAssumptions,
   },
   "lightning-year": {

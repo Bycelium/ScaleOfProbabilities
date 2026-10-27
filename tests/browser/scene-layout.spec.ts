@@ -12,7 +12,11 @@ const densePairs = [
   ["weekday", "yellow-pea"],
   ["weekday", "four-dice-any-match"],
   ["yellow-pea", "four-dice-any-match"],
-  ["birthday-23", "month-31-days"],
+  ["birthday-30", "month-31-days"],
+  ["birthday-30", "frozen-freshwater"],
+  ["birthday-30", "mensik-first-serve-miami-2025"],
+  ["birthday-40", "fr-household-television-2025"],
+  ["birthday-20", "french-scrabble-consonant"],
   ["four-dice-any-match", "red-dwarf-star"],
   ["four-dice-any-match", "rain-hilo"],
   ["france-loto-main-prize", "pokemon-destined-rivals-double-rare"],
@@ -68,10 +72,12 @@ const auditScene = (page: Page) => page.locator(".scale").evaluate((scale, pairs
   const coin = box("coin-heads");
   const planet = box("solar-terrestrial");
   const fourDice = box("four-dice-any-six");
-  const readoutOverlaps = fourDice ? ["[data-depth-readout]", "[data-current-readout-stack]", "[data-current-depth-marker] strong"]
+  const scrabble = box("french-scrabble-consonant");
+  const readoutBoxes = ["[data-depth-readout]", "[data-current-readout-stack]", "[data-current-depth-marker] strong"]
     .map(selector => scale.querySelector<HTMLElement>(selector)?.getBoundingClientRect())
-    .filter((box): box is DOMRect => box !== undefined)
-    .map(readout => overlapArea(fourDice, readout)) : [];
+    .filter((box): box is DOMRect => box !== undefined);
+  const readoutOverlaps = fourDice ? readoutBoxes.map(readout => overlapArea(fourDice, readout)) : [];
+  const scrabbleReadoutOverlaps = scrabble ? readoutBoxes.map(readout => overlapArea(scrabble, readout)) : [];
   return {
     overlaps,
     worstRadiusError: Math.max(0, ...radiusErrors.map(item => item.error)),
@@ -82,6 +88,7 @@ const auditScene = (page: Page) => page.locator(".scale").evaluate((scale, pairs
       coin.top + coin.height / 2 - (planet.top + planet.height / 2),
     ) : null,
     readoutOverlaps,
+    scrabbleReadoutOverlaps,
   };
 }, densePairs);
 
@@ -103,6 +110,9 @@ for (const [name, viewport] of [
       expect(audit.labelProblems, `${locale} at ${depth} dBan`).toEqual([]);
       expect(audit.readoutOverlaps.every(area => area === 0), `${locale} at ${depth} dBan`).toBe(true);
       if (depth === 0) expect(audit.readoutOverlaps, `${locale} at ${depth} dBan`).toEqual([0, 0, 0]);
+      if (name !== "desktop" && depth === 0) {
+        expect(audit.scrabbleReadoutOverlaps, `${locale} at ${depth} dBan`).toEqual([0, 0, 0]);
+      }
       if (name === "mobile" && depth === 0) {
         expect(audit.globalOverlaps.length, `${locale} at ${depth} dBan`).toBeLessThanOrEqual(6);
         expect(audit.globalOverlaps.reduce((sum, pair) => sum + pair.area, 0)).toBeLessThan(2_000);
@@ -182,6 +192,9 @@ test("renders compact family connectors through their exact members", async ({ p
           "pokemon-destined-rivals-double-rare", "pokemon-destined-rivals-illustration-rare",
           "pokemon-destined-rivals-special-illustration-rare",
         ]),
+        birthdays: inspect("birthdays-365", [
+          "birthday-10", "birthday-20", "birthday-30", "birthday-40", "birthday-50", "birthday-60",
+        ]),
         identicalDice: inspect("all-identical-dice", [
           "two-dice-any-double", "three-dice-any-triple", "four-dice-all-identical", "first-roll-yahtzee",
         ]),
@@ -199,11 +212,14 @@ test("renders compact family connectors through their exact members", async ({ p
     { depth: 10, families: ["anyPairDice"] },
     { depth: -23, families: ["identicalDice"] },
     { depth: -13, families: ["poker"] },
+    { depth: displayLandmarks.find(item => item.id === "birthday-20")!.position, families: ["birthdays"] },
+    { depth: displayLandmarks.find(item => item.id === "birthday-40")!.position, families: ["birthdays"] },
+    { depth: displayLandmarks.find(item => item.id === "birthday-60")!.position, families: ["birthdays"] },
   ] as const) {
     const rails = await inspectAtDepth(scenario.depth);
     expect(rails.ariaHidden).toBe("true");
     expect(rails.pointerEvents).toBe("none");
-    for (const family of [rails.roulette, rails.dice, rails.pokemon, rails.identicalDice, rails.anyPairDice, rails.poker]) {
+    for (const family of [rails.roulette, rails.dice, rails.pokemon, rails.birthdays, rails.identicalDice, rails.anyPairDice, rails.poker]) {
       expect(family.hidden).toBe(family.points.length < 2);
       if (family.hidden) expect(family.vertices).toEqual([]);
     }
@@ -241,6 +257,9 @@ test("keeps a current family title readable inside the mobile viewport", async (
     ["pokemon-destined-rivals-illustration-rare", displayLandmarks.find(item => item.id === "pokemon-destined-rivals-illustration-rare")!.position],
     ["four-dice-any-match", displayLandmarks.find(item => item.id === "four-dice-any-match")!.position],
     ["holdem-straight", displayLandmarks.find(item => item.id === "holdem-straight")!.position],
+    ["birthday-20", displayLandmarks.find(item => item.id === "birthday-20")!.position],
+    ["birthday-40", displayLandmarks.find(item => item.id === "birthday-40")!.position],
+    ["birthday-60", displayLandmarks.find(item => item.id === "birthday-60")!.position],
   ] as const) {
     await openScene(page, "fr", depth);
     const title = page.locator(`[data-landmark="${id}"] .landmark-title`);

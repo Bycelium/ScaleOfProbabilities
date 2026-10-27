@@ -5,7 +5,6 @@ export const catalogueSlots = {
   "ace-in-five-cards": 2,
   "holdem-one-pair": 3,
   "coin-heads": 4,
-  "birthday-23": 5,
   "four-dice-any-six": 6,
   "month-31-days": 7,
   "three-dice-sum-ten": 8,
@@ -45,8 +44,6 @@ export const catalogueSlots = {
   "carbon-12": 43,
   "oxygen-16": 44,
   "birthday-50": 45,
-  "birthday-70": 46,
-  "birthday-79": 47,
   "euromillions-main-prize": 48,
   "france-loto-main-prize": 49,
   "france-loto-main-loss": 50,
@@ -136,6 +133,11 @@ export const catalogueSlots = {
   "drop-olympic-pool": 134,
   "drop-garden-pool": 135,
   "four-dice-all-identical": 136,
+  "birthday-10": 140,
+  "birthday-20": 141,
+  "birthday-30": 142,
+  "birthday-40": 143,
+  "birthday-60": 144,
 } as const;
 
 export type LandmarkId = keyof typeof catalogueSlots;

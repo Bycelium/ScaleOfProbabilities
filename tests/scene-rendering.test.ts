@@ -222,4 +222,29 @@ describe("scene rendering performance", () => {
     expect(Number(coin.dataset.depthScale) * Number(scene.dataset.sceneZoom)).toBeCloseTo(10 ** (-center / 10), 10);
     dispose();
   });
+
+  it("rebases the birthday rail through a long family journey", () => {
+    const birthday40 = displayLandmarks.find(item => item.id === "birthday-40")!;
+    const birthday60 = displayLandmarks.find(item => item.id === "birthday-60")!;
+    history.replaceState(null, "", `#d=${birthday60.position}`);
+    const clock = new TestFrameClock();
+    const dispose = renderMobileScale();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const rail = document.querySelector<SVGLineElement>('[data-family-rail="birthdays-365"]')!;
+    const geometry = () => ["x1", "y1", "x2", "y2"].map(attribute => Number(rail.getAttribute(attribute)));
+    const initialGeometry = geometry();
+
+    expect(rail.hasAttribute("hidden")).toBe(false);
+    expect(initialGeometry.every(Number.isFinite)).toBe(true);
+    document.querySelector<HTMLButtonElement>('[data-landmark="birthday-40"]')!.click();
+    clock.advanceTo(400);
+
+    expect(geometry()).not.toEqual(initialGeometry);
+    expect(geometry().every(Number.isFinite)).toBe(true);
+    clock.advanceTo(4000);
+    expect(Number(scale.dataset.depth)).toBeCloseTo(birthday40.position, 10);
+    expect(rail.hasAttribute("hidden")).toBe(false);
+    expect(geometry().every(Number.isFinite)).toBe(true);
+    dispose();
+  });
 });

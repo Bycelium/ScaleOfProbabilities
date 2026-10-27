@@ -699,6 +699,33 @@ describe("public probability exploration", () => {
     expect(new Set(landmarkModels.flatMap(item => item.sourceIds))).toEqual(new Set(Object.keys(sourceReferences)));
   });
 
+  it("models shared birthdays at regular ten-person steps from the all-different tail", () => {
+    const groups = [10, 20, 30, 40, 50, 60] as const;
+    const expectedTails = [
+      0.8830518222889223,
+      0.5885616164194197,
+      0.2936837572807312,
+      0.10876819018205097,
+      0.029626420422011596,
+      0.005877339134652055,
+    ] as const;
+    const positions = groups.map((people, index) => {
+      const id = `birthday-${people}` as const;
+      const model = landmarkModels.find(candidate => candidate.id === id)!;
+      expect(model.chance).toEqual({ tail: { kind: "decimal", value: expectedTails[index] }, side: "upper" });
+      expect(model.classification).toBe("Exact model");
+      return displayLandmarks.find(candidate => candidate.id === id)!.position;
+    });
+    expect(positions).toEqual([...positions].sort((first, second) => first - second));
+    for (let index = 0; index < groups.length; index += 1) {
+      const id = `birthday-${groups[index]}` as const;
+      const expectedNeighbors = [groups[index - 1], groups[index + 1]]
+        .filter((people): people is (typeof groups)[number] => people !== undefined)
+        .map(people => `birthday-${people}`);
+      expect(relatedLandmarkIds[id]).toEqual(expectedNeighbors);
+    }
+  });
+
   it("switches language without losing the current depth or open details", () => {
     history.replaceState(null, "", "#d=-4.8");
     const recording = trackedAnalytics();
@@ -1711,7 +1738,7 @@ describe("public probability exploration", () => {
 
     history.replaceState(null, "", "#d=40");
     render();
-    expect(document.querySelector('[data-landmark="birthday-79"]')).not.toBeNull();
+    expect(document.querySelector('[data-landmark="birthday-60"]')).not.toBeNull();
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("Odds: 10,000 to 1");
     expect(document.querySelector<HTMLElement>("[data-center-marker]")?.style.getPropertyValue("--axis-color")).toBe("rgb(74 185 137)");
     expect(document.body.textContent).not.toContain("another Sahara grain");
