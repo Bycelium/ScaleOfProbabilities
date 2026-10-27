@@ -11,7 +11,7 @@ const angleOverrides: Readonly<Partial<Record<LandmarkId, number>>> = {
   "holdem-one-pair": degrees(250),
   "coin-heads": degrees(80),
   "birthday-23": degrees(195),
-  "four-dice-any-six": degrees(280),
+  "four-dice-any-six": degrees(150),
   "month-31-days": degrees(175),
   "three-dice-sum-ten": degrees(250),
   "numbered-card": degrees(75),

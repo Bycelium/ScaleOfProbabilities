@@ -61,6 +61,11 @@ const auditScene = (page: Page) => page.locator(".scale").evaluate((scale, pairs
   });
   const coin = box("coin-heads");
   const planet = box("solar-terrestrial");
+  const fourDice = box("four-dice-any-six");
+  const readoutOverlaps = fourDice ? ["[data-depth-readout]", "[data-current-readout-stack]", "[data-current-depth-marker] strong"]
+    .map(selector => scale.querySelector<HTMLElement>(selector)?.getBoundingClientRect())
+    .filter((box): box is DOMRect => box !== undefined)
+    .map(readout => overlapArea(fourDice, readout)) : [];
   return {
     overlaps,
     worstRadiusError: Math.max(0, ...radiusErrors.map(item => item.error)),
@@ -70,6 +75,7 @@ const auditScene = (page: Page) => page.locator(".scale").evaluate((scale, pairs
       coin.left + coin.width / 2 - (planet.left + planet.width / 2),
       coin.top + coin.height / 2 - (planet.top + planet.height / 2),
     ) : null,
+    readoutOverlaps,
   };
 }, densePairs);
 
@@ -82,13 +88,14 @@ for (const [name, viewport] of [
     await page.setViewportSize(viewport);
     const scenarios = name === "mobile"
       ? ["en", "fr", "zh", "es"].flatMap(locale => [-7, -3, 0, 3, 7].map(depth => ({ locale, depth })))
-      : [{ locale: "fr", depth: 0 }];
+      : [-3, 0, 3].map(depth => ({ locale: "fr", depth }));
     for (const { locale, depth } of scenarios) {
       await openScene(page, locale, depth);
       const audit = await auditScene(page);
       expect(audit.overlaps.filter(pair => pair.area > .5), `${locale} at ${depth} dBan`).toEqual([]);
       expect(audit.worstRadiusError).toBeLessThanOrEqual(.6);
       expect(audit.labelProblems, `${locale} at ${depth} dBan`).toEqual([]);
+      expect(audit.readoutOverlaps, `${locale} at ${depth} dBan`).toEqual([0, 0, 0]);
       if (name === "mobile" && depth === 0) {
         expect(audit.globalOverlaps.length, `${locale} at ${depth} dBan`).toBeLessThanOrEqual(6);
         expect(audit.globalOverlaps.reduce((sum, pair) => sum + pair.area, 0)).toBeLessThan(2_000);
