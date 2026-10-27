@@ -39,14 +39,14 @@ export const biology_healthEN = {
   "covid-scenario-positive": {
     title: "COVID infection after a positive rapid antigen test",
     shortTitle: "COVID · positive",
-    explanation: "Suppose {infected} people out of {population} are infected, or {prevalence}%. About {positiveTotal} test positive. Of those, {truePositive} are infected. The other {falsePositive} are the false positives. That is about a one-in-three chance of infection.",
+    explanation: "In this hypothetical group of {population} people at {prevalence}% prevalence, about {positiveTotal} test positive: {truePositive} are infected and {falsePositive} are false positives. For this scenario, a positive result corresponds to about a one-in-three chance of infection.",
     calculation: "p = (0.005 × 0.586) / [(0.005 × 0.586) + (0.995 × (1 − 0.994))] ≈ 0.3292",
     assumptions: "The calculation starts from the hypothetical 0.5% prevalence and uses pooled sensitivity 0.586 and specificity 0.994 for asymptomatic people with suspected exposure. These historical pooled estimates combine different tests and studies through February 2022. Performance varies by kit, timing, sampling, and setting. This calculation is not a personal diagnosis.",
   },
   "covid-scenario-negative": {
     title: "COVID infection after a negative rapid antigen test",
     shortTitle: "COVID · negative",
-    explanation: "Suppose {infected} people out of {population} are infected, or {prevalence}%. About {negativeTotal} test negative. The test misses {falseNegative} infections among them, about one infected person in 479 negative results.",
+    explanation: "In this hypothetical group of {population} people at {prevalence}% prevalence, about {negativeTotal} test negative. The test misses {falseNegative} infections among them, about one infected person in 479 negative results.",
     calculation: "p = (0.005 × (1 − 0.586)) / [(0.005 × (1 − 0.586)) + (0.995 × 0.994)] ≈ 0.00209",
     assumptions: "The calculation starts from the hypothetical 0.5% prevalence and uses pooled sensitivity 0.586 and specificity 0.994 for asymptomatic people with suspected exposure. These historical pooled estimates combine different tests and studies through February 2022. Performance varies by kit, timing, sampling, and setting. This calculation is not a personal diagnosis.",
   },

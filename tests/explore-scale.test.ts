@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createAnalytics, type Analytics, type AnalyticsConfig } from "../src/analytics";
 import { catalogueOrder, displayLandmarks, landmarkModels, relatedLandmarkIds, sourceReferences } from "../src/catalogue";
-import { localeChoices } from "../src/locales";
+import { localeChoices, locales } from "../src/locales";
 import { chance, formatOdds, formatProbability, formatProbabilityPercent } from "../src/probability";
 import { createScale } from "../src/scale";
 import { FakeAnalyticsProvider } from "./helpers/fake-analytics-provider";
@@ -193,10 +193,9 @@ describe("public probability exploration", () => {
 
     const pair = document.querySelector<HTMLButtonElement>('[data-landmark="holdem-one-pair"]')!;
     pair.click();
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("best five of seven cards");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).not.toMatch(/Deal|count success/);
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("58,627,800");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("Two private cards and five community cards");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("best five of seven cards");
     expect(document.querySelector("[data-detail-sources]")?.textContent).toContain("Brian Alspach");
     document.querySelector<HTMLButtonElement>("[data-close-detail]")!.click();
     expect(document.querySelector('[data-landmark="one-pair"]')).toBeNull();
@@ -1643,10 +1642,10 @@ describe("public probability exploration", () => {
     }
   });
 
-  it("includes the new astronomy, nature, game, and food models as explorable landmarks", () => {
+  it("includes the astronomy, nature, game, and food models as explorable landmarks", () => {
     const byId = new Map<string, (typeof displayLandmarks)[number]>(displayLandmarks.map(item => [item.id, item]));
     const newIds = [
-      "solar-terrestrial",
+      "earth-sized-observed-exoplanet",
       "full-moon-15-days",
       "french-scrabble-consonant",
       "solar-eclipse-year",
@@ -1654,17 +1653,25 @@ describe("public probability exploration", () => {
       "four-dice-all-identical",
       "four-dice-any-match",
       "red-dwarf-star",
-      "planet-with-moon",
+      "terrestrial-massive-moon",
       "lunar-eclipse-year",
       "yahtzee-any-match",
       "full-moon-28-days",
       "french-scrabble-vowel-rack",
       "sun-mass",
       "double-yolk-young-hens",
+      "stellar-hydrogen-mass",
+      "stellar-helium-mass",
+      "stellar-hydrogen-helium-mass",
+      "main-sequence-star",
+      "stellar-black-hole-baryonic-mass",
     ];
 
     expect(newIds.every(id => byId.has(id))).toBe(true);
-    expect(byId.get("solar-terrestrial")?.position).toBeCloseTo(0, 10);
+    expect(byId.get("earth-sized-observed-exoplanet")?.position).toBeCloseTo(10 * Math.log10(558 / (4826 - 558)), 10);
+    expect(byId.get("terrestrial-massive-moon")?.position).toBeCloseTo(-10 * Math.log10(11), 10);
+    expect(byId.get("stellar-hydrogen-helium-mass")?.position).toBeCloseTo(10 * Math.log10(49), 10);
+    expect(byId.get("stellar-black-hole-baryonic-mass")?.position).toBeCloseTo(10 * Math.log10(.01 / .99), 10);
     expect(byId.get("four-dice-all-identical")?.position).toBeCloseTo(-10 * Math.log10(215), 10);
     expect(byId.get("four-dice-any-match")?.position).toBeCloseTo(10 * Math.log10(13 / 5), 10);
     expect(byId.get("french-scrabble-vowel-rack")?.position).toBeGreaterThan(18);
@@ -1678,6 +1685,29 @@ describe("public probability exploration", () => {
     expect(relatedLandmarkIds["four-dice-all-identical"]).toContain("first-roll-yahtzee");
     expect(relatedLandmarkIds["four-dice-any-match"]).toContain("yahtzee-any-match");
     expect(relatedLandmarkIds["full-moon-15-days"]).toContain("full-moon-28-days");
+    expect(relatedLandmarkIds["earth-sized-observed-exoplanet"]).toContain("terrestrial-massive-moon");
+    expect(relatedLandmarkIds["stellar-hydrogen-mass"]).toContain("stellar-hydrogen-helium-mass");
+    expect(relatedLandmarkIds["stellar-black-hole-baryonic-mass"]).toEqual(expect.arrayContaining(["main-sequence-star", "sun-mass"]));
+    expect(landmarkModels.find(item => item.id === "earth-sized-observed-exoplanet")).toMatchObject({
+      chance: { side: "lower", tail: { kind: "ratio", numerator: 558, denominator: 4826 } },
+      classification: "Historical estimate",
+      sourceIds: ["nasa-exoplanet-archive-statistics"],
+    });
+    expect(landmarkModels.find(item => item.id === "terrestrial-massive-moon")).toMatchObject({
+      chance: { side: "lower", tail: { kind: "ratio", numerator: 1, denominator: 12 } },
+      classification: "Estimate",
+      sourceIds: ["elser-massive-moons-2011"],
+    });
+    expect(landmarkModels.find(item => item.id === "stellar-black-hole-baryonic-mass")).toMatchObject({
+      chance: { side: "lower", tail: { kind: "decimal", value: .01 } },
+      classification: "Estimate",
+      sourceIds: ["stellar-black-holes-sicilia-2022"],
+    });
+    expect(sourceReferences["nasa-exoplanet-archive-statistics"].href).toBe("https://exoplanetarchive.ipac.caltech.edu/docs/counts_detail.html");
+    expect(locales.en.sources["nasa-exoplanet-archive-statistics"].note).toContain("27 October 2026");
+    expect(locales.en.landmarks["earth-sized-observed-exoplanet"].calculation).toContain("558 / 4,826");
+    expect(locales.en.landmarks["stellar-hydrogen-mass"].calculation).toContain("by mass");
+    expect(locales.en.landmarks["stellar-black-hole-baryonic-mass"].calculation).toContain("baryonic mass");
   });
 
   it("models every French Scrabble tile event from the full bag", () => {
@@ -1892,8 +1922,9 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-landmark="covid-scenario-positive"]')!.click();
     expect(document.querySelector<HTMLElement>("[data-detail-kind]")?.hidden).toBe(true);
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("0.586");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("Suppose 500 people out of 100,000 are infected, or 0.5%.");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("The other 597 are the false positives.");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("hypothetical group");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("100,000");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("0.5%");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("0.5% prevalence");
     expect(document.querySelector('[data-related-landmark="covid-scenario-prior"]')).not.toBeNull();
     const evidence = document.querySelector<HTMLElement>("[data-detail-diagnostic]")!;
@@ -1912,7 +1943,9 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-landmark="covid-scenario-negative"]')!.click();
     expect(document.querySelector<HTMLElement>("[data-detail-kind]")?.hidden).toBe(true);
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("test antigénique rapide négatif");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("Supposons que 500 personnes sur 100 000 soient infectées, soit 0,5 %.");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("groupe hypothétique");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("100 000");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("0,5 %");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("prévalence hypothétique");
     expect(document.querySelector("[data-detail-diagnostic]")?.textContent).toContain("207 faux négatifs");
     expect(document.querySelector("[data-detail-diagnostic]")?.textContent).toContain("Un résultat négatif divise la cote d’infection par 2,4, soit −3,8 dBan.");
@@ -1936,12 +1969,12 @@ describe("public probability exploration", () => {
     for (const [id, winningPockets] of roulette) {
       const item = byId.get(id)!;
       expect(item.position).toBeCloseTo(10 * Math.log10(winningPockets / (37 - winningPockets)), 10);
-      expect(item.explanation).toContain("average loss");
+      expect(item.assumptions).toContain("average loss");
     }
-    expect(byId.get("roulette-straight-up")?.explanation).toContain("average loss is €2.70 per €100 bet");
-    expect(byId.get("roulette-straight-up")?.explanation).toContain("the €100 stake is lost");
-    expect(byId.get("roulette-even-money")?.explanation).toContain("average loss is €1.35 per €100 bet");
-    expect(byId.get("roulette-even-money")?.explanation).toContain("Zero returns €50");
+    expect(byId.get("roulette-straight-up")?.calculation).toContain("−€100/37");
+    expect(byId.get("roulette-straight-up")?.calculation).toContain("€3,500");
+    expect(byId.get("roulette-even-money")?.calculation).toContain("−€100/74");
+    expect(byId.get("roulette-even-money")?.calculation).toContain("€50");
     expect(byId.get("roulette-two-dozens-columns")?.position).toBeGreaterThan(0);
 
     const clover = byId.get("four-leaf-clover")!;
@@ -1962,9 +1995,10 @@ describe("public probability exploration", () => {
     render();
     document.querySelector<HTMLButtonElement>('[data-landmark="roulette-even-money"]')!.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("rouge");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("chances simples équivalentes");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("mise est rendue");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("perte moyenne");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("18 des 37 cases");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("−100 €/74");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("50 €");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("perte moyenne");
     expect(document.querySelector('[data-related-landmark="roulette-dozen-column"]')).not.toBeNull();
   });
 
@@ -2337,9 +2371,31 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("no cards known in advance");
   });
 
-  it("compares specified deck, UUIDv4, and SHA-256 pair collisions", () => {
+  it("compares specified 32-, 52-, and 78-card orders with UUIDv4 and SHA-256 pair collisions", () => {
     history.replaceState(null, "", "#d=-679.1");
     const first = render(390);
+
+    const factorial = (count: number): number => {
+      let permutations = 1n;
+      for (let factor = 2n; factor <= BigInt(count); factor += 1n) permutations *= factor;
+      return Number(permutations);
+    };
+    const shuffledDecks = [
+      ["shuffled-tarot-specified-order", 78, ["french-tarot-rules", "ucr-well-shuffled-deck"]],
+      ["shuffled-deck-specified-order", 52, ["ucr-well-shuffled-deck"]],
+      ["shuffled-belote-specified-order", 32, ["french-belote-rules", "ucr-well-shuffled-deck"]],
+    ] as const;
+    const shuffledLandmarks = shuffledDecks.map(([id]) => displayLandmarks.find(candidate => candidate.id === id)!);
+    expect(shuffledLandmarks.map(item => item.position)).toEqual([...shuffledLandmarks.map(item => item.position)].sort((firstPosition, secondPosition) => firstPosition - secondPosition));
+    for (const [id, count, sourceIds] of shuffledDecks) {
+      const model = landmarkModels.find(candidate => candidate.id === id)!;
+      expect(model.chance).toEqual({ side: "lower", tail: { kind: "one-in", denominator: factorial(count) } });
+      expect(model.classification).toBe("Exact model");
+      expect(model.sourceIds).toEqual(sourceIds);
+      expect(new DOMParser().parseFromString(model.art, "image/svg+xml").querySelector(`.deck-stack-art[data-card-count="${count}"]`)).not.toBeNull();
+      if (count !== 52) expect(new DOMParser().parseFromString(model.art, "image/svg+xml").querySelector(`[data-deck-pattern="${count === 78 ? "tarot-stars" : "belote-diamonds"}"]`)).not.toBeNull();
+      expect(relatedLandmarkIds[id]).toEqual(expect.arrayContaining(shuffledDecks.filter(([candidate]) => candidate !== id).map(([candidate]) => candidate)));
+    }
 
     const item = displayLandmarks.find(candidate => candidate.id === "shuffled-deck-specified-order")!;
     const model = landmarkModels.find(candidate => candidate.id === item.id)!;
@@ -2358,8 +2414,6 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("specified before");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("N / 52!");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("whether earlier or later");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("never appeared before");
-    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("neither claim can be guaranteed");
     expect(document.querySelector<HTMLElement>("[data-detail-related]")?.hidden).toBe(false);
     expect(document.querySelector('[data-related-landmark="uuid-v4-pair-collision"]')).not.toBeNull();
     expect(document.querySelector('[data-related-landmark="sha256-pair-collision"]')).not.toBeNull();

@@ -39,14 +39,14 @@ export const biology_healthFR = {
   "covid-scenario-positive": {
     title: "Infection par le COVID après un test antigénique rapide positif",
     shortTitle: "COVID · positif",
-    explanation: "Supposons que {infected} personnes sur {population} soient infectées, soit {prevalence} %. Environ {positiveTotal} obtiennent un résultat positif. Parmi elles, {truePositive} sont infectées. Les {falsePositive} autres ne sont pas infectées : ce sont les faux positifs. Cela correspond à environ une chance sur trois d’être infecté.",
+    explanation: "Dans ce groupe hypothétique de {population} personnes avec une prévalence de {prevalence} %, environ {positiveTotal} obtiennent un résultat positif : {truePositive} sont infectées et {falsePositive} sont des faux positifs. Dans ce scénario, un résultat positif correspond à environ une chance sur trois d’être infecté.",
     calculation: "p = (0,005 × 0,586) / [(0,005 × 0,586) + (0,995 × (1 − 0,994))] ≈ 0,3292",
     assumptions: "Le calcul part de la prévalence hypothétique de 0,5 % et utilise une sensibilité groupée de 0,586 et une spécificité de 0,994 chez des personnes asymptomatiques ayant eu une exposition suspectée. Ces estimations historiques réunissent différents tests et études jusqu’en février 2022. Les performances varient selon le test, le moment, le prélèvement et le contexte. Ce calcul ne constitue pas un diagnostic personnel.",
   },
   "covid-scenario-negative": {
     title: "Infection par le COVID après un test antigénique rapide négatif",
     shortTitle: "COVID · négatif",
-    explanation: "Supposons que {infected} personnes sur {population} soient infectées, soit {prevalence} %. Environ {negativeTotal} obtiennent un résultat négatif. Le test manque {falseNegative} infections parmi elles, soit environ une personne infectée sur 479 résultats négatifs.",
+    explanation: "Dans ce groupe hypothétique de {population} personnes avec une prévalence de {prevalence} %, environ {negativeTotal} obtiennent un résultat négatif. Le test manque {falseNegative} infections parmi elles, soit environ une personne infectée sur 479 résultats négatifs.",
     calculation: "p = (0,005 × (1 − 0,586)) / [(0,005 × (1 − 0,586)) + (0,995 × 0,994)] ≈ 0,00209",
     assumptions: "Le calcul part de la prévalence hypothétique de 0,5 % et utilise une sensibilité groupée de 0,586 et une spécificité de 0,994 chez des personnes asymptomatiques ayant eu une exposition suspectée. Ces estimations historiques réunissent différents tests et études jusqu’en février 2022. Les performances varient selon le test, le moment, le prélèvement et le contexte. Ce calcul ne constitue pas un diagnostic personnel.",
   },

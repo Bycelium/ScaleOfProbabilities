@@ -1,12 +1,12 @@
 import type { LandmarkCopyFamily } from "../../types";
 
 export const astronomyZH = {
-  "solar-terrestrial": {
-    title: "太阳系中的类地行星",
-    shortTitle: "类地行星",
-    explanation: "太阳系八颗行星中有四颗是类地行星：水星、金星、地球和火星。",
-    calculation: "p = 4 颗类地行星 / 8 颗行星 = 1/2",
-    assumptions: "从八颗行星中等概率选择。排除矮行星，也不按质量、大小或人口加权。",
+  "earth-sized-observed-exoplanet": {
+    title: "与地球一样大或更小的系外行星",
+    shortTitle: "地球大小的已观测系外行星",
+    explanation: "巨行星之间也藏着地球大小的世界。半径已知的已确认系外行星中，约 12% 不超过地球半径的 1.25 倍。",
+    calculation: "p = 558 / 4,826 ≈ 0.1156",
+    assumptions: "这项历史估计从 NASA 系外行星档案 2026 年 10 月 27 日快照中半径已知的已确认行星取样。探测和测量偏差塑造了观测目录。半径门槛不能证明行星由岩石构成或适宜居住，结果也不代表银河系全部行星的组成。",
   },
 
   "full-moon-15-days": {
@@ -33,12 +33,47 @@ export const astronomyZH = {
     assumptions: "从银河系估计恒星总体中取样。这并非从肉眼可见恒星中选择，因为亮度会改变其组成比例。",
   },
 
-  "planet-with-moon": {
-    title: "拥有卫星的太阳系行星",
-    shortTitle: "拥有卫星的行星",
-    explanation: "太阳系八颗行星中有六颗至少拥有一颗已知天然卫星；水星和金星没有卫星。",
-    calculation: "p = 6 颗有卫星的行星 / 8 颗行星 = 3/4",
-    assumptions: "每颗行星被选中的概率相等，各行星的卫星数量不影响取样。",
+  "terrestrial-massive-moon": {
+    title: "模拟类地行星形成大质量卫星",
+    shortTitle: "拥有大质量卫星的类地行星",
+    explanation: "在 Elser 等人的撞击模拟中，约每 12 颗类地行星会出现一次类似地月系统的结果。",
+    calculation: "p ≈ 15 / 180 ≈ 1/12 ≈ 0.083；敏感性范围 ≈ 1/45 至 1/4",
+    assumptions: "2011 年研究的名义估计在约 180 颗模拟行星中找到 15 个匹配结果，要求主行星质量超过 0.5 个地球质量，卫星质量超过 0.5 个月球质量。1/45 至 1/4 来自敏感性选择，并非置信区间或实测银河系频率。初始条件和较小的模拟样本增加了不确定性；卫星吸积效率取极端值时，结果范围会从几乎没有系统扩大到 180 个系统中约 60 个，即约三分之一。",
+  },
+  "stellar-hydrogen-mass": {
+    title: "恒星中的氢",
+    shortTitle: "普通恒星中的氢",
+    explanation: "一颗有代表性的普通恒星按质量计算约有 70% 是氢。",
+    calculation: "p ≈ 0.70，按质量",
+    assumptions: "NASA 的代表性混合物按质量约为 70% 氢、28% 氦和 2% 更重元素。模型抽取等质量份额，而非按原子计数。这是近似教学组成，不是每颗恒星的精确值，也不是整个银河系的实测汇总。",
+  },
+  "stellar-helium-mass": {
+    title: "恒星中的氦",
+    shortTitle: "普通恒星中的氦",
+    explanation: "一颗有代表性的普通恒星按质量计算约有 28% 是氦。",
+    calculation: "p ≈ 0.28，按质量",
+    assumptions: "NASA 的代表性混合物按质量约为 70% 氢、28% 氦和 2% 更重元素。模型抽取等质量份额，而非按原子计数。这是近似教学组成，不是每颗恒星的精确值，也不是整个银河系的实测汇总。",
+  },
+  "stellar-hydrogen-helium-mass": {
+    title: "恒星中的氢或氦",
+    shortTitle: "普通恒星中的氢或氦",
+    explanation: "一颗有代表性的普通恒星几乎只由两种元素组成：按质量约有 98% 是氢或氦。",
+    calculation: "p ≈ 0.70 + 0.28 = 0.98，按质量",
+    assumptions: "NASA 的代表性混合物按质量约为 70% 氢、28% 氦和 2% 更重元素。模型抽取等质量份额，而非按原子计数。这是近似教学组成，不是每颗恒星的精确值，也不是整个银河系的实测汇总。",
+  },
+  "main-sequence-star": {
+    title: "随机选择的恒星处于主序阶段",
+    shortTitle: "主序星",
+    explanation: "约每十颗恒星中有九颗是主序星，正在核心中进行氢聚变。",
+    calculation: "p ≈ 0.90，按恒星数量",
+    assumptions: "这是按恒星数量计算的近似比例，不代表恒星质量占比或一颗恒星的寿命占比。不同恒星群体可能有所不同。",
+  },
+  "stellar-black-hole-baryonic-mass": {
+    title: "恒星遗迹黑洞中的普通宇宙物质",
+    shortTitle: "恒星黑洞中的物质",
+    explanation: "一个当今宇宙模型认为，约 1% 的普通物质位于恒星遗留的黑洞中。",
+    calculation: "p ≈ 0.01 的重子质量，作为舍入后的数量级参照",
+    assumptions: "Sicilia 等人 2022 年的研究模型认为，在当今局部宇宙中，最多约 1% 的普通物质（即重子物质）位于恒星遗迹黑洞中。舍入值是数量级参照，不是精确普查。分母不含暗物质和暗能量；模型不包括超大质量黑洞和原初黑洞。",
   },
 
   "lunar-eclipse-year": {
@@ -60,7 +95,7 @@ export const astronomyZH = {
   "sun-mass": {
     title: "太阳占太阳系质量的比例",
     shortTitle: "太阳的质量占比",
-    explanation: "NASA 估计太阳约占太阳系总质量的 99.85%，即每 100 个质量单位中占 99.85 个。",
+    explanation: "按质量比例抽取太阳系物质，其中约 99.85% 属于太阳。",
     calculation: "p ≈ 0.9985",
     assumptions: "按质量比例取样，并非在太阳、行星、卫星和小天体之间均匀选择。公布的百分比经过舍入。",
   },
@@ -68,7 +103,7 @@ export const astronomyZH = {
   "solar-eclipse-local-year": {
     title: "一年内居住地发生日全食",
     shortTitle: "居住地日全食·一年",
-    explanation: "对一个有代表性的固定地点，长期估计平均每出现一个日全食覆盖的年份，对应 374 个没有日全食的年份。NASA 给出的同一地点两次日全食平均间隔约为 375 年。",
+    explanation: "从长期看，在一个有代表性的固定地点，日全食覆盖该处的年份约每 375 年出现一次。",
     calculation: "p ≈ 1/375，来自长期平均重现间隔",
     assumptions: "这是代表性固定地点基于频率的年度近似值。实际间隔和当地发生率各异。事件不考虑云层，也不是对特定城市或年份的预测。",
   },

@@ -39,14 +39,14 @@ export const biology_healthES = {
   "covid-scenario-positive": {
     title: "Infección por COVID tras una prueba rápida de antígenos positiva",
     shortTitle: "COVID · positivo",
-    explanation: "Supón que {infected} de {population} personas están infectadas, es decir, el {prevalence} %. Aproximadamente {positiveTotal} obtienen un resultado positivo. De ellas, {truePositive} están infectadas. Las otras {falsePositive} son los falsos positivos. Esto equivale aproximadamente a una probabilidad de una entre tres de tener la infección.",
+    explanation: "En este grupo hipotético de {population} personas con una prevalencia del {prevalence} %, cerca de {positiveTotal} obtienen un resultado positivo: {truePositive} están infectadas y {falsePositive} son falsos positivos. En este escenario, un resultado positivo corresponde a una probabilidad de infección cercana a una entre tres.",
     calculation: "p = (0,005 × 0,586) / [(0,005 × 0,586) + (0,995 × (1 − 0,994))] ≈ 0,3292",
     assumptions: "El cálculo parte de la prevalencia hipotética del 0,5 % y usa una sensibilidad combinada de 0,586 y una especificidad de 0,994 para personas asintomáticas con exposición sospechada. Estas estimaciones históricas combinan distintas pruebas y estudios hasta febrero de 2022. El rendimiento varía según el kit, el momento, la toma de la muestra y el entorno. Este cálculo no es un diagnóstico personal.",
   },
   "covid-scenario-negative": {
     title: "Infección por COVID tras una prueba rápida de antígenos negativa",
     shortTitle: "COVID · negativo",
-    explanation: "Supón que {infected} de {population} personas están infectadas, es decir, el {prevalence} %. Aproximadamente {negativeTotal} obtienen un resultado negativo. La prueba no detecta {falseNegative} infecciones entre ellas, cerca de una persona infectada por cada 479 resultados negativos.",
+    explanation: "En este grupo hipotético de {population} personas con una prevalencia del {prevalence} %, cerca de {negativeTotal} obtienen un resultado negativo. La prueba no detecta {falseNegative} infecciones entre ellas, cerca de una persona infectada por cada 479 resultados negativos.",
     calculation: "p = (0,005 × (1 − 0,586)) / [(0,005 × (1 − 0,586)) + (0,995 × 0,994)] ≈ 0,00209",
     assumptions: "El cálculo parte de la prevalencia hipotética del 0,5 % y usa una sensibilidad combinada de 0,586 y una especificidad de 0,994 para personas asintomáticas con exposición sospechada. Estas estimaciones históricas combinan distintas pruebas y estudios hasta febrero de 2022. El rendimiento varía según el kit, el momento, la toma de la muestra y el entorno. Este cálculo no es un diagnóstico personal.",
   },

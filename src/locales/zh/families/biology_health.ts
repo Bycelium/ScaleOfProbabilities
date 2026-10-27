@@ -44,7 +44,7 @@ export const biology_healthZH = {
   "covid-scenario-positive": {
     title: "快速抗原检测阳性者已感染 COVID",
     shortTitle: "COVID·阳性",
-    explanation: "假设 {population} 人中有 {infected} 人感染，即 {prevalence}%。约有 {positiveTotal} 人检测呈阳性，其中 {truePositive} 人确实感染，另 {falsePositive} 人是假阳性。感染概率约为三分之一。",
+    explanation: "在这个感染率为 {prevalence}% 的 {population} 人假设群体中，约 {positiveTotal} 人检测呈阳性：{truePositive} 人确实感染，{falsePositive} 人是假阳性。在此情景下，阳性结果对应的感染概率约为三分之一。",
     calculation: "p = (0.005 × 0.586) / [(0.005 × 0.586) + (0.995 × (1 − 0.994))] ≈ 0.3292",
     assumptions: "计算从假设的 0.5% 感染率开始，采用疑似接触病毒的无症状人群的汇总敏感度 0.586 和特异度 0.994。这些历史汇总估计合并了截至 2022 年 2 月的不同检测和研究。表现随试剂、时机、采样和环境而异。本计算不是个人诊断。",
   },
@@ -52,7 +52,7 @@ export const biology_healthZH = {
   "covid-scenario-negative": {
     title: "快速抗原检测阴性者已感染 COVID",
     shortTitle: "COVID·阴性",
-    explanation: "假设 {population} 人中有 {infected} 人感染，即 {prevalence}%。约有 {negativeTotal} 人检测呈阴性，其中检测漏掉 {falseNegative} 例感染，约每 479 个阴性结果中有一名感染者。",
+    explanation: "在这个感染率为 {prevalence}% 的 {population} 人假设群体中，约 {negativeTotal} 人检测呈阴性。检测漏掉其中 {falseNegative} 例感染，约每 479 个阴性结果中有一名感染者。",
     calculation: "p = (0.005 × (1 − 0.586)) / [(0.005 × (1 − 0.586)) + (0.995 × 0.994)] ≈ 0.00209",
     assumptions: "计算从假设的 0.5% 感染率开始，采用疑似接触病毒的无症状人群的汇总敏感度 0.586 和特异度 0.994。这些历史汇总估计合并了截至 2022 年 2 月的不同检测和研究。表现随试剂、时机、采样和环境而异。本计算不是个人诊断。",
   },

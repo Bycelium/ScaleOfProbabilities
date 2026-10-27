@@ -11,14 +11,14 @@ export const dice_gamesES = {
   "four-dice-any-six": {
     title: "Al menos un seis entre cuatro dados",
     shortTitle: "al menos un seis",
-    explanation: "De las 1296 tiradas posibles de cuatro dados equilibrados, 671 contienen al menos un seis. El cálculo cuenta primero las tiradas sin ningún seis y luego las resta del total.",
+    explanation: "Lanza cuatro dados equilibrados: aparece al menos un seis en cerca del 52 % de las tiradas.",
     calculation: "p = 1 − (5/6)⁴ = 671 / 1296",
     assumptions: "Los cuatro dados equilibrados de seis caras se lanzan de forma independiente.",
   },
   "three-dice-sum-ten": {
     title: "Tres dados suman al menos 10",
     shortTitle: "suma de dados ≥ 10",
-    explanation: "Exactamente 135 de los 216 resultados ordenados de tres dados equilibrados suman al menos 10.",
+    explanation: "Lanza tres dados equilibrados: su suma llega a 10 o más en cinco de cada ocho tiradas por término medio.",
     calculation: "p = 135 / 216 = 5/8",
     assumptions: "Los tres dados equilibrados de seis caras se lanzan de forma independiente y se suman sus caras superiores.",
   },
@@ -53,7 +53,7 @@ export const dice_gamesES = {
   "two-dice-any-double": {
     title: "Dos dados muestran el mismo número",
     shortTitle: "dos dados coinciden",
-    explanation: "Seis de las 36 parejas igualmente probables coinciden, desde 1–1 hasta 6–6.",
+    explanation: "Lanza dos dados equilibrados: sus caras coinciden una vez de cada seis por término medio, desde 1–1 hasta 6–6.",
     calculation: "p = 6 parejas coincidentes / 36 parejas igualmente probables = 1/6",
     assumptions: "Los dos dados equilibrados de seis caras se lanzan de forma independiente.",
   },
@@ -67,7 +67,7 @@ export const dice_gamesES = {
   "three-dice-any-triple": {
     title: "Tres dados muestran el mismo número",
     shortTitle: "tres dados coinciden",
-    explanation: "Seis de los 216 tríos igualmente probables coinciden, desde 1–1–1 hasta 6–6–6.",
+    explanation: "Tres dados equilibrados muestran la misma cara cerca de una vez de cada 36, desde 1–1–1 hasta 6–6–6.",
     calculation: "p = 6 tríos coincidentes / 216 tiradas igualmente probables = 1/36",
     assumptions: "Los tres dados equilibrados de seis caras se lanzan de forma independiente.",
   },
@@ -88,14 +88,14 @@ export const dice_gamesES = {
   "first-roll-yahtzee": {
     title: "Yams/Yahtzee en la primera tirada",
     shortTitle: "Yams en la primera tirada",
-    explanation: "Seis de las 7776 primeras tiradas posibles son cinco dados iguales, el resultado de Yams o Yahtzee. Después de caer el primer dado, los otros cuatro deben coincidir con él.",
+    explanation: "Una primera tirada de cinco dados equilibrados produce un Yams o Yahtzee instantáneo solo cerca de una vez entre 1296 intentos.",
     calculation: "p = 6 conjuntos coincidentes / 6⁵ tiradas posibles = 1/1296",
     assumptions: "Cinco dados equilibrados de seis caras se lanzan de forma independiente.",
   },
   "rubik-state": {
     title: "Dos cubos 3 × 3 mezclados coinciden",
     shortTitle: "dos cubos mezclados iguales",
-    explanation: "Dos cubos de Rubik 3 × 3 mezclados de forma independiente tienen cada uno 43 252 003 274 489 856 000 estados legales. Tras alinear los centros del mismo color, el segundo cubo tiene un único estado coincidente entre todos ellos.",
+    explanation: "Mezcla dos cubos de Rubik 3 × 3 de forma independiente y alinea sus centros. La probabilidad de que cada pieza termine en el mismo lugar en ambos cubos es de una entre unos 43 trillones.",
     calculation: "p = 1 estado coincidente / 43 252 003 274 489 856 000 estados legales",
     assumptions: "Cada cubo se toma de forma independiente y uniforme entre los estados legales de 3 × 3 × 3. Alinear los centros del mismo color elimina las rotaciones del cubo completo; una mezcla manual solo ilustra este modelo uniforme.",
   },

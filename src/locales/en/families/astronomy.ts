@@ -1,12 +1,12 @@
 import type { LandmarkCopyFamily } from "../../types";
 
 export const astronomyEN = {
-  "solar-terrestrial": {
-    title: "A terrestrial Solar System planet",
-    shortTitle: "a terrestrial planet",
-    explanation: "Four of the eight Solar System planets are terrestrial: Mercury, Venus, Earth, and Mars.",
-    calculation: "p = 4 terrestrial planets / 8 planets = 1/2",
-    assumptions: "Each of the eight planets is equally likely to be chosen. Dwarf planets are excluded, and planets are not weighted by mass, size, or population.",
+  "earth-sized-observed-exoplanet": {
+    title: "An observed exoplanet is Earth-sized or smaller",
+    shortTitle: "Earth-sized observed exoplanet",
+    explanation: "Earth-sized worlds hide among the giants. About 12% of confirmed exoplanets with a known radius are no larger than 1.25 times Earth’s radius.",
+    calculation: "p = 558 / 4,826 ≈ 0.1156",
+    assumptions: "This historical estimate samples confirmed planets with a known radius in the NASA Exoplanet Archive snapshot of 27 October 2026. Detection and measurement biases shape the observed catalogue. The radius threshold does not establish a rocky composition or habitability, and the result is not the composition of all planets in the galaxy.",
   },
   "full-moon-15-days": {
     title: "A full Moon during a 15-day stay",
@@ -29,12 +29,47 @@ export const astronomyEN = {
     calculation: "p ≈ 0.73",
     assumptions: "Stars are sampled from the estimated Milky Way population. This is not a selection from stars visible to the unaided eye, where brightness changes the mix.",
   },
-  "planet-with-moon": {
-    title: "A Solar System planet with a moon",
-    shortTitle: "a planet with a moon",
-    explanation: "Six of the eight Solar System planets have at least one known natural moon. Mercury and Venus are the two without moons.",
-    calculation: "p = 6 planets with moons / 8 planets = 3/4",
-    assumptions: "Each planet is equally likely to be chosen. The number of moons around each planet does not affect the sampling.",
+  "terrestrial-massive-moon": {
+    title: "A simulated terrestrial planet forms a massive moon",
+    shortTitle: "terrestrial planet with a massive moon",
+    explanation: "In Elser and colleagues’ simulated impacts, an Earth–Moon-like outcome appeared for about one in 12 terrestrial planets.",
+    calculation: "p ≈ 15 / 180 ≈ 1/12 ≈ 0.083; sensitivity range ≈ 1/45 to 1/4",
+    assumptions: "The 2011 study’s nominal estimate counts 15 matches among about 180 simulated planets, with host mass above 0.5 Earth masses and moon mass above 0.5 lunar masses. The 1/45-to-1/4 range comes from sensitivity choices, not a confidence interval or a measured galactic frequency. Initial conditions and the small simulated sample add uncertainty; extreme satellite-accretion efficiencies widen the outcomes from almost no systems to about 60 systems among 180, roughly one-third.",
+  },
+  "stellar-hydrogen-mass": {
+    title: "Hydrogen in a common star",
+    shortTitle: "hydrogen in a common star",
+    explanation: "A representative common star is about 70% hydrogen by mass.",
+    calculation: "p ≈ 0.70 by mass",
+    assumptions: "The NASA representative mixture is about 70% hydrogen, 28% helium, and 2% heavier elements by mass. The model samples equal-mass portions, not atoms. It is an approximate teaching composition, not an exact value for every star or an empirical aggregate of the whole galaxy.",
+  },
+  "stellar-helium-mass": {
+    title: "Helium in a common star",
+    shortTitle: "helium in a common star",
+    explanation: "A representative common star is about 28% helium by mass.",
+    calculation: "p ≈ 0.28 by mass",
+    assumptions: "The NASA representative mixture is about 70% hydrogen, 28% helium, and 2% heavier elements by mass. The model samples equal-mass portions, not atoms. It is an approximate teaching composition, not an exact value for every star or an empirical aggregate of the whole galaxy.",
+  },
+  "stellar-hydrogen-helium-mass": {
+    title: "Hydrogen or helium in a common star",
+    shortTitle: "hydrogen or helium in a common star",
+    explanation: "Almost all of a representative common star is just two elements: about 98% hydrogen or helium by mass.",
+    calculation: "p ≈ 0.70 + 0.28 = 0.98 by mass",
+    assumptions: "The NASA representative mixture is about 70% hydrogen, 28% helium, and 2% heavier elements by mass. The model samples equal-mass portions, not atoms. It is an approximate teaching composition, not an exact value for every star or an empirical aggregate of the whole galaxy.",
+  },
+  "main-sequence-star": {
+    title: "A randomly chosen star is on the main sequence",
+    shortTitle: "main-sequence star",
+    explanation: "About nine in ten stars are main-sequence stars, actively fusing hydrogen in their cores.",
+    calculation: "p ≈ 0.90 by stellar count",
+    assumptions: "This is an approximate fraction by number of stars. It is not a share of stellar mass or of a star’s lifetime, and individual populations can differ.",
+  },
+  "stellar-black-hole-baryonic-mass": {
+    title: "Ordinary cosmic matter in stellar-remnant black holes",
+    shortTitle: "matter in stellar black holes",
+    explanation: "A present-day cosmic model places roughly 1% of ordinary matter in black holes left by stars.",
+    calculation: "p ≈ 0.01 of baryonic mass, as a rounded order-of-magnitude anchor",
+    assumptions: "The 2022 study by Sicilia and colleagues models at most about 1% of ordinary, or baryonic, matter in stellar-remnant black holes in the local present-day cosmos. The rounded value is an order-of-magnitude anchor rather than an exact census. Dark matter and dark energy are outside the denominator; supermassive and primordial black holes are not modelled.",
   },
   "lunar-eclipse-year": {
     title: "A year with a partial or total lunar eclipse",
@@ -53,14 +88,14 @@ export const astronomyEN = {
   "sun-mass": {
     title: "The Sun’s share of Solar System mass",
     shortTitle: "the Sun’s share of mass",
-    explanation: "NASA estimates that the Sun contains about 99.85% of the Solar System’s mass, or 99.85 units out of every 100.",
+    explanation: "Sample Solar System matter in proportion to mass and about 99.85% of it belongs to the Sun.",
     calculation: "p ≈ 0.9985",
     assumptions: "Sampling is proportional to mass. It is not a uniform choice among the Sun, planets, moons, and smaller bodies. The published percentage is rounded.",
   },
   "solar-eclipse-local-year": {
     title: "A total solar eclipse where you live within a year",
     shortTitle: "total eclipse where you live · year",
-    explanation: "At a representative fixed place, the long-run estimate averages one year with a total solar eclipse overhead for every 374 years without one. NASA gives a mean interval of about 375 years between total eclipses at one place.",
+    explanation: "At a representative fixed place, a total solar eclipse overhead is a roughly one-year-in-375 event over the long run.",
     calculation: "p ≈ 1/375 from the long-run mean return interval",
     assumptions: "This is a frequency-based annual approximation for a representative fixed place. Real intervals and local rates vary. Clouds are outside the event, and the estimate is not a forecast for a named city or year.",
   },
