@@ -13,6 +13,8 @@ export const esSources = {
   "standard-deck-model": { label: "Modelo de baraja estándar" },
   "ucr-well-shuffled-deck": { label: "John Baez: permutaciones de una baraja bien mezclada", note: "publicado el 5 de febrero de 2013; consultado el 27 de octubre de 2026" },
   "rfc-9562-uuidv4": { label: "RFC 9562 del IETF: UUID versión 4", note: "publicado en mayo de 2024; consultado el 27 de octubre de 2026" },
+  "nist-fips-180-4-sha256": { label: "NIST FIPS 180-4: Estándar de Hash Seguro", note: "actualizado en agosto de 2015; consultado el 27 de octubre de 2026" },
+  "nist-sp-800-57-hash-strength": { label: "NIST SP 800-57 parte 1 rev. 5: fortalezas de seguridad de hashes", note: "publicado en mayo de 2020; consultado el 27 de octubre de 2026" },
   "uniform-seven-day-calendar-model": { label: "Modelo uniforme de calendario de siete días" },
   "noaa-ocean-service": { label: "Servicio Oceánico de la NOAA", note: "estimación de cobertura" },
   "fair-die-model": { label: "Modelo de dado equilibrado" },

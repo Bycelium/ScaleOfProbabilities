@@ -141,6 +141,9 @@ export const cryptographicKeyArtwork = (bits: 128 | 256, color: string): string 
 export const uuidArtwork = (color: string): string =>
   `<svg class="uuid-art" viewBox="0 0 100 100" aria-hidden="true" style="--art:${color}"><rect x="9" y="19" width="82" height="62" rx="10" fill="#f7f2e4" stroke="var(--art)" stroke-width="5"/><path d="M22 40h19m7 0h12m7 0h11M22 54h12m7 0h24m7 0h6M22 68h25m7 0h24" fill="none" stroke="var(--art)" stroke-width="5" stroke-linecap="round"/><circle cx="77" cy="26" r="13" fill="var(--art)"/><text x="77" y="31" text-anchor="middle" fill="#fff9e8" font-size="15" font-family="system-ui" font-weight="800">v4</text></svg>`;
 
+export const sha256Artwork = (color: string): string =>
+  `<svg class="sha256-art" data-bits="256" viewBox="0 0 100 100" aria-hidden="true" style="--art:${color}"><rect x="8" y="13" width="84" height="74" rx="9" fill="#f7f2e4" stroke="var(--art)" stroke-width="4"/><g fill="none" stroke="var(--art)" stroke-width="4" stroke-linecap="round"><path d="M19 32h15m7 0h10m7 0h23M19 45h8m7 0h20m7 0h20M19 58h17m7 0h11m7 0h20"/><path d="m34 70 8 8 15-15" stroke="#55a27e" stroke-width="6"/></g><rect x="52" y="66" width="38" height="14" rx="7" fill="var(--art)"/><text x="71" y="76" text-anchor="middle" fill="#fff9e8" font-size="8" font-family="monospace" font-weight="800">SHA-256</text></svg>`;
+
 type LotteryCountry = "france" | "united-kingdom" | "united-states" | "euromillions";
 type LotteryEvent = "jackpot" | "prize" | "loss";
 

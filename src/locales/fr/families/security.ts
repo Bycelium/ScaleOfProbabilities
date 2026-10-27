@@ -80,6 +80,13 @@ export const securityFR = {
     calculation: "p = 1 / 2¹²² = 1 / 5 316 911 983 139 663 491 615 228 241 121 378 304",
     assumptions: "Les deux UUIDv4 utilisent des champs aléatoires de 122 bits indépendants et uniformes issus d’un générateur fiable. Le modèle porte sur une seule paire. Dans une grande collection, le paradoxe des anniversaires compte de nombreuses paires possibles et augmente la probabilité d’au moins une collision.",
   },
+  "sha256-pair-collision": {
+    title: "Deux entrées distinctes partagent la même empreinte SHA-256",
+    shortTitle: "collision d’une paire SHA-256",
+    explanation: "SHA-256 produit une empreinte de 256 bits. Dans le modèle idéal, les empreintes de deux entrées distinctes sont indépendantes et uniformément réparties ; la seconde égale donc la première avec une probabilité de 1 sur 2²⁵⁶. Une recherche parmi de nombreuses empreintes crée de nombreuses paires possibles ; le paradoxe des anniversaires situe la recherche d’une collision autour de 2¹²⁸ empreintes.",
+    calculation: "Une paire fixée : p = 1 / 2²⁵⁶ ≈ 1 / (1,158 × 10⁷⁷)",
+    assumptions: "Les deux entrées sont distinctes, et leurs empreintes SHA-256 sont modélisées comme des valeurs uniformes et indépendantes de 256 bits. Le modèle porte sur une paire précise. Une recherche parmi de nombreuses empreintes compte n(n − 1)/2 paires ; le seuil d’environ 2¹²⁸ empreintes associé au paradoxe des anniversaires décrit la collection, tandis que cette paire précise reste à 2⁻²⁵⁶.",
+  },
   "exact-hash-day": {
     title: "Une empreinte Bitcoin choisie à l’avance apparaît en un jour",
     shortTitle: "empreinte Bitcoin exacte en un jour",

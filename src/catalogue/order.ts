@@ -135,6 +135,7 @@ export const catalogueSlots = {
   "four-dice-all-identical": 136,
   "shuffled-deck-specified-order": 137,
   "uuid-v4-pair-collision": 138,
+  "sha256-pair-collision": 139,
   "birthday-10": 140,
   "birthday-20": 141,
   "birthday-30": 142,

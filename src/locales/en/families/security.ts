@@ -80,6 +80,13 @@ export const securityEN = {
     calculation: "p = 1 / 2¹²² = 1 / 5,316,911,983,139,663,491,615,228,241,121,378,304",
     assumptions: "Both UUIDv4 values use independent, uniform 122-bit random fields from a reliable generator. The model covers one pair. In a large collection, the birthday effect counts many possible pairs and raises the probability of at least one collision.",
   },
+  "sha256-pair-collision": {
+    title: "Two distinct inputs share one SHA-256 hash",
+    shortTitle: "SHA-256 pair collision",
+    explanation: "SHA-256 produces a 256-bit digest. In the ideal model, the digests of two distinct inputs are independent and uniform, so the second matches the first with probability 1 in 2²⁵⁶. Searching across many hashes creates many possible pairs; the birthday scale for finding some collision is around 2¹²⁸ hashes.",
+    calculation: "One fixed pair: p = 1 / 2²⁵⁶ ≈ 1 / (1.158 × 10⁷⁷)",
+    assumptions: "The two inputs are distinct, and their SHA-256 digests are modelled as independent uniform 256-bit values. This model covers one specified pair. A many-hash collision search counts n(n − 1)/2 pairs; its roughly 2¹²⁸-hash birthday scale describes the collection, while this specified pair remains at 2⁻²⁵⁶.",
+  },
   "exact-hash-day": {
     title: "A preselected Bitcoin hash appears within one day",
     shortTitle: "exact Bitcoin hash in a day",

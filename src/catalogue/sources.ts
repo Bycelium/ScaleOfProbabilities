@@ -11,6 +11,8 @@ export const sourceReferences = {
   "standard-deck-model": { },
   "ucr-well-shuffled-deck": { href: "https://math.ucr.edu/home/baez/games/games_10.html" },
   "rfc-9562-uuidv4": { href: "https://www.rfc-editor.org/rfc/rfc9562.html#section-5.4" },
+  "nist-fips-180-4-sha256": { href: "https://csrc.nist.gov/pubs/fips/180-4/upd1/final" },
+  "nist-sp-800-57-hash-strength": { href: "https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final" },
   "uniform-seven-day-calendar-model": { },
   "noaa-ocean-service": { href: "https://oceanservice.noaa.gov/facts/howmanyoceans.html" },
   "fair-die-model": { },

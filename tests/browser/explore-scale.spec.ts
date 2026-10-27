@@ -411,12 +411,14 @@ test("keeps mobile odds labels and values on stable separate lines", async ({ pa
   }
 });
 
-test("keeps extreme deck and UUID details usable in every locale", async ({ page }, testInfo) => {
+test("keeps extreme deck, UUID, and SHA-256 details usable in every locale", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 640 });
   const deck = displayLandmarks.find(item => item.id === "shuffled-deck-specified-order");
   const uuid = displayLandmarks.find(item => item.id === "uuid-v4-pair-collision");
+  const sha256 = displayLandmarks.find(item => item.id === "sha256-pair-collision");
   expect(deck).toBeDefined();
   expect(uuid).toBeDefined();
+  expect(sha256).toBeDefined();
 
   for (const locale of ["en", "fr", "es", "zh"] as const) {
     await page.goto("/");
@@ -453,9 +455,19 @@ test("keeps extreme deck and UUID details usable in every locale", async ({ page
 
     await page.locator('[data-related-landmark="uuid-v4-pair-collision"]').click();
     await expect(calculation).toContainText("2¹²²");
+    await expect(page.locator("[data-detail-title]")).toBeInViewport();
+    expect(await content.evaluate(element => element.scrollTop)).toBe(0);
     expect(await detail.evaluate(panel => panel.scrollWidth <= panel.clientWidth)).toBe(true);
     expect(await calculation.evaluate(item => item.scrollWidth <= item.clientWidth)).toBe(true);
     await capture(page, testInfo, `mobile-${locale}-uuid-collision-details`);
+
+    await page.locator('[data-related-landmark="sha256-pair-collision"]').click();
+    await expect(calculation).toContainText("2²⁵⁶");
+    await expect(page.locator("[data-detail-title]")).toBeInViewport();
+    expect(await content.evaluate(element => element.scrollTop)).toBe(0);
+    expect(await detail.evaluate(panel => panel.scrollWidth <= panel.clientWidth)).toBe(true);
+    expect(await calculation.evaluate(item => item.scrollWidth <= item.clientWidth)).toBe(true);
+    await capture(page, testInfo, `mobile-${locale}-sha256-collision-details`);
   }
 });
 

@@ -13,6 +13,8 @@ export const enSources = {
   "standard-deck-model": { label: "Standard-deck model" },
   "ucr-well-shuffled-deck": { label: "John Baez: well-shuffled deck permutations", note: "published 5 February 2013; checked 27 October 2026" },
   "rfc-9562-uuidv4": { label: "IETF RFC 9562: UUID version 4", note: "published May 2024; checked 27 October 2026" },
+  "nist-fips-180-4-sha256": { label: "NIST FIPS 180-4: Secure Hash Standard", note: "updated August 2015; checked 27 October 2026" },
+  "nist-sp-800-57-hash-strength": { label: "NIST SP 800-57 Part 1 Rev. 5: hash security strengths", note: "published May 2020; checked 27 October 2026" },
   "uniform-seven-day-calendar-model": { label: "Uniform seven-day calendar model" },
   "noaa-ocean-service": { label: "NOAA Ocean Service", note: "coverage estimate" },
   "fair-die-model": { label: "Fair-die model" },
