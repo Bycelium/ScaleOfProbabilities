@@ -93,11 +93,11 @@ export const dice_gamesES = {
     assumptions: "Cinco dados equilibrados de seis caras se lanzan de forma independiente.",
   },
   "rubik-state": {
-    title: "Un estado al azar del cubo de Rubik está resuelto",
-    shortTitle: "un cubo resuelto al azar",
-    explanation: "Solo uno de los 43 252 003 274 489 856 000 estados legales del cubo de Rubik tiene cada cara de un solo color.",
-    calculation: "p = 1 estado resuelto / 43 252 003 274 489 856 000 estados legales",
-    assumptions: "Todos los estados legales de un cubo estándar de 3 × 3 × 3 se consideran igualmente probables.",
+    title: "Dos cubos 3 × 3 mezclados coinciden",
+    shortTitle: "dos cubos mezclados iguales",
+    explanation: "Dos cubos de Rubik 3 × 3 mezclados de forma independiente tienen cada uno 43 252 003 274 489 856 000 estados legales. Tras alinear los centros del mismo color, el segundo cubo tiene un único estado coincidente entre todos ellos.",
+    calculation: "p = 1 estado coincidente / 43 252 003 274 489 856 000 estados legales",
+    assumptions: "Cada cubo se toma de forma independiente y uniforme entre los estados legales de 3 × 3 × 3. Alinear los centros del mismo color elimina las rotaciones del cubo completo; una mezcla manual solo ilustra este modelo uniforme.",
   },
   "french-scrabble-consonant": {
     title: "Una consonante de una bolsa completa de Scrabble francés",

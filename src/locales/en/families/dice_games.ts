@@ -93,11 +93,11 @@ export const dice_gamesEN = {
     assumptions: "Five fair six-sided dice roll independently.",
   },
   "rubik-state": {
-    title: "A random Rubik’s Cube state is solved",
-    shortTitle: "a randomly solved cube",
-    explanation: "Only one of the 43,252,003,274,489,856,000 legal Rubik’s Cube states has every face in a single colour.",
-    calculation: "p = 1 solved state / 43,252,003,274,489,856,000 legal states",
-    assumptions: "Every legal state of a standard 3 × 3 × 3 cube is treated as equally likely.",
+    title: "Two shuffled 3 × 3 cubes match",
+    shortTitle: "two matching scrambled cubes",
+    explanation: "Two independently mixed 3 × 3 Rubik’s Cubes each have 43,252,003,274,489,856,000 legal states. Once like-coloured centres are aligned, the second cube has one matching state among all of them.",
+    calculation: "p = 1 matching state / 43,252,003,274,489,856,000 legal states",
+    assumptions: "Each cube is sampled independently and uniformly from legal 3 × 3 × 3 states. Aligning like-coloured centres removes whole-cube rotations; a physical hand shuffle only illustrates this uniform-state model.",
   },
   "french-scrabble-consonant": {
     title: "A consonant from a full French Scrabble bag",

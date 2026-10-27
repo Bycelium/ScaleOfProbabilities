@@ -2077,6 +2077,36 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-detail-sources]")?.textContent).toContain("checked 27 October 2026");
   });
 
+  it("compares two independently shuffled Rubik’s Cubes in one matching state", () => {
+    const cube = displayLandmarks.find(candidate => candidate.id === "rubik-state")!;
+    const model = landmarkModels.find(candidate => candidate.id === cube.id)!;
+    expect(cube.position).toBeCloseTo(-10 * Math.log10(43252003274489856000 - 1), 10);
+    expect(model.chance.tail).toEqual({ kind: "one-in", denominator: 43252003274489856000 });
+    expect(model.classification).toBe("Exact model");
+    expect(model.sourceIds).toEqual(["god-s-number-state-count"]);
+
+    history.replaceState(null, "", `#d=${cube.position}`);
+    render(390);
+    const art = sceneArtwork(cube.id);
+    expect(art.querySelector(".rubik-pair")).not.toBeNull();
+    const cubes = art.querySelectorAll(".rubik-cube");
+    expect(cubes).toHaveLength(2);
+    expect([...cubes].every(item => item.querySelectorAll(".rubik-sticker").length === 27)).toBe(true);
+    expect(cubes[0]?.innerHTML).toBe(cubes[1]?.innerHTML);
+
+    document.querySelector<HTMLButtonElement>('[data-landmark="rubik-state"]')!.click();
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Two shuffled 3 × 3 cubes match");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("1 matching state / 43,252,003,274,489,856,000");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("independently and uniformly");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("whole-cube rotations");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("physical hand shuffle only illustrates");
+    for (const id of ["shuffled-deck-specified-order", "uuid-v4-pair-collision", "sha256-pair-collision"]) {
+      expect(relatedLandmarkIds[cube.id]).toContain(id);
+      expect(document.querySelector(`[data-related-landmark="${id}"]`)).not.toBeNull();
+    }
+    expect(document.querySelector<HTMLAnchorElement>("[data-detail-sources] a")?.href).toBe("https://www.cube20.org/");
+  });
+
   it("shows the authorized main-draw lottery losses as sourced ticket events", () => {
     history.replaceState(null, "", "#d=10.78");
     render(390);

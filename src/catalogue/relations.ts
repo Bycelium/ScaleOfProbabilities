@@ -20,6 +20,7 @@ const declaredRelatedLandmarkIds = {
   "three-dice-all-six": ["two-dice-both-six", "first-roll-yahtzee"],
   "four-dice-all-identical": ["three-dice-any-triple", "first-roll-yahtzee"],
   "first-roll-yahtzee": ["three-dice-all-six", "four-dice-all-identical"],
+  "rubik-state": ["shuffled-deck-specified-order", "uuid-v4-pair-collision", "sha256-pair-collision"],
   "four-dice-any-match": ["two-dice-any-double", "three-dice-any-triple", "yahtzee-any-match"],
   "yahtzee-any-match": ["four-dice-any-match", "first-roll-yahtzee"],
   "password-123456": ["manager-password-16", "eff-passphrase-six"],
