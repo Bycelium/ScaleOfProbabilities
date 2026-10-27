@@ -1,4 +1,5 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
+import { displayLandmarks } from "../../src/catalogue";
 
 test.use({ hasTouch: true, reducedMotion: "reduce" });
 
@@ -407,6 +408,76 @@ test("keeps mobile odds labels and values on stable separate lines", async ({ pa
     expect(positions.every(position => position.odds.y === positions[0].odds.y)).toBe(true);
     expect(positions.every(position => position.odds.height === positions[0].odds.height)).toBe(true);
     await capture(page, testInfo, `mobile-${locale}-odds-two-lines`);
+  }
+});
+
+test("keeps extreme deck, UUID, SHA-256, and Rubik’s Cube details usable in every locale", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  const deck = displayLandmarks.find(item => item.id === "shuffled-deck-specified-order");
+  const uuid = displayLandmarks.find(item => item.id === "uuid-v4-pair-collision");
+  const sha256 = displayLandmarks.find(item => item.id === "sha256-pair-collision");
+  const cube = displayLandmarks.find(item => item.id === "rubik-state");
+  expect(deck).toBeDefined();
+  expect(uuid).toBeDefined();
+  expect(sha256).toBeDefined();
+  expect(cube).toBeDefined();
+
+  for (const locale of ["en", "fr", "es", "zh"] as const) {
+    await page.goto("/");
+    await page.evaluate(code => {
+      localStorage.setItem("probability-scale-locale", code);
+      sessionStorage.setItem("probability-scale-intro-seen", "true");
+    }, locale);
+    await page.goto(`/?extreme-details=${locale}&locale=${locale}#d=${deck!.position}`);
+
+    await page.locator('[data-landmark="shuffled-deck-specified-order"]').click();
+    const detail = page.locator("[data-detail-panel]");
+    const content = page.locator("[data-detail-content]");
+    const close = page.locator("[data-close-detail]");
+    const calculation = page.locator("[data-detail-calculation]");
+    await expect(detail).toBeVisible();
+    await expect(calculation).toContainText("52!");
+    expect(await detail.evaluate(panel => panel.scrollWidth <= panel.clientWidth)).toBe(true);
+    expect(await calculation.evaluate(item => item.scrollWidth <= item.clientWidth)).toBe(true);
+    const closeBeforeScroll = await close.boundingBox();
+    expect(closeBeforeScroll).not.toBeNull();
+    await capture(page, testInfo, `mobile-${locale}-specified-deck-details`);
+
+    const scroll = await content.evaluate(element => {
+      element.scrollTop = element.scrollHeight;
+      return { clientHeight: element.clientHeight, scrollHeight: element.scrollHeight, scrollTop: element.scrollTop };
+    });
+    expect(scroll.scrollHeight).toBeGreaterThan(scroll.clientHeight);
+    expect(scroll.scrollTop).toBeGreaterThan(0);
+    const closeAfterScroll = await close.boundingBox();
+    expect(closeAfterScroll).not.toBeNull();
+    expect(closeAfterScroll!.x).toBeCloseTo(closeBeforeScroll!.x, 1);
+    expect(closeAfterScroll!.y).toBeCloseTo(closeBeforeScroll!.y, 1);
+    await expect(close).toBeInViewport();
+
+    await page.locator('[data-related-landmark="uuid-v4-pair-collision"]').click();
+    await expect(calculation).toContainText("2¹²²");
+    await expect(page.locator("[data-detail-title]")).toBeInViewport();
+    expect(await content.evaluate(element => element.scrollTop)).toBe(0);
+    expect(await detail.evaluate(panel => panel.scrollWidth <= panel.clientWidth)).toBe(true);
+    expect(await calculation.evaluate(item => item.scrollWidth <= item.clientWidth)).toBe(true);
+    await capture(page, testInfo, `mobile-${locale}-uuid-collision-details`);
+
+    await page.locator('[data-related-landmark="sha256-pair-collision"]').click();
+    await expect(calculation).toContainText("2²⁵⁶");
+    await expect(page.locator("[data-detail-title]")).toBeInViewport();
+    expect(await content.evaluate(element => element.scrollTop)).toBe(0);
+    expect(await detail.evaluate(panel => panel.scrollWidth <= panel.clientWidth)).toBe(true);
+    expect(await calculation.evaluate(item => item.scrollWidth <= item.clientWidth)).toBe(true);
+    await capture(page, testInfo, `mobile-${locale}-sha256-collision-details`);
+
+    await page.locator('[data-related-landmark="rubik-state"]').click();
+    await expect(calculation).toContainText("p =");
+    await expect(page.locator("[data-detail-title]")).toBeInViewport();
+    expect(await content.evaluate(element => element.scrollTop)).toBe(0);
+    expect(await detail.evaluate(panel => panel.scrollWidth <= panel.clientWidth)).toBe(true);
+    expect(await calculation.evaluate(item => item.scrollWidth <= item.clientWidth)).toBe(true);
+    await capture(page, testInfo, `mobile-${locale}-rubik-collision-details`);
   }
 });
 

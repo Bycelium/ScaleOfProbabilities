@@ -13,11 +13,47 @@ const drawings: Record<string, string> = {
   pin: '<rect x="20" y="25" width="60" height="55" rx="9" fill="var(--art)"/><path d="M35 25v-7c0-20 30-20 30 0v7" fill="none" stroke="var(--light)" stroke-width="7"/><text x="50" y="60" text-anchor="middle" fill="var(--light)" font-size="15" font-family="monospace">••••</text>',
   flood: '<path d="M18 63V35l32-20 32 20v28" fill="var(--art)"/><path d="M7 65c9-10 17 10 26 0s17 10 26 0 17 10 34 0M7 79c9-10 17 10 26 0s17 10 26 0 17 10 34 0" fill="none" stroke="var(--light)" stroke-width="6"/>',
   lightning: '<path d="M58 6 25 55h23L39 94l37-53H53Z" fill="var(--art)"/><path d="M16 26c5-13 21-17 31-8M72 19c11 0 17 6 20 15" fill="none" stroke="var(--light)" stroke-width="5" stroke-linecap="round"/>',
-  cube: '<g stroke="#17202a" stroke-linejoin="round"><path d="m50 10 36 18-36 18-36-18Z" fill="#f5f1df" stroke-width="4"/><path d="m14 28 36 18v40L14 68Z" fill="#d84f50" stroke-width="4"/><path d="m50 46 36-18v40L50 86Z" fill="#3273bc" stroke-width="4"/><g fill="none" stroke-width="2"><path d="m26 22 36 18m-24-24 36 18M26 34l36-18M38 40l36-18M26 34v40m12-34v40M14 41.3l36 18M14 54.7l36 18M74 34v40M62 40v40M50 59.3l36-18M50 72.7l36-18"/></g></g>',
 };
 
 export const artwork = (kind: keyof typeof drawings, color: string, light = "#ffe8a0"): string =>
   `<svg viewBox="0 0 100 100" aria-hidden="true" style="--art:${color};--light:${light}">${drawings[kind]}</svg>`;
+
+type CubePoint = readonly [number, number];
+type CubeFace = readonly [CubePoint, CubePoint, CubePoint, CubePoint];
+
+const rubikPoint = (face: CubeFace, horizontal: number, vertical: number): CubePoint => {
+  const [topLeft, topRight, bottomRight, bottomLeft] = face;
+  return [
+    topLeft[0] * (1 - horizontal) * (1 - vertical) + topRight[0] * horizontal * (1 - vertical) + bottomRight[0] * horizontal * vertical + bottomLeft[0] * (1 - horizontal) * vertical,
+    topLeft[1] * (1 - horizontal) * (1 - vertical) + topRight[1] * horizontal * (1 - vertical) + bottomRight[1] * horizontal * vertical + bottomLeft[1] * (1 - horizontal) * vertical,
+  ];
+};
+
+const rubikStickerGrid = (name: string, face: CubeFace, colors: readonly string[]): string => {
+  const coordinate = ([x, y]: CubePoint) => `${x.toFixed(2)},${y.toFixed(2)}`;
+  const stickers = colors.map((fill, index) => {
+    const column = index % 3;
+    const row = Math.floor(index / 3);
+    const points = [
+      rubikPoint(face, column / 3, row / 3),
+      rubikPoint(face, (column + 1) / 3, row / 3),
+      rubikPoint(face, (column + 1) / 3, (row + 1) / 3),
+      rubikPoint(face, column / 3, (row + 1) / 3),
+    ].map(coordinate).join(" ");
+    return `<polygon class="rubik-sticker" points="${points}" fill="${fill}"/>`;
+  }).join("");
+  return `<g class="rubik-face rubik-${name}">${stickers}</g>`;
+};
+
+const scrambledCubeArtwork = (x: number): string => {
+  const top = ["#f3f0dc", "#f3f0dc", "#65a77d", "#f3f0dc", "#f3f0dc", "#65a77d", "#f3f0dc", "#f3f0dc", "#65a77d"];
+  const left = ["#65a77d", "#65a77d", "#efc95d", "#65a77d", "#65a77d", "#efc95d", "#65a77d", "#65a77d", "#efc95d"];
+  const right = Array<string>(9).fill("#d85d58");
+  return `<g class="rubik-cube" transform="translate(${x} 0)" stroke="#17202a" stroke-linejoin="round" stroke-width="1.2">${rubikStickerGrid("top", [[50, 10], [86, 28], [50, 46], [14, 28]], top)}${rubikStickerGrid("left", [[14, 28], [50, 46], [50, 86], [14, 68]], left)}${rubikStickerGrid("right", [[50, 46], [86, 28], [86, 68], [50, 86]], right)}</g>`;
+};
+
+export const rubikPairArtwork = (): string =>
+  `<svg class="rubik-pair" viewBox="0 0 210 100" aria-hidden="true">${scrambledCubeArtwork(2)}${scrambledCubeArtwork(106)}</svg>`;
 
 export const calendarArtwork = (count: number, color: string): string =>
   `<svg viewBox="0 0 100 100" aria-hidden="true" style="--art:${color}"><rect x="17" y="29" width="66" height="50" rx="5" fill="#fff9e8"/><path d="M17 45h66M35 21v18M65 21v18" stroke="var(--art)" stroke-width="7" stroke-linecap="round"/><text x="50" y="69" text-anchor="middle" fill="var(--art)" font-size="24" font-family="Georgia">${count}</text></svg>`;
@@ -137,6 +173,12 @@ export const wordSelectionArtwork = (color: string): string => {
 
 export const cryptographicKeyArtwork = (bits: 128 | 256, color: string): string =>
   `<svg class="crypto-key-art" data-bits="${bits}" viewBox="0 0 100 100" aria-hidden="true" style="--art:${color}"><circle cx="31" cy="49" r="20" fill="none" stroke="var(--art)" stroke-width="10"/><path d="M49 49h41M71 49v13M82 49v9" fill="none" stroke="var(--art)" stroke-width="10" stroke-linecap="round"/><circle cx="31" cy="49" r="5" fill="#f6cf70"/><rect x="25" y="76" width="50" height="17" rx="8.5" fill="#172f3d"/><text x="50" y="88" text-anchor="middle" fill="#dcebe6" font-size="12" font-family="monospace" font-weight="700">AES-${bits}</text></svg>`;
+
+export const uuidArtwork = (color: string): string =>
+  `<svg class="uuid-art" viewBox="0 0 100 100" aria-hidden="true" style="--art:${color}"><rect x="9" y="19" width="82" height="62" rx="10" fill="#f7f2e4" stroke="var(--art)" stroke-width="5"/><path d="M22 40h19m7 0h12m7 0h11M22 54h12m7 0h24m7 0h6M22 68h25m7 0h24" fill="none" stroke="var(--art)" stroke-width="5" stroke-linecap="round"/><circle cx="77" cy="26" r="13" fill="var(--art)"/><text x="77" y="31" text-anchor="middle" fill="#fff9e8" font-size="15" font-family="system-ui" font-weight="800">v4</text></svg>`;
+
+export const sha256Artwork = (color: string): string =>
+  `<svg class="sha256-art" data-bits="256" viewBox="0 0 100 100" aria-hidden="true" style="--art:${color}"><rect x="8" y="13" width="84" height="74" rx="9" fill="#f7f2e4" stroke="var(--art)" stroke-width="4"/><g fill="none" stroke="var(--art)" stroke-width="4" stroke-linecap="round"><path d="M19 32h15m7 0h10m7 0h23M19 45h8m7 0h20m7 0h20M19 58h17m7 0h11m7 0h20"/><path d="m34 70 8 8 15-15" stroke="#55a27e" stroke-width="6"/></g><rect x="52" y="66" width="38" height="14" rx="7" fill="var(--art)"/><text x="71" y="76" text-anchor="middle" fill="#fff9e8" font-size="8" font-family="monospace" font-weight="800">SHA-256</text></svg>`;
 
 type LotteryCountry = "france" | "united-kingdom" | "united-states" | "euromillions";
 type LotteryEvent = "jackpot" | "prize" | "loss";

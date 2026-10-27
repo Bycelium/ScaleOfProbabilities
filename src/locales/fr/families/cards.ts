@@ -37,6 +37,13 @@ export const cardsFR = {
     calculation: "p = 1 carte correspondante / 52 cartes = 1/52",
     assumptions: "Chaque carte d’un jeu standard de 52 cartes bien mélangé a la même probabilité.",
   },
+  "shuffled-deck-specified-order": {
+    title: "Reproduire un ordre de cartes précis",
+    shortTitle: "répéter un ordre précis",
+    explanation: "Un jeu ordinaire de 52 cartes admet 52! ordres possibles, soit environ 8,07 × 10⁶⁷. Un jeu bien mélangé n’a donc qu’une chance sur 52! de reproduire un ordre précis observé auparavant. Face à un tel nombre de possibilités, il est très probable qu’un ordre bien mélangé ne se soit jamais présenté auparavant et ne se répète jamais à l’échelle des sociétés humaines, sans qu’aucune de ces affirmations puisse être garantie.",
+    calculation: "p = 1 / 52! = 1 / 80 658 175 170 943 878 571 660 636 856 403 766 975 289 505 440 883 277 824 000 000 000 000 ≈ 1,24 × 10⁻⁶⁸",
+    assumptions: "Le jeu contient 52 cartes toutes distinctes et aucun joker. L’ordre antérieur est fixé avant un nouveau mélange indépendant, et toutes les permutations sont équiprobables. Le nombre d’ordres distincts produits au cours de l’histoire humaine est inconnu. Conditionnellement à tout ensemble fini de N ordres de comparaison distincts fixés comme cibles, antérieurs ou futurs, la probabilité d’en reproduire un est N / 52!.",
+  },
   "holdem-high-card": {
     title: "Texas Hold’em : carte haute",
     shortTitle: "carte haute",

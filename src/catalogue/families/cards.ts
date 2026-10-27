@@ -1,6 +1,8 @@
 import { artwork, numberCardArtwork, pokerArtwork } from "../../artwork";
-import { lowerRatio, exact } from "../helpers";
+import { lowerRatio, oneIn, exact } from "../helpers";
 import type { LandmarkModel } from "../types";
+
+const standardDeckPermutationCount = 8.065817517094388e67; // 52!
 
 export const cardsModels = [
   { id: "ace-in-five-cards", chance: lowerRatio(886656, 2598960), size: 96, art: artwork("cards", "#dd5b5b"), sourceIds: ["five-card-hand-combinatorics"], classification: exact },
@@ -17,4 +19,5 @@ export const cardsModels = [
   { id: "holdem-four-kind", chance: lowerRatio(224848, 133784560), size: 94, art: pokerArtwork([["9", "♠"], ["9", "♥"], ["9", "♣"], ["9", "♦"], ["A", "♠"]], "#8f5d79"), sourceIds: ["brian-alspach-seven-card-poker-frequencies", "pokerstars-texas-hold-em-rules"], classification: exact },
   { id: "holdem-straight-flush", chance: lowerRatio(37260, 133784560), size: 94, art: pokerArtwork([["9", "♣"], ["8", "♣"], ["7", "♣"], ["6", "♣"], ["5", "♣"]], "#597c78"), sourceIds: ["brian-alspach-seven-card-poker-frequencies", "pokerstars-texas-hold-em-rules"], classification: exact },
   { id: "holdem-royal-flush", chance: lowerRatio(4324, 133784560), size: 94, art: pokerArtwork([["A", "♦"], ["K", "♦"], ["Q", "♦"], ["J", "♦"], ["10", "♦"]], "#a06770"), sourceIds: ["brian-alspach-seven-card-poker-frequencies", "pokerstars-texas-hold-em-rules"], classification: exact },
+  { id: "shuffled-deck-specified-order", chance: oneIn(standardDeckPermutationCount), size: 96, art: artwork("cards", "#4f7895"), sourceIds: ["ucr-well-shuffled-deck"], classification: exact },
 ] satisfies readonly LandmarkModel[];

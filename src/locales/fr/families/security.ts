@@ -73,6 +73,20 @@ export const securityFR = {
     calculation: "p = 1 / 2²⁵⁶ ≈ 1 / (1,158 × 10⁷⁷)",
     assumptions: "La clé AES est tirée uniformément, et la probabilité porte sur un seul essai indépendant. La protection réelle dépend aussi du logiciel et de la gestion des clés.",
   },
+  "uuid-v4-pair-collision": {
+    title: "Collision entre deux UUIDv4",
+    shortTitle: "collision de deux UUIDv4",
+    explanation: "Un UUIDv4 réserve six bits à sa version et à sa variante, puis remplit les 122 autres avec des données aléatoires. Pour deux UUIDv4 générés indépendamment et uniformément, le second égale le premier avec une probabilité de 1 sur 2¹²². Cette collision est bien plus probable que la répétition d’un ordre précis de 52 cartes, tout en restant extraordinairement rare pour une seule paire.",
+    calculation: "p = 1 / 2¹²² = 1 / 5 316 911 983 139 663 491 615 228 241 121 378 304",
+    assumptions: "Les deux UUIDv4 utilisent des champs aléatoires de 122 bits indépendants et uniformes issus d’un générateur fiable. Le modèle porte sur une seule paire. Dans une grande collection, le paradoxe des anniversaires compte de nombreuses paires possibles et augmente la probabilité d’au moins une collision.",
+  },
+  "sha256-pair-collision": {
+    title: "Deux entrées distinctes partagent la même empreinte SHA-256",
+    shortTitle: "collision d’une paire SHA-256",
+    explanation: "SHA-256 produit une empreinte de 256 bits. Dans le modèle idéal, les empreintes de deux entrées distinctes sont indépendantes et uniformément réparties ; la seconde égale donc la première avec une probabilité de 1 sur 2²⁵⁶. Une recherche parmi de nombreuses empreintes crée de nombreuses paires possibles ; le paradoxe des anniversaires situe la recherche d’une collision autour de 2¹²⁸ empreintes.",
+    calculation: "Une paire fixée : p = 1 / 2²⁵⁶ ≈ 1 / (1,158 × 10⁷⁷)",
+    assumptions: "Les deux entrées sont distinctes, et leurs empreintes SHA-256 sont modélisées comme des valeurs uniformes et indépendantes de 256 bits. Le modèle porte sur une paire précise. Une recherche parmi de nombreuses empreintes compte n(n − 1)/2 paires ; le seuil d’environ 2¹²⁸ empreintes associé au paradoxe des anniversaires décrit la collection, tandis que cette paire précise reste à 2⁻²⁵⁶.",
+  },
   "exact-hash-day": {
     title: "Une empreinte Bitcoin choisie à l’avance apparaît en un jour",
     shortTitle: "empreinte Bitcoin exacte en un jour",

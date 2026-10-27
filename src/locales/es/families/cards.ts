@@ -38,6 +38,13 @@ export const cardsES = {
     calculation: "p = 1 carta coincidente / 52 cartas = 1/52",
     assumptions: "Una baraja estándar de 52 cartas bien barajada da la misma probabilidad a cada carta.",
   },
+  "shuffled-deck-specified-order": {
+    title: "Reproducir un orden de cartas específico",
+    shortTitle: "repetir un orden específico",
+    explanation: "Una baraja ordinaria de 52 cartas tiene 52! órdenes posibles, unos 8,07 × 10⁶⁷. Por tanto, una baraja bien mezclada solo tiene una probabilidad entre 52! de reproducir un orden específico observado anteriormente. Con tantas posibilidades, es muy probable que un orden bien mezclado nunca haya aparecido antes y nunca se repita a escala humana, aunque ninguna de estas afirmaciones puede garantizarse.",
+    calculation: "p = 1 / 52! = 1 / 80 658 175 170 943 878 571 660 636 856 403 766 975 289 505 440 883 277 824 000 000 000 000 ≈ 1,24 × 10⁻⁶⁸",
+    assumptions: "La baraja contiene 52 cartas distintas y ningún comodín. El orden anterior se especifica antes de una barajada independiente, y todas las permutaciones tienen la misma probabilidad. Se desconoce cuántos órdenes distintos se han producido a lo largo de la historia humana. Condicionado a cualquier conjunto finito de N órdenes de comparación distintos fijados como objetivos, anteriores o futuros, la probabilidad de reproducir uno es N / 52!.",
+  },
   "holdem-high-card": {
     title: "Texas Hold’em: carta alta",
     shortTitle: "carta alta",

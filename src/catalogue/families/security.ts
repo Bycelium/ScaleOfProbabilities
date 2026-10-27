@@ -1,4 +1,4 @@
-import { artwork, cryptographicKeyArtwork, enigmaArtwork, passwordArtwork, wordSelectionArtwork } from "../../artwork";
+import { artwork, cryptographicKeyArtwork, enigmaArtwork, passwordArtwork, sha256Artwork, uuidArtwork, wordSelectionArtwork } from "../../artwork";
 import { lowerRatio, oneIn, exact } from "../helpers";
 import type { LandmarkModel } from "../types";
 
@@ -11,6 +11,8 @@ export const securityModels = [
   { id: "eff-passphrase-six", chance: oneIn(7776 ** 6), size: 92, art: passwordArtwork("6", "words", "#607f9a"), sourceIds: ["eff-dice", "eff-wordlist", "eff-password-advice"], classification: exact },
   { id: "aes-128-key", chance: oneIn(2 ** 128), size: 92, art: cryptographicKeyArtwork(128, "#4d86a5"), sourceIds: ["nist-fips-197-aes"], classification: exact },
   { id: "aes-256-key", chance: oneIn(2 ** 256), size: 94, art: cryptographicKeyArtwork(256, "#596eaa"), sourceIds: ["nist-fips-197-aes"], classification: exact },
+  { id: "uuid-v4-pair-collision", chance: oneIn(2 ** 122), size: 94, art: uuidArtwork("#527f91"), sourceIds: ["rfc-9562-uuidv4"], classification: exact },
+  { id: "sha256-pair-collision", chance: oneIn(2 ** 256), size: 96, art: sha256Artwork("#4f7893"), sourceIds: ["nist-fips-180-4-sha256", "nist-sp-800-57-hash-strength"], classification: "Defined model" },
   { id: "exact-hash-day", chance: oneIn(1.340186218024493e51), size: 98, art: artwork("bitcoin", "#f7931a", "#ffd59a"), sourceIds: ["kryptex-network-hash-rate", "bitcoin-developer-guide-proof-of-work"], classification: "Defined model" },
   { id: "eff-word-one", chance: oneIn(7776), size: 90, art: wordSelectionArtwork("#5f829c"), sourceIds: ["eff-dice", "eff-wordlist"], classification: exact },
   { id: "enigma-i-known-rings", chance: oneIn(158962555217826360000), size: 96, art: enigmaArtwork("I"), sourceIds: ["enigma-working", "enigma-i", "national-museum-computing-bombe", "turing-welchman"], classification: "Defined model" },

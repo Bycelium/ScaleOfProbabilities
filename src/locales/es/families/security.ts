@@ -73,6 +73,20 @@ export const securityES = {
     calculation: "p = 1 / 2²⁵⁶ ≈ 1 / (1,158 × 10⁷⁷)",
     assumptions: "La clave AES se genera uniformemente y la probabilidad cubre un intento de clave independiente. La protección práctica de los datos también depende del software y de la gestión de claves.",
   },
+  "uuid-v4-pair-collision": {
+    title: "Dos valores UUIDv4 coinciden",
+    shortTitle: "colisión de dos UUIDv4",
+    explanation: "Un UUIDv4 reserva seis bits para la versión y la variante, y rellena los otros 122 con datos aleatorios. Para dos valores UUIDv4 generados de forma independiente y uniforme, el segundo coincide con el primero con una probabilidad entre 2¹²². Esa colisión es mucho más probable que repetir un orden específico de 52 cartas, pero sigue siendo extraordinariamente rara para un solo par.",
+    calculation: "p = 1 / 2¹²² = 1 / 5 316 911 983 139 663 491 615 228 241 121 378 304",
+    assumptions: "Ambos UUIDv4 usan campos aleatorios de 122 bits independientes y uniformes producidos por un generador fiable. El modelo cubre un solo par. En una colección grande, el efecto cumpleaños cuenta muchos pares posibles y aumenta la probabilidad de al menos una colisión.",
+  },
+  "sha256-pair-collision": {
+    title: "Dos entradas distintas comparten un hash SHA-256",
+    shortTitle: "colisión de un par SHA-256",
+    explanation: "SHA-256 produce un resumen de 256 bits. En el modelo ideal, los resúmenes de dos entradas distintas son independientes y uniformes, por lo que el segundo coincide con el primero con una probabilidad entre 2²⁵⁶. Buscar entre muchos hashes crea muchos pares posibles; la escala de cumpleaños para encontrar alguna colisión ronda los 2¹²⁸ hashes.",
+    calculation: "Un par fijado: p = 1 / 2²⁵⁶ ≈ 1 / (1,158 × 10⁷⁷)",
+    assumptions: "Las dos entradas son distintas y sus resúmenes SHA-256 se modelizan como valores independientes y uniformes de 256 bits. El modelo cubre un par específico. Una búsqueda entre muchos hashes cuenta n(n − 1)/2 pares; su escala de cumpleaños de unos 2¹²⁸ hashes describe la colección, mientras que este par específico permanece en 2⁻²⁵⁶.",
+  },
   "exact-hash-day": {
     title: "Un hash de Bitcoin preseleccionado aparece en un día",
     shortTitle: "hash exacto de Bitcoin en un día",

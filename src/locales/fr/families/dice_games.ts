@@ -93,11 +93,11 @@ export const dice_gamesFR = {
     assumptions: "Les cinq dés équilibrés à six faces sont lancés indépendamment. Aucun dé n’est relancé.",
   },
   "rubik-state": {
-    title: "Un état aléatoire du Rubik’s Cube est résolu",
-    shortTitle: "un cube résolu au hasard",
-    explanation: "Un seul des 43 252 003 274 489 856 000 états légaux du Rubik’s Cube présente chaque face d’une seule couleur.",
-    calculation: "p = 1 état résolu / 43 252 003 274 489 856 000 états légaux",
-    assumptions: "Tous les états légaux d’un cube standard 3 × 3 × 3 sont considérés comme équiprobables.",
+    title: "Deux cubes 3 × 3 mélangés sont identiques",
+    shortTitle: "deux cubes mélangés identiques",
+    explanation: "Deux Rubik’s Cubes 3 × 3 mélangés indépendamment ont chacun 43 252 003 274 489 856 000 états légaux. Une fois les centres de même couleur alignés, le second cube ne possède qu’un état correspondant parmi tous ces états.",
+    calculation: "p = 1 état correspondant / 43 252 003 274 489 856 000 états légaux",
+    assumptions: "Chaque cube est tiré indépendamment et uniformément parmi les états légaux 3 × 3 × 3. Aligner les centres de même couleur élimine les rotations globales ; un mélange manuel ne fait qu’illustrer ce modèle uniforme.",
   },
   "french-scrabble-consonant": {
     title: "Une consonne dans un sac complet de Scrabble français",

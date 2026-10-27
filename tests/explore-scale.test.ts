@@ -1326,10 +1326,13 @@ describe("public probability exploration", () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true }));
     const reduced = render();
     document.querySelector<HTMLButtonElement>('[data-landmark="holdem-one-pair"]')!.click();
+    const detailContent = document.querySelector<HTMLElement>("[data-detail-content]")!;
+    detailContent.scrollTop = 48;
     document.querySelector<HTMLButtonElement>('[data-related-landmark="holdem-two-pair"]')!.click();
     expect(document.activeElement).toBe(document.querySelector("[data-close-detail]"));
     expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("exactly two pair");
+    expect(detailContent.scrollTop).toBe(0);
     expect(document.querySelector<HTMLElement>("[data-gap-caption]")?.hidden).toBe(true);
     reduced.dispose();
 
@@ -2000,6 +2003,108 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("31,433,400");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("Two private cards and five community cards");
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("no cards known in advance");
+  });
+
+  it("compares specified deck, UUIDv4, and SHA-256 pair collisions", () => {
+    history.replaceState(null, "", "#d=-679.1");
+    const first = render(390);
+
+    const item = displayLandmarks.find(candidate => candidate.id === "shuffled-deck-specified-order")!;
+    const model = landmarkModels.find(candidate => candidate.id === item.id)!;
+    expect(item.position).toBeCloseTo(-679.0664839220405, 10);
+    expect(model.chance.tail).toEqual({ kind: "one-in", denominator: 8.065817517094388e67 });
+    expect(model.classification).toBe("Exact model");
+
+    const landmark = document.querySelector<HTMLButtonElement>('[data-landmark="shuffled-deck-specified-order"]')!;
+    const deckArt = sceneArtwork(item.id);
+    expect(deckArt.querySelector(".poker-hand")).toBeNull();
+    expect(deckArt.querySelector("text")?.textContent).toBe("A");
+    landmark.click();
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Reproduce one specified deck order");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("1 / 52!");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("specified before");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("N / 52!");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("whether earlier or later");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("never appeared before");
+    expect(document.querySelector("[data-detail-explanation]")?.textContent).toContain("neither claim can be guaranteed");
+    expect(document.querySelector<HTMLElement>("[data-detail-related]")?.hidden).toBe(false);
+    expect(document.querySelector('[data-related-landmark="uuid-v4-pair-collision"]')).not.toBeNull();
+    expect(document.querySelector('[data-related-landmark="sha256-pair-collision"]')).not.toBeNull();
+    expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a')?.href).toBe("https://math.ucr.edu/home/baez/games/games_10.html");
+    expect(document.querySelector("[data-detail-sources]")?.textContent).toContain("checked 27 October 2026");
+
+    const uuid = displayLandmarks.find(candidate => candidate.id === "uuid-v4-pair-collision")!;
+    expect(uuid.position).toBeCloseTo(-10 * Math.log10(2 ** 122 - 1), 10);
+    expect(uuid.chance.tail).toEqual({ kind: "one-in", denominator: 2 ** 122 });
+    expect(new DOMParser().parseFromString(uuid.art, "image/svg+xml").querySelector(".uuid-art")).not.toBeNull();
+    expect(relatedLandmarkIds[uuid.id]).toContain(item.id);
+    expect(relatedLandmarkIds[uuid.id]).toContain("sha256-pair-collision");
+    first.dispose();
+    history.replaceState(null, "", `#d=${uuid.position}`);
+    const second = render(390);
+    document.querySelector<HTMLButtonElement>('[data-landmark="uuid-v4-pair-collision"]')!.click();
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Two UUIDv4 values collide");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("1 / 2¹²²");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("one pair");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("birthday effect");
+    expect(document.querySelector('[data-related-landmark="shuffled-deck-specified-order"]')).not.toBeNull();
+    expect(document.querySelector('[data-related-landmark="sha256-pair-collision"]')).not.toBeNull();
+    expect(document.querySelector<HTMLAnchorElement>('[data-detail-sources] a')?.href).toBe("https://www.rfc-editor.org/rfc/rfc9562.html#section-5.4");
+
+    const sha256 = displayLandmarks.find(candidate => candidate.id === "sha256-pair-collision")!;
+    const sha256Model = landmarkModels.find(candidate => candidate.id === sha256.id)!;
+    expect(sha256.position).toBeCloseTo(-10 * Math.log10(2 ** 256 - 1), 10);
+    expect(sha256.chance.tail).toEqual({ kind: "one-in", denominator: 2 ** 256 });
+    expect(sha256Model.classification).toBe("Defined model");
+    expect(new DOMParser().parseFromString(sha256.art, "image/svg+xml").querySelector(".sha256-art[data-bits='256']")).not.toBeNull();
+    expect(relatedLandmarkIds[sha256.id]).toEqual(expect.arrayContaining([item.id, uuid.id]));
+    second.dispose();
+    history.replaceState(null, "", `#d=${sha256.position}`);
+    render(390);
+    document.querySelector<HTMLButtonElement>('[data-landmark="sha256-pair-collision"]')!.click();
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Two distinct inputs share one SHA-256 hash");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("1 / 2²⁵⁶");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("one specified pair");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("2¹²⁸-hash birthday scale");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("2⁻²⁵⁶");
+    expect(document.querySelector('[data-related-landmark="shuffled-deck-specified-order"]')).not.toBeNull();
+    expect(document.querySelector('[data-related-landmark="uuid-v4-pair-collision"]')).not.toBeNull();
+    const shaSources = [...document.querySelectorAll<HTMLAnchorElement>('[data-detail-sources] a')];
+    expect(shaSources.map(source => source.href)).toEqual([
+      "https://csrc.nist.gov/pubs/fips/180-4/upd1/final",
+      "https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final",
+    ]);
+    expect(document.querySelector("[data-detail-sources]")?.textContent).toContain("checked 27 October 2026");
+  });
+
+  it("compares two independently shuffled Rubik’s Cubes in one matching state", () => {
+    const cube = displayLandmarks.find(candidate => candidate.id === "rubik-state")!;
+    const model = landmarkModels.find(candidate => candidate.id === cube.id)!;
+    expect(cube.position).toBeCloseTo(-10 * Math.log10(43252003274489856000 - 1), 10);
+    expect(model.chance.tail).toEqual({ kind: "one-in", denominator: 43252003274489856000 });
+    expect(model.classification).toBe("Exact model");
+    expect(model.sourceIds).toEqual(["god-s-number-state-count"]);
+
+    history.replaceState(null, "", `#d=${cube.position}`);
+    render(390);
+    const art = sceneArtwork(cube.id);
+    expect(art.querySelector(".rubik-pair")).not.toBeNull();
+    const cubes = art.querySelectorAll(".rubik-cube");
+    expect(cubes).toHaveLength(2);
+    expect([...cubes].every(item => item.querySelectorAll(".rubik-sticker").length === 27)).toBe(true);
+    expect(cubes[0]?.innerHTML).toBe(cubes[1]?.innerHTML);
+
+    document.querySelector<HTMLButtonElement>('[data-landmark="rubik-state"]')!.click();
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Two shuffled 3 × 3 cubes match");
+    expect(document.querySelector("[data-detail-calculation]")?.textContent).toContain("1 matching state / 43,252,003,274,489,856,000");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("independently and uniformly");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("whole-cube rotations");
+    expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("physical hand shuffle only illustrates");
+    for (const id of ["shuffled-deck-specified-order", "uuid-v4-pair-collision", "sha256-pair-collision"]) {
+      expect(relatedLandmarkIds[cube.id]).toContain(id);
+      expect(document.querySelector(`[data-related-landmark="${id}"]`)).not.toBeNull();
+    }
+    expect(document.querySelector<HTMLAnchorElement>("[data-detail-sources] a")?.href).toBe("https://www.cube20.org/");
   });
 
   it("shows the authorized main-draw lottery losses as sourced ticket events", () => {

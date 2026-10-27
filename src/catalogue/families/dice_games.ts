@@ -1,4 +1,4 @@
-import { artwork, d20AdvantageArtwork, diceArtwork, diceOutcomeArtwork, polyhedralDieArtwork, scrabbleArtwork } from "../../artwork";
+import { artwork, d20AdvantageArtwork, diceArtwork, diceOutcomeArtwork, polyhedralDieArtwork, rubikPairArtwork, scrabbleArtwork } from "../../artwork";
 import { lowerRatio, upperRatio, oneIn, exact } from "../helpers";
 import type { LandmarkModel } from "../types";
 
@@ -16,7 +16,7 @@ export const dice_gamesModels = [
   { id: "three-dice-all-six", chance: lowerRatio(1, 216), size: 78, art: diceArtwork(3, 6, "#885d91", "#f5e6ff"), sourceIds: ["fair-independent-dice-model"], classification: exact },
   { id: "four-dice-all-identical", chance: lowerRatio(1, 216), size: 78, art: diceOutcomeArtwork([4, 4, 4, 4], "#a86b8f", "#ffe8f2"), sourceIds: ["fair-independent-dice-model"], classification: exact },
   { id: "first-roll-yahtzee", chance: lowerRatio(1, 1296), size: 78, art: diceArtwork(5, 4, "#b65a79", "#ffe8f2"), sourceIds: ["five-dice-model"], classification: exact },
-  { id: "rubik-state", chance: oneIn(43252003274489856000), size: 91, art: artwork("cube", "#d56645", "#f2d35d"), sourceIds: ["god-s-number-state-count"], classification: exact },
+  { id: "rubik-state", chance: oneIn(43252003274489856000), size: 91, art: rubikPairArtwork(), sourceIds: ["god-s-number-state-count"], classification: exact },
   { id: "french-scrabble-consonant", chance: lowerRatio(55, 102), size: 88, art: scrabbleArtwork("consonant", "#7c694d"), sourceIds: ["french-scrabble-federation-letter-distribution", "international-french-language-classic-scrabble-rules", "hasbro-english-scrabble-letter-distribution"], classification: exact },
   { id: "four-dice-any-match", chance: lowerRatio(13, 18), size: 82, art: diceOutcomeArtwork([4, 4, 2, 5], "#8a6d9d", "#f4e8ff"), sourceIds: ["fair-independent-dice-model"], classification: exact },
   { id: "yahtzee-any-match", chance: lowerRatio(49, 54), size: 84, art: diceOutcomeArtwork([4, 4, 2, 5, 1], "#9b617f", "#ffe9f3"), sourceIds: ["fair-independent-dice-model"], classification: exact },
