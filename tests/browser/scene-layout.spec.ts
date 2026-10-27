@@ -166,6 +166,39 @@ test("shows captions for readable mobile artwork beyond the former depth window"
   expect(observed.every(candidate => candidate.artSize >= 32 && candidate.titleInsideViewport)).toBe(true);
 });
 
+test("keeps every French Scrabble tile icon selectable at its exact depth", async ({ page }) => {
+  const ids = [
+    "french-scrabble-consonant",
+    "french-scrabble-vowel",
+    "french-scrabble-blank",
+    "french-scrabble-vowel-rack",
+    "french-scrabble-consonant-rack",
+    "french-scrabble-blank-rack",
+  ] as const;
+  for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }, { width: 1365, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    for (const id of ids) {
+      const landmark = displayLandmarks.find(item => item.id === id)!;
+      await openScene(page, "en", landmark.position);
+      if (id === "french-scrabble-vowel" || id === "french-scrabble-blank") {
+        const readoutOverlaps = await page.locator(".scale").evaluate((scale, landmarkId) => {
+          const art = scale.querySelector<HTMLElement>(`[data-landmark="${landmarkId}"] .art img`)!.getBoundingClientRect();
+          const overlapArea = (first: DOMRect, second: DOMRect) => Math.max(0, Math.min(first.right, second.right) - Math.max(first.left, second.left))
+            * Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top));
+          return ["[data-depth-readout]", "[data-current-readout-stack]", "[data-current-depth-marker] strong"]
+            .map(selector => scale.querySelector<HTMLElement>(selector)?.getBoundingClientRect())
+            .filter((box): box is DOMRect => box !== undefined)
+            .map(readout => overlapArea(art, readout));
+        }, id);
+        expect(readoutOverlaps, `${id} at ${viewport.width}px`).toEqual([0, 0, 0]);
+      }
+      await page.locator(`[data-landmark="${id}"] .art img`).click();
+      await expect(page.locator("[data-detail-panel][open]")).toBeVisible();
+      await expect(page.locator("[data-detail-title]")).toHaveText(landmark.title);
+    }
+  }
+});
+
 test("renders compact family connectors through their exact members", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 740 });
   const inspectAtDepth = async (depth: number) => {
