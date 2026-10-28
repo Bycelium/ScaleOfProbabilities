@@ -1554,6 +1554,40 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-event-marker]")).toBeNull();
   });
 
+  it("keeps an open detail and the scene stable while the sharing fallback is modal", () => {
+    const rendered = render();
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    document.querySelector<HTMLButtonElement>('[data-landmark="coin-heads"]')!.click();
+    const detail = document.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
+    const share = document.querySelector<HTMLButtonElement>("[data-open-share]")!;
+    const feedback = document.querySelector<HTMLAnchorElement>("[data-feedback-link]")!;
+    const depth = scale.dataset.depth;
+
+    expect(detail.open).toBe(true);
+    expect(detail.querySelector("[data-open-share]")).toBeNull();
+    expect(feedback.href).toBe("mailto:feedback.scaleofprobabilities@bycelium.com");
+    share.click();
+    const shareDialog = document.querySelector<HTMLDialogElement>("[data-share-dialog]")!;
+    expect(shareDialog.open).toBe(true);
+    expect(detail.open).toBe(true);
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: 120, bubbles: true, cancelable: true }));
+    scale.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }));
+    expect(scale.dataset.depth).toBe(depth);
+    expect(detail.open).toBe(true);
+
+    shareDialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    expect(shareDialog.open).toBe(false);
+    expect(detail.open).toBe(true);
+    expect(document.activeElement).toBe(share);
+
+    document.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!.click();
+    document.querySelector<HTMLInputElement>('[data-locale-choice="fr"]')!.click();
+    expect(share.getAttribute("aria-label")).toBe("Partager");
+    expect(feedback.getAttribute("aria-label")).toBe("Envoyer un commentaire");
+    rendered.dispose();
+  });
+
   it("travels continuously from details to a related chance and reveals it on arrival", () => {
     vi.useFakeTimers();
     const clock = new TestFrameClock();
@@ -2096,6 +2130,13 @@ describe("public probability exploration", () => {
     intro.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.click();
     clock.advanceTo(16);
     expect(detail.open).toBe(false);
+
+    document.querySelector<HTMLButtonElement>("[data-open-share]")!.click();
+    const shareDialog = document.querySelector<HTMLDialogElement>("[data-share-dialog]")!;
+    expect(shareDialog.open).toBe(true);
+    const sharedUrl = new URL(shareDialog.querySelector<HTMLAnchorElement>("[data-share-x]")!.href).searchParams.get("url");
+    expect(sharedUrl).toBe("https://deciban.bycelium.com/examples/die-six/");
+    shareDialog.querySelector<HTMLButtonElement>("[data-close-share]")!.click();
 
     scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -120, bubbles: true, cancelable: true }));
     expect(location.pathname).toBe("/");

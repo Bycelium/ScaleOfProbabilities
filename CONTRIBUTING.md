@@ -116,6 +116,12 @@ Every landmark ID is part of the public URL contract. Keep `/examples/<id>/` and
 
 When changing route metadata or preview generation, run `pnpm build` and inspect the generated HTML for canonical, alternate-language, Open Graph, Twitter card, static reference, sitemap, and robots fields. Follow [docs/seo-and-previews.md](docs/seo-and-previews.md).
 
+## Sharing and social GIFs
+
+The single Share icon uses the current URL. It opens the native operating-system share sheet when available, otherwise it opens the fallback bottom sheet. Keep the URL locale unchanged and do not add a sharing-language control. The Feedback toolbar icon uses `mailto:feedback.scaleofprobabilities@bycelium.com`.
+
+Regenerate `public/social/loto-journey.gif` when its scene, selected landmark, or visible probability changes. Follow [docs/sharing.md](docs/sharing.md) for the capture command, media review artifacts, and supported sharing destinations.
+
 ## Checks
 
 Run the focused checks after a catalogue or translation change:

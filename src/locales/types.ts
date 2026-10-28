@@ -23,6 +23,7 @@ export type UiTranslation = Readonly<{
   about: string;
   returnZero: string;
   language: string;
+  feedback: string;
   scaleAria: string;
   howToUse: string;
   allReferences: string;
@@ -54,6 +55,22 @@ export type UiTranslation = Readonly<{
   difference: string;
   referenceDisclosure: string;
   catalogueDisclosure: string;
+  share: Readonly<{
+    open: string;
+    title: string;
+    description: string;
+    close: string;
+    copyLink: string;
+    copiedLink: string;
+    copyCitation: string;
+    copiedCitation: string;
+    downloadGif: string;
+    copyUnavailable: string;
+    shareUnavailable: string;
+    nativeText: string;
+    nativeHomeText: string;
+    citationAccessed: string;
+  }>;
   privacy: Readonly<{
     title: string;
     review: string;

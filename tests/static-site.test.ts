@@ -51,6 +51,7 @@ describe("static page generation", () => {
       "/assets/index-123.js.map",
       "/social/neutral/home.png",
       `/social/en/${landmarkId}.png`,
+      "/social/loto-journey.gif",
       "/tests/helpers/fake-analytics-provider.ts",
     ]) expect(requestResource(pathname), pathname).toEqual({ next: true, status: undefined });
 
