@@ -78,7 +78,7 @@ test("keeps the French mobile detail clear of the complete toolbar", async ({ pa
   const { detail } = await exploreLotoRoute(page, "/fr/examples/france-loto-jackpot/", frenchLotoTitle);
   const toolbar = page.locator(".explorer-tools");
   await expect(detail).toBeVisible();
-  await expect(toolbar.locator("button:visible")).toHaveCount(3);
+  await expect(toolbar.locator("button:visible, a:visible")).toHaveCount(5);
 
   const bounds = await page.locator("body").evaluate(() => {
     const rectangle = (element: Element) => {
@@ -90,7 +90,7 @@ test("keeps the French mobile detail clear of the complete toolbar", async ({ pa
     return {
       detail: rectangle(detailElement),
       toolbar: rectangle(toolbarElement),
-      controls: [...toolbarElement.querySelectorAll<HTMLElement>("button:not([hidden])")].map(rectangle),
+      controls: [...toolbarElement.querySelectorAll<HTMLElement>("button:not([hidden]), a[href]")].map(rectangle),
     };
   });
 

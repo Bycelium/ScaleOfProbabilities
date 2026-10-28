@@ -31,6 +31,8 @@ const tap = async (session: CDPSession, y: number) => {
 };
 
 test("repeated mobile swipes gather speed, show travel rays, brake, and reverse cleanly", async ({ page }) => {
+  // This long CDP gesture sequence needs enough total time for its stricter stage-specific polls under load.
+  test.setTimeout(60_000);
   const scale = await prepareScale(page);
   const hyperspace = page.locator("[data-hyperspace]");
   const session = await page.context().newCDPSession(page);

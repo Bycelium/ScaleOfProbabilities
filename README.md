@@ -2,7 +2,7 @@
 
 The Scale of Probability is an interactive atlas of probabilities expressed in decibans, odds, and percentages. It places each event at its exact depth on a continuous radial scale and provides the model, assumptions, calculations, and sources behind each example.
 
-[![Explore the Scale of Probability: illustrated examples arranged around the current deciban depth](docs/assets/scale-preview.png)](https://deciban.bycelium.com)
+[![Animated journey from 0 decibans to the French Loto jackpot, showing 1 in 19,068,840](public/social/loto-journey.gif)](https://deciban.bycelium.com)
 
 **[Explore the live website](https://deciban.bycelium.com)**
 
@@ -12,7 +12,7 @@ Selecting an illustration or related example sets an exact destination and opens
 
 The atlas supports English, Français, 简体中文, and Español. A localized URL selects its language. A saved language choice then takes precedence over the browser’s ordered language preferences for neutral URLs. The shared language menu is available from the opening About dialog and the globe control; its **Show all references** checkbox includes examples associated with every region instead of the selected language’s default set.
 
-Each example has a stable URL. Use `/examples/<id>/` for the recipient’s language or `/en/examples/<id>/`, `/fr/examples/<id>/`, `/es/examples/<id>/`, or `/zh/examples/<id>/` to open a specific language. See [SEO and previews](docs/seo-and-previews.md) for static metadata, preview images, and release verification.
+Each example has a stable URL. Use `/examples/<id>/` for the recipient’s language or `/en/examples/<id>/`, `/fr/examples/<id>/`, `/es/examples/<id>/`, or `/zh/examples/<id>/` to open a specific language. The Share icon uses the current URL and opens the native device share sheet when available. See [SEO and previews](docs/seo-and-previews.md) for static metadata and preview images, and [sharing and social GIFs](docs/sharing.md) for the sharing controls and GIF regeneration.
 
 ## Contributing
 

@@ -18,7 +18,7 @@
             assert pkgs.lib.hasPrefix "24." pkgs.nodejs_24.version;
             assert pkgs.pnpm.version == "11.20.0";
             pkgs.mkShell {
-              packages = [ pkgs.nodejs_24 pkgs.pnpm ];
+              packages = [ pkgs.nodejs_24 pkgs.pnpm pkgs.ffmpeg ];
             };
         });
     };

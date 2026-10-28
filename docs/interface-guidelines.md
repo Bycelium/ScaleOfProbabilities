@@ -43,6 +43,7 @@ Read this guide before changing the scale scene, readout, navigation, details, A
 
 - Keep the About dialog keyboard accessible and modal. Leave the current-depth scene visible through a light backdrop around its opaque reading panel.
 - Keep probability-to-odds and odds-to-decibans equations in separate, explicitly labelled collapsed disclosures. Keep Turing history and the I. J. Good (1979) source beside the deciban explanation.
+- Keep one Share icon in the toolbar. It shares the current URL through the native operating-system sheet when available and otherwise opens the fallback bottom sheet. Keep its fallback actions ordered as Copy link, X, LinkedIn, Bluesky, and Copy citation. Keep the visible localized Feedback / Request toolbar link as `mailto:feedback.scaleofprobabilities@bycelium.com`.
 
 ## Locales and regional references
 

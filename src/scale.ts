@@ -7,6 +7,7 @@ import { createAnalytics, type Analytics } from "./analytics";
 import { getAnalyticsConfig } from "./analytics-config";
 import { renderReferenceArticle } from "./reference";
 import { updateDocumentMetadata } from "./seo";
+import { createSharingControl, type SharingControl } from "./sharing";
 import { parseSiteRoute, sitePath, type SiteRoute } from "./site";
 import { familyRailDefinitions, isFamilyRailLandmark, landmarkAngle, landmarkArtFactor, suppressedTitleIds, type LayoutBox, type TitleCandidate } from "./scene-layout";
 import {
@@ -190,11 +191,12 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   let retainPendingRouteItem = initialRouteItem !== undefined;
   let routeRequest = 0;
   let resumePendingRoute: () => void;
+  let sharing: SharingControl;
   const prerenderReference = root.querySelector<HTMLElement>("[data-prerender-reference]");
   const prerenderCatalogue = root.querySelector<HTMLElement>("[data-prerender-catalogue]");
 
   root.innerHTML = `<div class="atlas"><div data-page-content>
-    <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker"><button type="button" class="language-toggle" data-preferences-toggle="toolbar" aria-label="${locale.ui.language}" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">🌐</span></button></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
+    <header class="explorer-tools"><button type="button" class="return-zero" data-return-zero aria-label="${locale.ui.returnZero}" title="${locale.ui.returnZero}" hidden><svg class="return-zero-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.5"/><path d="M4 5v5h5M5 9a8 8 0 1 1-.4 5"/></svg><span data-return-label>${locale.ui.returnZero}</span></button><div class="language-picker"><button type="button" class="language-toggle" data-preferences-toggle="toolbar" aria-label="${locale.ui.language}" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">🌐</span></button></div><button type="button" class="toolbar-icon share-trigger" data-open-share aria-label="${locale.ui.share.open}" title="${locale.ui.share.open}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.3 10.8 7.4-4.4M8.3 13.2l7.4 4.4"/></svg></button><a class="toolbar-icon feedback-link" data-feedback-link href="mailto:feedback.scaleofprobabilities@bycelium.com" aria-label="${locale.ui.feedback}" title="${locale.ui.feedback}"><span data-feedback-label>${locale.ui.feedback}</span></a><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
     <section class="scale" tabindex="0" aria-label="${locale.ui.scaleAria}">
       <div class="ruler" data-ruler></div><canvas class="depth-rings" data-depth-rings aria-hidden="true"></canvas><i class="current-depth-ring" data-current-depth-ring aria-hidden="true"></i><svg class="family-rails" data-family-rails aria-hidden="true" focusable="false"></svg><div class="depth-scene" data-depth-scene><div class="landmarks" data-landmarks></div></div><div class="hyperspace" data-hyperspace aria-hidden="true"><i style="--angle:10deg;--delay:-.1s"></i><i style="--angle:40deg;--delay:-.45s"></i><i style="--angle:70deg;--delay:-.25s"></i><i style="--angle:100deg;--delay:-.6s"></i><i style="--angle:130deg;--delay:-.32s"></i><i style="--angle:160deg;--delay:-.05s"></i><i style="--angle:190deg;--delay:-.5s"></i><i style="--angle:220deg;--delay:-.18s"></i><i style="--angle:250deg;--delay:-.38s"></i><i style="--angle:280deg;--delay:-.56s"></i><i style="--angle:310deg;--delay:-.28s"></i><i style="--angle:340deg;--delay:-.68s"></i></div><p class="gap-caption" data-gap-caption aria-live="polite" hidden></p>
     </section>
@@ -236,6 +238,9 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   const dialog = root.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
   const introDialog = root.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
   const introButton = root.querySelector<HTMLButtonElement>("[data-open-intro]")!;
+  const shareButton = root.querySelector<HTMLButtonElement>("[data-open-share]")!;
+  const feedbackLink = root.querySelector<HTMLAnchorElement>("[data-feedback-link]")!;
+  const feedbackLabel = feedbackLink.querySelector<HTMLElement>("[data-feedback-label]")!;
   const toolbarPreferencesToggle = root.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!;
   const introPreferences = introDialog.querySelector<HTMLElement>(".intro-preferences")!;
   const introPreferencesToggle = introPreferences.querySelector<HTMLButtonElement>('[data-preferences-toggle="intro"]')!;
@@ -259,6 +264,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     if (mode === "push" && location.pathname !== path) history.pushState(null, "", path);
     else if (mode === "replace" && location.pathname !== path) history.replaceState(null, "", path);
     updateDocumentMetadata(route, item, locale);
+    sharing.update();
   };
   const landmarkIsAvailable = (item: DisplayLandmark): boolean => {
     if (retainPendingRouteItem && pendingRouteItem?.id === item.id) return true;
@@ -1017,6 +1023,11 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   const openIntroPreferences = (): void => preferencesMenu.open({ anchor: introPreferencesToggle, parent: introPreferences, placement: "intro" });
   toolbarPreferencesToggle.addEventListener("click", openToolbarPreferences);
   introPreferencesToggle.addEventListener("click", openIntroPreferences);
+  sharing = createSharingControl(root, shareButton, () => {
+    const route = parseSiteRoute(location.pathname) ?? {};
+    const item = route.landmarkId ? landmarksById.get(route.landmarkId) : undefined;
+    return { item, locale, route };
+  }, () => preferencesMenu.close(false));
   const onCloseDetails = (): void => closeDetails();
   closeButton.addEventListener("click", onCloseDetails);
   const onDialogKeydown = (event: KeyboardEvent): void => {
@@ -1027,7 +1038,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   };
   dialog.addEventListener("keydown", onDialogKeydown);
   const onRootKeydown = (event: KeyboardEvent): void => {
-    if (event.key !== "Escape" || event.defaultPrevented || !dialog.open) return;
+    if (event.key !== "Escape" || event.defaultPrevented || sharing.isOpen() || !dialog.open) return;
     event.preventDefault();
     closeDetails();
   };
@@ -1200,7 +1211,12 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     document.documentElement.lang = locale.code;
     document.title = locale.ui.title;
     introButton.textContent = locale.ui.about;
-    returnButton.textContent = locale.ui.returnZero;
+    returnButton.querySelector<HTMLElement>("[data-return-label]")!.textContent = locale.ui.returnZero;
+    returnButton.setAttribute("aria-label", locale.ui.returnZero);
+    returnButton.title = locale.ui.returnZero;
+    feedbackLink.setAttribute("aria-label", locale.ui.feedback);
+    feedbackLink.title = locale.ui.feedback;
+    feedbackLabel.textContent = locale.ui.feedback;
     scale.setAttribute("aria-label", locale.ui.scaleAria);
     toolbarPreferencesToggle.setAttribute("aria-label", locale.ui.language);
     introPreferencesToggle.setAttribute("aria-label", `${locale.ui.language}: ${locale.nativeName}`);
@@ -1261,6 +1277,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     render();
     if (selected && dialog.open) populateDetails(selected);
     renderPrivacyState();
+    sharing.update();
   };
 
   function selectLocale(code: LocaleCode): void {
@@ -1608,6 +1625,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   );
 
   const onWheel = (event: WheelEvent): void => {
+    if (sharing.isOpen()) return;
     const delta = event.deltaY;
     if (event.ctrlKey || delta === 0 || Math.abs(delta) <= Math.abs(event.deltaX)) return;
     event.preventDefault();
@@ -1638,7 +1656,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       : event.key === "ArrowDown"
         ? -1
         : 0;
-    if (direction === 0 || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || introDialog.open || privacyDialog.open) return;
+    if (direction === 0 || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || introDialog.open || privacyDialog.open || sharing.isOpen()) return;
     const target = event.target;
     const navigatesScene = target === document.body
       || target === document.documentElement
@@ -1825,6 +1843,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     toolbarPreferencesToggle.removeEventListener("click", openToolbarPreferences);
     introPreferencesToggle.removeEventListener("click", openIntroPreferences);
     preferencesMenu.destroy();
+    sharing.destroy();
     privacyDialog.querySelector<HTMLButtonElement>("[data-close-privacy]")!.removeEventListener("click", closePrivacy);
     privacyDialog.removeEventListener("keydown", onPrivacyKeydown);
     privacyDialog.removeEventListener("cancel", onPrivacyCancel);

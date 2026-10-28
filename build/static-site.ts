@@ -94,7 +94,7 @@ const writeRoute = async (outputDirectory: string, route: SiteRoute, html: strin
 const sitemap = (routes: readonly SiteRoute[]): string => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${routes.map(route => `  <url><loc>${siteUrl(route)}</loc></url>`).join("\n")}\n</urlset>\n`;
 
 const generatedResourcePath = (pathname: string): boolean => {
-  if (pathname === "/favicon.svg" || pathname === "/robots.txt" || pathname === "/sitemap.xml") return true;
+  if (pathname === "/favicon.svg" || pathname === "/robots.txt" || pathname === "/sitemap.xml" || pathname === "/social/loto-journey.gif") return true;
   if (/^\/assets\/(?:[^/]+\/)*[^/]+\.(?:css|js|map)$/iu.test(pathname)) return true;
   const socialPreview = pathname.match(/^\/social\/([^/]+)\/([^/]+)\.png$/iu);
   if (!socialPreview) return false;
