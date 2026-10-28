@@ -54,13 +54,6 @@ export const astronomyZH = {
     calculation: "p ≈ 0.28，按质量",
     assumptions: "NASA 的代表性混合物按质量约为 70% 氢、28% 氦和 2% 更重元素。模型抽取等质量份额，而非按原子计数。这是近似教学组成，不是每颗恒星的精确值，也不是整个银河系的实测汇总。",
   },
-  "stellar-hydrogen-helium-mass": {
-    title: "恒星中的氢或氦",
-    shortTitle: "普通恒星中的氢或氦",
-    explanation: "一颗有代表性的普通恒星几乎只由两种元素组成：按质量约有 98% 是氢或氦。",
-    calculation: "p ≈ 0.70 + 0.28 = 0.98，按质量",
-    assumptions: "NASA 的代表性混合物按质量约为 70% 氢、28% 氦和 2% 更重元素。模型抽取等质量份额，而非按原子计数。这是近似教学组成，不是每颗恒星的精确值，也不是整个银河系的实测汇总。",
-  },
   "main-sequence-star": {
     title: "随机选择的恒星处于主序阶段",
     shortTitle: "主序星",

@@ -209,7 +209,6 @@ test("keeps every new astronomy icon selectable at its exact depth on compact mo
     "terrestrial-massive-moon",
     "stellar-hydrogen-mass",
     "stellar-helium-mass",
-    "stellar-hydrogen-helium-mass",
     "main-sequence-star",
     "stellar-black-hole-baryonic-mass",
   ] as const;
@@ -224,6 +223,8 @@ test("keeps every new astronomy icon selectable at its exact depth on compact mo
 });
 
 test("keeps stellar hydrogen and its nearby landmarks selectable at their exact depths", async ({ page }) => {
+  // Two mobile viewports and nine depth journeys exceed Playwright's default test deadline.
+  test.setTimeout(60_000);
   const ids = [
     "stellar-hydrogen-mass",
     "ocean-point",

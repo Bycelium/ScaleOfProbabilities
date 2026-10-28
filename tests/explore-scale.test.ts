@@ -1704,7 +1704,6 @@ describe("public probability exploration", () => {
       "double-yolk-young-hens",
       "stellar-hydrogen-mass",
       "stellar-helium-mass",
-      "stellar-hydrogen-helium-mass",
       "main-sequence-star",
       "stellar-black-hole-baryonic-mass",
     ];
@@ -1712,7 +1711,6 @@ describe("public probability exploration", () => {
     expect(newIds.every(id => byId.has(id))).toBe(true);
     expect(byId.get("earth-sized-observed-exoplanet")?.position).toBeCloseTo(10 * Math.log10(558 / (4826 - 558)), 10);
     expect(byId.get("terrestrial-massive-moon")?.position).toBeCloseTo(-10 * Math.log10(11), 10);
-    expect(byId.get("stellar-hydrogen-helium-mass")?.position).toBeCloseTo(10 * Math.log10(49), 10);
     expect(byId.get("stellar-black-hole-baryonic-mass")?.position).toBeCloseTo(10 * Math.log10(.01 / .99), 10);
     expect(byId.get("four-dice-all-identical")?.position).toBeCloseTo(-10 * Math.log10(215), 10);
     expect(byId.get("four-dice-any-match")?.position).toBeCloseTo(10 * Math.log10(13 / 5), 10);
@@ -1728,7 +1726,7 @@ describe("public probability exploration", () => {
     expect(relatedLandmarkIds["four-dice-any-match"]).toContain("yahtzee-any-match");
     expect(relatedLandmarkIds["full-moon-15-days"]).toContain("full-moon-28-days");
     expect(relatedLandmarkIds["earth-sized-observed-exoplanet"]).toContain("terrestrial-massive-moon");
-    expect(relatedLandmarkIds["stellar-hydrogen-mass"]).toContain("stellar-hydrogen-helium-mass");
+    expect(relatedLandmarkIds["stellar-hydrogen-mass"]).toContain("stellar-helium-mass");
     expect(relatedLandmarkIds["stellar-black-hole-baryonic-mass"]).toEqual(expect.arrayContaining(["main-sequence-star", "sun-mass"]));
     expect(landmarkModels.find(item => item.id === "earth-sized-observed-exoplanet")).toMatchObject({
       chance: { side: "lower", tail: { kind: "ratio", numerator: 558, denominator: 4826 } },

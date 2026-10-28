@@ -20,19 +20,6 @@ export const sharePayload = ({ item, locale, route }: ShareSelection): ShareData
   url: siteUrl(route),
 });
 
-export const citationText = ({ item, locale, route }: ShareSelection, accessed = new Date()): string => {
-  const accessedDate = new Intl.DateTimeFormat(locale.numberLocale, { dateStyle: "long", timeZone: "UTC" }).format(accessed);
-  const title = item ? locale.landmarks[item.id].title : locale.ui.title;
-  const sources = item?.sources.map(source => {
-    const translated = locale.sources[source.id];
-    return source.href ? `${translated.label} (${source.href})` : translated.label;
-  });
-  return [
-    `Bycelium. ${title}. ${locale.ui.title}. ${siteUrl(route)}. ${locale.ui.share.citationAccessed} ${accessedDate}.`,
-    sources?.length ? `${locale.ui.sources}: ${sources.join("; ")}.` : undefined,
-  ].filter(Boolean).join("\n");
-};
-
 const isAbortError = (error: unknown): boolean => typeof error === "object" && error !== null && "name" in error && error.name === "AbortError";
 
 const icon = (content: string): string => `<span class="share-action-icon" aria-hidden="true">${content}</span>`;
@@ -60,7 +47,6 @@ export const createSharingControl = (
       <a data-share-linkedin target="_blank" rel="noreferrer">${linkedInIcon}<span>LinkedIn</span></a>
       <a data-share-bluesky target="_blank" rel="noreferrer">${blueskyIcon}<span>Bluesky</span></a>
     </div>
-    <div class="share-utilities"><button type="button" data-copy-citation></button></div>
     <p class="share-status" data-share-status role="status" aria-live="polite"></p>
     <textarea data-share-fallback readonly hidden></textarea>
   </div>`;
@@ -94,7 +80,6 @@ export const createSharingControl = (
     closeButton.setAttribute("aria-label", locale.ui.share.close);
     closeButton.title = locale.ui.share.close;
     dialog.querySelector<HTMLElement>("[data-copy-link-label]")!.textContent = locale.ui.share.copyLink;
-    dialog.querySelector<HTMLButtonElement>("[data-copy-citation]")!.textContent = locale.ui.share.copyCitation;
     x.href = `https://x.com/intent/tweet?text=${encodeURIComponent(String(payload.text))}&url=${encodeURIComponent(String(payload.url))}`;
     linkedIn.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(String(payload.url))}`;
     bluesky.href = `https://bsky.app/intent/compose?text=${encodeURIComponent(shareText)}`;
@@ -165,7 +150,6 @@ export const createSharingControl = (
     }
     const selection = getSelection();
     if (target.closest("[data-copy-link]")) void copy(siteUrl(selection.route), selection.locale.ui.share.copiedLink, selection.locale.ui.share.copyLink);
-    else if (target.closest("[data-copy-citation]")) void copy(citationText(selection), selection.locale.ui.share.copiedCitation, selection.locale.ui.share.copyCitation);
   };
   const onDialogCancel = (event: Event): void => {
     event.preventDefault();

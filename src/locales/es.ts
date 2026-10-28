@@ -50,13 +50,10 @@ export const es: LocaleDefinition = {
       close: "Cerrar las opciones para compartir",
       copyLink: "Copiar enlace",
       copiedLink: "Enlace copiado.",
-      copyCitation: "Copiar cita",
-      copiedCitation: "Cita copiada.",
       copyUnavailable: "No se puede copiar. Selecciona y copia el texto de abajo.",
       shareUnavailable: "No se abrió el menú del dispositivo. Elige una opción abajo.",
       nativeText: "Explora esta probabilidad:",
       nativeHomeText: "Explora eventos desde lo cotidiano hasta lo casi imposible.",
-      citationAccessed: "Consultado el",
     },
     privacy: {
       title: "Privacidad y analítica",
