@@ -1,10 +1,13 @@
-import { displayLandmarks, regionalLandmarkLocales, relatedLandmarkIds, type DisplayLandmark, type LandmarkDiagnostic, type Source } from "./catalogue";
+import { displayLandmarks, regionalLandmarkLocales, relatedLandmarkIds, type DisplayLandmark, type LandmarkDiagnostic } from "./catalogue";
 import { localeChoices, locales, localizeLandmark, resolveInitialLocale, saveLocale, translateArtwork, type LocaleCode, type LocaleDefinition } from "./locales";
 import { fillTemplate } from "./locales/helpers";
 import { chanceAt, formatDecibans, formatOdds, formatProbability, formatProbabilityPercent } from "./probability";
 import { createPreferencesMenu } from "./preferences-menu";
 import { createAnalytics, type Analytics } from "./analytics";
 import { getAnalyticsConfig } from "./analytics-config";
+import { renderReferenceArticle } from "./reference";
+import { updateDocumentMetadata } from "./seo";
+import { parseSiteRoute, sitePath, type SiteRoute } from "./site";
 import { familyRailDefinitions, isFamilyRailLandmark, landmarkAngle, landmarkArtFactor, suppressedTitleIds, type LayoutBox, type TitleCandidate } from "./scene-layout";
 import {
   GestureSequence,
@@ -70,6 +73,7 @@ const DEFAULT_CURRENT_STACK_HEIGHT = 84;
 
 export type ScaleDependencies = Readonly<{
   analytics?: Analytics;
+  initialRoute?: SiteRoute;
 }>;
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.max(minimum, Math.min(maximum, value));
@@ -90,7 +94,8 @@ const axisColor = (position: number): string => {
 };
 const sceneRebaseDecibans = (width: number): number => width <= 640 ? COMPACT_SCENE_REBASE_DECIBANS : SCENE_REBASE_DECIBANS;
 
-const initialView = (minimum: number, maximum: number): View => {
+const initialView = (minimum: number, maximum: number, startAtZero = false): View => {
+  if (startAtZero) return { center: 0 };
   const match = location.hash.match(/^#d=(-?\d+(?:\.\d+)?)$/);
   if (match) return { center: clamp(Number(match[1]), minimum, maximum) };
   try {
@@ -126,30 +131,11 @@ const saveView = (view: View): void => {
   }
 };
 
-const sourceList = (sources: readonly Source[]): DocumentFragment => {
-  const fragment = document.createDocumentFragment();
-  const list = document.createElement("ul");
-  for (const source of sources) {
-    const item = document.createElement("li");
-    if (source.href) {
-      const link = document.createElement("a");
-      link.href = source.href;
-      link.textContent = source.label;
-      link.target = "_blank";
-      link.rel = "noreferrer";
-      item.append(link);
-    } else {
-      item.append(source.label);
-    }
-    if (source.note) item.append(` — ${source.note}`);
-    list.append(item);
-  }
-  fragment.append(list);
-  return fragment;
-};
-
 export function createScale(root: HTMLElement, dependencies: ScaleDependencies = {}): () => void {
-  let locale = resolveInitialLocale();
+  const initialRoute = dependencies.initialRoute ?? parseSiteRoute(location.pathname) ?? {};
+  const initialRouteItem = initialRoute.landmarkId ? displayLandmarks.find(item => item.id === initialRoute.landmarkId) : undefined;
+  let routeLocalePinned = initialRoute.locale !== undefined;
+  let locale = resolveInitialLocale(initialRoute.locale);
   const analyticsConfig = dependencies.analytics ? null : getAnalyticsConfig();
   const analytics = dependencies.analytics ?? createAnalytics(analyticsConfig, locale.code);
   let analyticsLocale = locale.code;
@@ -159,7 +145,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     const regionalLocales = regionalLandmarkLocales[item.id];
     return allReferences || !regionalLocales || regionalLocales.includes(locale.code);
   });
-  let view = initialView(Math.min(...initiallyAvailable.map(item => item.position)), Math.max(...initiallyAvailable.map(item => item.position)));
+  let view = initialView(Math.min(...initiallyAvailable.map(item => item.position)), Math.max(...initiallyAvailable.map(item => item.position)), initialRouteItem !== undefined);
   let selected: DisplayLandmark | undefined;
   let active: DisplayLandmark | undefined;
   let restoreFocus: HTMLElement | undefined;
@@ -199,6 +185,13 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   let privacyRestoreFocus: HTMLElement | undefined;
   let suppressLandmarkClick = false;
   let lastPersistedCenter = view.center;
+  let pendingRouteItem = initialRouteItem;
+  let pendingRouteMode: "push" | "replace" | "none" = "none";
+  let retainPendingRouteItem = initialRouteItem !== undefined;
+  let routeRequest = 0;
+  let resumePendingRoute: () => void;
+  const prerenderReference = root.querySelector<HTMLElement>("[data-prerender-reference]");
+  const prerenderCatalogue = root.querySelector<HTMLElement>("[data-prerender-catalogue]");
 
   root.innerHTML = `<div class="atlas"><div data-page-content>
     <header class="explorer-tools"><button class="return-zero" data-return-zero hidden>${locale.ui.returnZero}</button><div class="language-picker"><button type="button" class="language-toggle" data-preferences-toggle="toolbar" aria-label="${locale.ui.language}" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">🌐</span></button></div><button class="read-scale" data-open-intro>${locale.ui.about}</button></header>
@@ -218,11 +211,12 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       <div class="intro-directions"><svg viewBox="0 0 260 180" aria-hidden="true"><path class="intro-rope" d="M128.5 4h3l-1.5 131Z"/><g class="intro-rings"><circle cx="130" cy="135" r="142"/><circle cx="130" cy="135" r="80"/><circle cx="130" cy="135" r="45"/><circle cx="130" cy="135" r="25"/><circle cx="130" cy="135" r="14"/><circle cx="130" cy="135" r="8"/></g><g class="intro-ticks"><path d="M124 55h12M125 90h10M126 110h8"/></g><path class="intro-outward" d="m130 76V30m0 0-5 7m5-7 5 7"/><path class="intro-inward" d="m130 104v24m0 0-5-7m5 7 5-7"/></svg><p><span class="rarer" data-intro-direction-rarer>${locale.ui.introDirectionRarer}</span><span class="likely" data-intro-direction-likely>${locale.ui.introDirectionLikely}</span></p></div>
       <h2 data-how-to-use>${locale.ui.howToUse}</h2>
       <p data-intro-navigation>${locale.ui.introNavigation}</p>
+      <div data-prerender-disclosures></div>
     </div>
     <footer class="intro-actions"><div data-intro-consent${privacyAvailable ? "" : " hidden"}><p><span data-intro-consent-description>${locale.ui.privacy.participationDescription}</span> <button type="button" class="intro-privacy-link" data-open-privacy data-privacy-from-description>${locale.ui.privacy.more}</button></p><div class="intro-consent" role="group" aria-label="${locale.ui.privacy.participationLabel}"><button type="button" data-consent-choice="accepted">${locale.ui.privacy.participate}</button><button type="button" data-consent-choice="declined">${locale.ui.privacy.doNotParticipate}</button></div></div><div class="intro-primary-actions"><button type="button" data-open-privacy data-privacy-from-intro>${locale.ui.privacy.review}</button><button data-dismiss-intro${privacyAvailable && analytics.getConsent() === "unknown" ? " disabled" : ""}>${locale.ui.explore}</button></div><p class="intro-credit"><span data-credit-prefix>${locale.ui.creditPrefix}</span> <a href="https://www.htwins.net/scale2/" data-credit-title>${locale.ui.creditTitle}</a>, <span data-credit-by>${locale.ui.creditBy}</span></p></footer>
   </dialog>
   <dialog class="privacy-dialog" data-privacy-dialog aria-modal="true" aria-labelledby="privacy-heading"><button type="button" data-close-privacy aria-label="${locale.ui.privacy.close}">×</button><h2 id="privacy-heading" tabindex="-1" data-privacy-title>${locale.ui.privacy.title}</h2><p class="privacy-status"><strong data-privacy-dialog-status-label>${locale.ui.privacy.statusLabel}</strong> <span data-privacy-dialog-status></span></p><section aria-labelledby="privacy-analytics-heading"><h3 id="privacy-analytics-heading" data-privacy-analytics-heading>${locale.ui.privacy.analyticsHeading}</h3><p data-privacy-analytics-description>${locale.ui.privacy.analyticsDescription}</p><div class="privacy-actions" data-privacy-actions><button type="button" data-consent-choice="accepted">${locale.ui.privacy.allow}</button></div><p data-privacy-identifier-note>${locale.ui.privacy.identifierNote}</p><p data-privacy-sample-note>${locale.ui.privacy.sampleNote}</p><p data-privacy-retention-note>${locale.ui.privacy.retentionNote}</p><p data-privacy-choice-description>${locale.ui.privacy.choiceDescription}</p></section><section aria-labelledby="privacy-controller-heading"><h3 id="privacy-controller-heading" data-privacy-controller-heading>${locale.ui.privacy.controllerHeading}</h3><p data-privacy-controller-description>${locale.ui.privacy.controllerDescription}</p><p><a data-privacy-registry href="https://annuaire-entreprises.data.gouv.fr/entreprise/bycelium-919837187" target="_blank" rel="noreferrer">${locale.ui.privacy.registry}</a></p><p><span data-privacy-rights-contact>${locale.ui.privacy.rightsContact}</span> <a href="mailto:gdpr@bycelium.com">gdpr@bycelium.com</a><br><span data-privacy-general-contact>${locale.ui.privacy.generalContact}</span> <a href="mailto:contact@bycelium.com">contact@bycelium.com</a></p></section><section aria-labelledby="privacy-providers-heading"><h3 id="privacy-providers-heading" data-privacy-providers-heading>${locale.ui.privacy.providersHeading}</h3><p data-privacy-providers-description>${locale.ui.privacy.providersDescription}</p><p><a data-privacy-provider-policy href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noreferrer">${locale.ui.privacy.providerPrivacy}</a> · <a data-privacy-provider-dpa href="https://vercel.com/legal/dpa" target="_blank" rel="noreferrer">${locale.ui.privacy.providerDpa}</a></p><p data-privacy-technical-logs>${locale.ui.privacy.technicalLogs}</p></section><section aria-labelledby="privacy-rights-heading"><h3 id="privacy-rights-heading" data-privacy-rights-heading>${locale.ui.privacy.rightsHeading}</h3><p data-privacy-rights-description>${locale.ui.privacy.rightsDescription}</p><p><a data-privacy-cnil href="https://www.cnil.fr/en/contact-us" target="_blank" rel="noreferrer">${locale.ui.privacy.cnil}</a></p></section><section aria-labelledby="privacy-local-heading"><h3 id="privacy-local-heading" data-privacy-local-heading>${locale.ui.privacy.localHeading}</h3><p data-privacy-local-description>${locale.ui.privacy.localDescription}</p></section></dialog>
-  <dialog data-detail-panel aria-labelledby="detail-heading"><button data-close-detail aria-label="${locale.ui.closeDetails}">×</button><div data-detail-content><div data-detail-art></div><p class="eyebrow" data-detail-kind></p><h2 id="detail-heading" data-detail-title></h2><p data-detail-explanation></p><section class="detail-related" data-detail-related hidden><h3 data-explore-on-scale>${locale.ui.exploreOnScale}</h3><div data-detail-related-links></div></section><dl><div><dt data-calculation-label>${locale.ui.calculation}</dt><dd data-detail-calculation></dd></div><div data-detail-diagnostic-section hidden><dt data-diagnostic-label></dt><dd data-detail-diagnostic hidden></dd></div><div><dt data-assumptions-label>${locale.ui.assumptions}</dt><dd data-detail-assumptions></dd></div><div data-detail-advice-section hidden><dt data-advice-label>${locale.ui.securityAdvice}</dt><dd data-detail-advice></dd></div><div><dt data-sources-label>${locale.ui.sources}</dt><dd data-detail-sources></dd></div></dl></div></dialog></div>`;
+  <dialog data-detail-panel aria-labelledby="detail-heading"><button data-close-detail aria-label="${locale.ui.closeDetails}">×</button><div data-detail-content><div data-detail-art></div><p class="eyebrow" data-detail-kind></p><div data-detail-reference></div><section class="detail-related" data-detail-related hidden><h3 data-explore-on-scale>${locale.ui.exploreOnScale}</h3><div data-detail-related-links></div></section><section data-detail-diagnostic-section hidden><h3 data-diagnostic-label></h3><div data-detail-diagnostic hidden></div></section><section data-detail-advice-section hidden><h3 data-advice-label>${locale.ui.securityAdvice}</h3><p data-detail-advice></p></section></div></dialog></div>`;
 
   const page = root.querySelector<HTMLElement>("[data-page-content]")!;
   const scale = root.querySelector<HTMLElement>(".scale")!;
@@ -258,7 +252,16 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   const artworkImageSources = new Map<string, string>();
   const landmarksById = new Map<string, DisplayLandmark>(displayLandmarks.map(item => [item.id, item]));
   const localized = (item: DisplayLandmark): DisplayLandmark => localizeLandmark(item, locale);
+  const homeRoute = (): SiteRoute => routeLocalePinned ? { locale: locale.code } : {};
+  const itemRoute = (item: DisplayLandmark): SiteRoute => ({ ...homeRoute(), landmarkId: item.id });
+  const applyHistoryRoute = (route: SiteRoute, item: DisplayLandmark | undefined, mode: "push" | "replace" | "none"): void => {
+    const path = sitePath(route);
+    if (mode === "push" && location.pathname !== path) history.pushState(null, "", path);
+    else if (mode === "replace" && location.pathname !== path) history.replaceState(null, "", path);
+    updateDocumentMetadata(route, item, locale);
+  };
   const landmarkIsAvailable = (item: DisplayLandmark): boolean => {
+    if (retainPendingRouteItem && pendingRouteItem?.id === item.id) return true;
     if (selected?.id === item.id && dialog.open) return true;
     const regionalLocales = regionalLandmarkLocales[item.id];
     return allReferences || !regionalLocales || regionalLocales.includes(locale.code);
@@ -284,6 +287,61 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     const source = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.outerHTML)}`;
     artworkImageSources.set(key, source);
     return source;
+  };
+
+  const renderPrerenderDisclosures = (): void => {
+    const container = introDialog.querySelector<HTMLElement>("[data-prerender-disclosures]")!;
+    const disclosures: HTMLDetailsElement[] = [];
+    if (initialRouteItem || prerenderReference) {
+      const details = document.createElement("details");
+      details.className = "prerender-disclosure";
+      const summary = document.createElement("summary");
+      summary.textContent = locale.ui.referenceDisclosure;
+      const content = document.createElement("div");
+      content.dataset.prerenderReference = "";
+      content.innerHTML = prerenderReference?.innerHTML ?? "";
+      if (initialRouteItem) {
+        const template = document.createElement("template");
+        template.innerHTML = renderReferenceArticle(initialRouteItem, locale);
+        const localizedArticle = template.content.firstElementChild!;
+        const existingArticle = content.querySelector("[data-reference-article]");
+        if (existingArticle) existingArticle.replaceWith(localizedArticle);
+        else content.append(localizedArticle);
+      }
+      details.append(summary, content);
+      disclosures.push(details);
+    }
+    if (!initialRouteItem || prerenderCatalogue) {
+      const details = document.createElement("details");
+      details.className = "prerender-disclosure";
+      const summary = document.createElement("summary");
+      summary.textContent = locale.ui.catalogueDisclosure;
+      const content = document.createElement("div");
+      content.dataset.prerenderCatalogue = "";
+      content.innerHTML = prerenderCatalogue?.innerHTML ?? "";
+      content.querySelector("h1")?.replaceChildren(locale.ui.title);
+      const description = content.querySelector("p");
+      if (description) {
+        const template = document.createElement("template");
+        template.innerHTML = `${locale.ui.probabilityExplanation} ${locale.ui.decibansExplanation}`;
+        description.textContent = template.content.textContent;
+      }
+      const list = document.createElement("ol");
+      for (const item of displayLandmarks) {
+        const entry = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = sitePath({ locale: routeLocalePinned ? locale.code : undefined, landmarkId: item.id });
+        link.textContent = localized(item).title;
+        entry.append(link);
+        list.append(entry);
+      }
+      const existingList = content.querySelector("ol");
+      if (existingList) existingList.replaceWith(list);
+      else content.append(list);
+      details.append(summary, content);
+      disclosures.push(details);
+    }
+    container.replaceChildren(...disclosures);
   };
 
   ruler.innerHTML = `<div class="depth-gauge"><div class="depth-readout-group" data-center-marker><div class="depth-readout" data-depth-readout><span class="probability"><small class="readout-label" data-probability-label></small> <span data-probability-value></span></span></div><span class="current-depth-marker" data-current-depth-marker><i></i><span class="current-readout-stack" data-current-readout-stack><span class="odds"><small class="readout-label" data-odds-label></small> <span data-odds-value></span></span><strong></strong></span></span></div><i class="depth-spoke" data-depth-spoke></i></div>`;
@@ -842,20 +900,42 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
 
   const populateDetails = (item: DisplayLandmark): void => {
     const translated = localized(item);
+    const relatedSection = dialog.querySelector<HTMLElement>("[data-detail-related]")!;
+    const diagnosticSection = dialog.querySelector<HTMLElement>("[data-detail-diagnostic-section]")!;
+    const adviceSection = dialog.querySelector<HTMLElement>("[data-detail-advice-section]")!;
+    relatedSection.remove();
+    diagnosticSection.remove();
+    adviceSection.remove();
     const detailArt = dialog.querySelector<HTMLElement>("[data-detail-art]")!;
     detailArt.innerHTML = item.art;
     translateArtwork(detailArt, locale);
     const kind = dialog.querySelector<HTMLElement>("[data-detail-kind]")!;
     kind.hidden = item.classification === undefined;
     kind.textContent = item.classification ? locale.ui.classification[item.classification] : "";
-    dialog.querySelector<HTMLElement>("[data-detail-title]")!.textContent = translated.title;
-    dialog.querySelector<HTMLElement>("[data-detail-explanation]")!.textContent = translated.explanation;
-    dialog.querySelector<HTMLElement>("[data-detail-calculation]")!.textContent = translated.calculation;
+    const reference = dialog.querySelector<HTMLElement>("[data-detail-reference]")!;
+    reference.innerHTML = renderReferenceArticle(item, locale);
+    const article = reference.querySelector<HTMLElement>("[data-reference-article]")!;
+    article.querySelector(".reference-classification")?.remove();
+    const title = article.querySelector<HTMLElement>('[data-reference-section="summary"] h2')!;
+    title.id = "detail-heading";
+    title.dataset.detailTitle = "";
+    article.querySelector<HTMLElement>('[data-reference-section="summary"] > p:last-child')!.dataset.detailExplanation = "";
+    article.querySelector<HTMLElement>('[data-reference-section="calculation"] h3')!.dataset.calculationLabel = "";
+    article.querySelector<HTMLElement>('[data-reference-section="calculation"] p')!.dataset.detailCalculation = "";
+    article.querySelector<HTMLElement>('[data-reference-section="assumptions"] h3')!.dataset.assumptionsLabel = "";
+    article.querySelector<HTMLElement>('[data-reference-section="assumptions"] p')!.dataset.detailAssumptions = "";
+    const sourceSection = article.querySelector<HTMLElement>('[data-reference-section="sources"]')!;
+    sourceSection.querySelector<HTMLElement>("h3")!.dataset.sourcesLabel = "";
+    sourceSection.dataset.detailSources = "";
+    article.querySelector('[data-reference-section="advice"]')?.remove();
+    article.querySelector('[data-reference-section="related"]')?.remove();
+    const summary = article.querySelector<HTMLElement>('[data-reference-section="summary"]')!;
+    const calculation = article.querySelector<HTMLElement>('[data-reference-section="calculation"]')!;
+    const assumptions = article.querySelector<HTMLElement>('[data-reference-section="assumptions"]')!;
+    summary.after(relatedSection);
+    calculation.after(diagnosticSection);
+    assumptions.after(adviceSection);
     renderDiagnostic(item.diagnostic);
-    dialog.querySelector<HTMLElement>("[data-detail-assumptions]")!.textContent = translated.assumptions;
-    const sources = dialog.querySelector<HTMLElement>("[data-detail-sources]")!;
-    sources.replaceChildren(sourceList(translated.sources));
-    const adviceSection = dialog.querySelector<HTMLElement>("[data-detail-advice-section]")!;
     const advice = dialog.querySelector<HTMLElement>("[data-detail-advice]")!;
     advice.replaceChildren();
     adviceSection.hidden = !translated.advice;
@@ -868,7 +948,6 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
       link.addEventListener("click", () => travelToRelated(target));
       advice.append(translated.advice.before, link, translated.advice.after);
     }
-    const relatedSection = dialog.querySelector<HTMLElement>("[data-detail-related]")!;
     const relatedLinks = dialog.querySelector<HTMLElement>("[data-detail-related-links]")!;
     const related = (relatedLandmarkIds[item.id] ?? []).map(id => landmarksById.get(id)!).filter(landmarkIsAvailable);
     const buttons = related.map(target => {
@@ -892,8 +971,10 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     relatedSection.hidden = buttons.length === 0;
   };
 
-  const openDetails = (item: DisplayLandmark): void => {
+  const openDetails = (item: DisplayLandmark, routeMode: "push" | "replace" | "none" = "push"): void => {
     cancelTravel();
+    pendingRouteItem = undefined;
+    retainPendingRouteItem = false;
     selected = item;
     active = item;
     restoreFocus = document.activeElement as HTMLElement;
@@ -904,9 +985,10 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     render();
     dialog.querySelector<HTMLButtonElement>("[data-close-detail]")!.focus();
     analytics.openExample(item.id);
+    applyHistoryRoute(itemRoute(item), item, routeMode);
   };
 
-  const closeDetails = (returnFocus = true): void => {
+  const closeDetails = (returnFocus = true, updateRoute = true): void => {
     const wasOpen = dialog.open;
     dialog.removeAttribute("open");
     selected = undefined;
@@ -914,6 +996,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     sceneOrigin = undefined;
     render();
     if (wasOpen) analytics.closeExample();
+    if (wasOpen && updateRoute) applyHistoryRoute(homeRoute(), undefined, "replace");
     if (!returnFocus) return;
     if (restoreFocus?.isConnected && !restoreFocus.hidden) restoreFocus.focus();
     else scale.focus();
@@ -1016,12 +1099,20 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     if (restore) introRestoreFocus?.focus();
     if (clearRestore) introRestoreFocus = undefined;
     syncExampleVisibility();
+    if (remember && !allowUnanswered) resumePendingRoute();
   };
   const closeIntro = (): void => hideIntro();
+  const isHiddenByClosedDetails = (element: HTMLElement, modal: HTMLDialogElement): boolean => {
+    for (let parent = element.parentElement; parent && parent !== modal; parent = parent.parentElement) {
+      const isDirectSummary = element.tagName === "SUMMARY" && element.parentElement === parent;
+      if (parent instanceof HTMLDetailsElement && !parent.open && !isDirectSummary) return true;
+    }
+    return false;
+  };
   const trapModalFocus = (event: KeyboardEvent, modal: HTMLDialogElement): void => {
     if (event.key !== "Tab") return;
     const focusable = [...modal.querySelectorAll<HTMLElement>('button:not([disabled]), summary, a[href], input:not([disabled]), select:not([disabled])')]
-      .filter(element => !element.closest("[hidden]") && !(element instanceof HTMLInputElement && element.type === "radio" && !element.checked));
+      .filter(element => !element.closest("[hidden]") && !isHiddenByClosedDetails(element, modal) && !(element instanceof HTMLInputElement && element.type === "radio" && !element.checked));
     const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
     const nextIndex = event.shiftKey
       ? (currentIndex <= 0 ? focusable.length - 1 : currentIndex - 1)
@@ -1164,10 +1255,8 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     privacyDialog.querySelector<HTMLElement>("[data-privacy-local-description]")!.textContent = locale.ui.privacy.localDescription;
     closeButton.setAttribute("aria-label", locale.ui.closeDetails);
     dialog.querySelector<HTMLElement>("[data-explore-on-scale]")!.textContent = locale.ui.exploreOnScale;
-    dialog.querySelector<HTMLElement>("[data-calculation-label]")!.textContent = locale.ui.calculation;
-    dialog.querySelector<HTMLElement>("[data-assumptions-label]")!.textContent = locale.ui.assumptions;
     dialog.querySelector<HTMLElement>("[data-advice-label]")!.textContent = locale.ui.securityAdvice;
-    dialog.querySelector<HTMLElement>("[data-sources-label]")!.textContent = locale.ui.sources;
+    renderPrerenderDisclosures();
     sceneOrigin = undefined;
     render();
     if (selected && dialog.open) populateDetails(selected);
@@ -1177,7 +1266,10 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   function selectLocale(code: LocaleCode): void {
     locale = locales[code];
     saveLocale(locale);
+    routeLocalePinned = true;
     applyLocale();
+    const routeItem = selected ?? (retainPendingRouteItem ? pendingRouteItem : undefined);
+    applyHistoryRoute(routeItem ? itemRoute(routeItem) : homeRoute(), routeItem, "replace");
   }
 
   function setAllReferences(checked: boolean): void {
@@ -1185,6 +1277,14 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     allReferences = checked;
     saveAllReferences(allReferences);
     preferencesMenu.update(locale, allReferences);
+    if (pendingRouteItem && !retainPendingRouteItem) {
+      const regionalLocales = regionalLandmarkLocales[pendingRouteItem.id];
+      if (!allReferences && regionalLocales && !regionalLocales.includes(locale.code)) {
+        pendingRouteItem = undefined;
+        routeRequest += 1;
+        applyHistoryRoute(homeRoute(), undefined, "replace");
+      }
+    }
     if (active && !landmarkIsAvailable(active)) active = selected;
     sceneOrigin = undefined;
     render();
@@ -1205,6 +1305,14 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     brakingIntent = undefined;
     clearTravelPresentation();
     persistView();
+  };
+
+  const departEventRoute = (): void => {
+    routeRequest += 1;
+    pendingRouteItem = undefined;
+    retainPendingRouteItem = false;
+    if (dialog.open) closeDetails(false, false);
+    applyHistoryRoute(homeRoute(), undefined, "replace");
   };
 
   const nextLandmarkPosition = (direction: number, position: number): number | undefined => {
@@ -1365,7 +1473,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
 
   const startTravel = (target: number, direction: number, { onArrival, initialVelocity = 0, startedAt = performance.now(), distanceBeforeSegment = 0, durationOverride, speedLimit, brakingDirection, brakingGestureId }: TravelOptions = {}, retargeting = false): void => {
     if (!retargeting) cancelTravel();
-    if (dialog.open) closeDetails(false);
+    if (dialog.open) closeDetails(false, false);
     restoreFocus = undefined;
     const start = view.center;
     const distance = Math.abs(target - start);
@@ -1391,7 +1499,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   };
 
   const travelInDirection = (direction: number, directDelta: number, inputVelocity: number, gestureId: number, momentumGain: number, lockedTarget: number | undefined, speedLimit: number, naturalGapAcceleration: boolean): void => {
-    if (dialog.open) closeDetails(false);
+    if (dialog.open || pendingRouteItem) departEventRoute();
     restoreFocus = undefined;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       const intended = clampToCatalogue(view.center + directDelta);
@@ -1420,6 +1528,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   };
 
   const returnToZero = (): void => {
+    if (dialog.open || pendingRouteItem) departEventRoute();
     lastTravelInputAt = undefined;
     const restoreScaleFocus = document.activeElement === returnButton;
     const direction = Math.sign(-view.center);
@@ -1432,16 +1541,45 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   travelToRelated = (target: DisplayLandmark): void => {
     lastTravelInputAt = undefined;
     scale.focus();
+    const request = ++routeRequest;
+    pendingRouteItem = target;
+    pendingRouteMode = "push";
+    retainPendingRouteItem = false;
     const direction = Math.sign(target.position - view.center);
-    startTravel(target.position, direction, { onArrival: () => openDetails(target) });
+    startTravel(target.position, direction, { onArrival: () => {
+      if (request === routeRequest) openDetails(target, pendingRouteMode);
+    } });
   };
 
   travelToLandmark = (target: DisplayLandmark): void => {
     lastTravelInputAt = undefined;
+    const request = ++routeRequest;
+    pendingRouteItem = target;
+    pendingRouteMode = "push";
+    retainPendingRouteItem = false;
     active = target;
     render();
     const direction = Math.sign(target.position - view.center);
-    startTravel(target.position, direction, { onArrival: () => openDetails(target) });
+    startTravel(target.position, direction, { onArrival: () => {
+      if (request === routeRequest) openDetails(target, pendingRouteMode);
+    } });
+  };
+
+  resumePendingRoute = (): void => {
+    const target = pendingRouteItem;
+    if (!target || introDialog.open || privacyDialog.open || travel) return;
+    const request = ++routeRequest;
+    active = target;
+    sceneOrigin = undefined;
+    render();
+    const direction = Math.sign(target.position - view.center);
+    const naturalDuration = travelDuration(Math.abs(target.position - view.center), 0, undefined, TRAVEL_DURATION_CONFIG);
+    startTravel(target.position, direction, {
+      durationOverride: Math.min(naturalDuration, 3000),
+      onArrival: () => {
+        if (request === routeRequest) openDetails(target, pendingRouteMode);
+      },
+    });
   };
 
   const resetGestureSequences = (): void => {
@@ -1523,7 +1661,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   document.addEventListener("keydown", onKeydown);
 
   scale.addEventListener("pointerdown", event => {
-    if (dialog.open) closeDetails(false);
+    if ((dialog.open || pendingRouteItem) && !(event.target as Element).closest?.(".landmark")) departEventRoute();
     if (pointers.size === 0) {
       suppressLandmarkClick = false;
     }
@@ -1643,12 +1781,36 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
   resizeObserver.observe(scale);
   window.addEventListener("pagehide", persistOnPageHide);
   document.addEventListener("visibilitychange", persistWhenHidden);
+  const onPopState = (): void => {
+    const nextRoute = parseSiteRoute(location.pathname);
+    if (!nextRoute) return;
+    const target = nextRoute.landmarkId ? landmarksById.get(nextRoute.landmarkId) : undefined;
+    routeRequest += 1;
+    cancelTravel();
+    if (dialog.open) closeDetails(false, false);
+    pendingRouteItem = target;
+    pendingRouteMode = "none";
+    retainPendingRouteItem = target !== undefined;
+    routeLocalePinned = nextRoute.locale !== undefined;
+    locale = resolveInitialLocale(nextRoute.locale);
+    applyLocale();
+    applyHistoryRoute(nextRoute, target, "none");
+    if (target) resumePendingRoute();
+  };
+  window.addEventListener("popstate", onPopState);
   applyLocale();
+  applyHistoryRoute(initialRoute, initialRouteItem, "none");
+  let introShown = false;
   try {
-    if (sessionStorage.getItem(INTRO_STORAGE_KEY) !== "true" || (privacyAvailable && analytics.getConsent() === "unknown")) showIntro();
+    if (initialRouteItem || sessionStorage.getItem(INTRO_STORAGE_KEY) !== "true" || (privacyAvailable && analytics.getConsent() === "unknown")) {
+      showIntro();
+      introShown = true;
+    }
   } catch {
     showIntro();
+    introShown = true;
   }
+  if (!introShown) resumePendingRoute();
 
   return () => {
     resizeObserver.disconnect();
@@ -1671,6 +1833,7 @@ export function createScale(root: HTMLElement, dependencies: ScaleDependencies =
     document.removeEventListener("keydown", onKeydown);
     window.removeEventListener("pagehide", persistOnPageHide);
     document.removeEventListener("visibilitychange", persistWhenHidden);
+    window.removeEventListener("popstate", onPopState);
     if (travelFrame !== undefined) cancelTravel();
     else persistView();
     unsubscribeConsent();

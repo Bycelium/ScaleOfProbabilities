@@ -52,6 +52,8 @@ export type UiTranslation = Readonly<{
   oddsLabel: string;
   oddsWord: string;
   difference: string;
+  referenceDisclosure: string;
+  catalogueDisclosure: string;
   privacy: Readonly<{
     title: string;
     review: string;

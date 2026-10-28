@@ -40,6 +40,8 @@ export const zh: LocaleDefinition = {
     oddsLabel: "胜算：",
     oddsWord: "胜算",
     difference: "差值",
+    referenceDisclosure: "共享示例参考资料",
+    catalogueDisclosure: "浏览所有示例",
     privacy: {
       title: "隐私与分析",
       review: "隐私",

@@ -3,6 +3,14 @@
 [hidden] { display: none !important; }
 .nowrap { white-space: nowrap; }
 body { margin: 0; min-width: 320px; background: radial-gradient(circle at 50% 12%, #17425a, #071522 48rem); }
+#app > [data-prerender-reference], #app > [data-prerender-catalogue] { margin: 0 auto; max-width: 64rem; min-height: 100svh; overflow-wrap: anywhere; padding: clamp(1.2rem, 4vw, 3rem); }
+#app > [data-prerender-reference] a, #app > [data-prerender-catalogue] a { color: #9ed6c8; text-underline-offset: .16em; }
+#app > [data-prerender-reference] > nav, #app > [data-prerender-catalogue] > nav { display: flex; flex-wrap: wrap; gap: .45rem .8rem; margin-bottom: 1.25rem; }
+#app > [data-prerender-reference] .reference-article, #app > [data-prerender-catalogue] > ol { background: #0b202de8; border: 1px solid #426674; border-radius: 1rem; padding: clamp(1rem, 3vw, 2rem); }
+#app > [data-prerender-catalogue] > ol { columns: 2 18rem; line-height: 1.4; }
+#app > [data-prerender-catalogue] li { break-inside: avoid; margin-bottom: .5rem; }
+#app > [data-prerender-reference] .reference-article > header > h1 { font: clamp(1.8rem, 5vw, 3.2rem)/1.04 Georgia, serif; overflow-wrap: anywhere; }
+#app > [data-prerender-reference] .reference-article :is(p, li, dd) { line-height: 1.5; }
 button, a, input { font: inherit; }
 button { color: inherit; cursor: pointer; }
 button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible { outline: 3px solid #f6cf70; outline-offset: 3px; }
@@ -116,6 +124,9 @@ dialog[data-detail-panel] > [data-close-detail] { align-self: flex-end; flex: no
 .scale-intro p { margin: .6rem 0; }
 .scale-intro details { border-block: 1px solid #426674; margin: .7rem 0; padding: .5rem 0; }
 .scale-intro summary { color: #9ed6c8; cursor: pointer; }
+.prerender-disclosure > div { max-height: min(22rem, 55svh); overflow-y: auto; padding: .4rem .2rem; }
+.prerender-disclosure :is(ul, ol) { padding-left: 1.35rem; }
+.prerender-disclosure li + li { margin-top: .35rem; }
 .scale-intro .math-disclosure { background: #102b3866; border: 1px solid #426674; border-radius: .55rem; margin: .55rem 0; padding: 0; }
 .scale-intro .math-disclosure summary { font-size: .9rem; font-weight: 650; padding: .55rem .65rem; }
 .scale-intro .math-disclosure summary::marker { color: #f6cf70; }
@@ -162,6 +173,17 @@ dialog[data-detail-panel] > [data-close-detail] { align-self: flex-end; flex: no
 dialog [data-detail-art] { width: 6.25rem; }
 dialog [data-detail-art] svg { width: 100%; }
 .detail-related { border-block: 1px solid #426674; margin: 1rem 0 .35rem; padding: .75rem 0; }
+.reference-article > header > h2 { font: 1.55rem/1.08 Georgia, serif; margin: .75rem 0 .55rem; }
+.reference-article > header > p, .reference-article > section > p { color: #d1e1de; line-height: 1.45; }
+.reference-article > section { border-top: 1px solid #426674; padding: .62rem 0; }
+.reference-article > section > h3, [data-detail-diagnostic-section] > h3, [data-detail-advice-section] > h3 { color: #9ed6c8; font-size: .7rem; letter-spacing: .08em; margin: 0; text-transform: uppercase; }
+.reference-values { display: grid; gap: .35rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: .6rem 0; }
+.reference-values > div { background: #102b38; border-radius: .4rem; padding: .4rem; }
+.reference-values dt { font-size: .62rem; }
+.reference-values dd { font: .82rem/1.2 Georgia, serif; margin-top: .2rem; }
+.reference-classification { color: #9ed6c8; font-size: .68rem; font-weight: 750; letter-spacing: .15em; margin: 0; text-transform: uppercase; }
+.reference-sources { margin: .35rem 0 0; padding-left: 1.2rem; }
+[data-detail-diagnostic-section], [data-detail-advice-section] { border-top: 1px solid #426674; padding: .62rem 0; }
 .detail-related h3 { color: #9ed6c8; font-size: .72rem; letter-spacing: .08em; margin: 0 0 .55rem; text-transform: uppercase; }
 [data-detail-related-links] { display: grid; gap: .4rem; }
 .related-landmark { align-items: center; background: #102b38; border: 1px solid #426674; border-radius: .65rem; color: #d8e6e4; display: grid; gap: .6rem; grid-template-columns: 2.8rem 1fr auto; padding: .45rem .55rem; text-align: left; }
@@ -178,7 +200,7 @@ dd { color: #d8e6e4; line-height: 1.4; margin: .3rem 0 0; }
 [data-detail-calculation] { overflow-wrap: anywhere; }
 dd ul { margin: 0; padding-left: 1.1rem; }
 dd li + li { margin-top: .3rem; }
-dd a { color: #9ed6c8; }
+.reference-article a { color: #9ed6c8; text-underline-offset: .16em; }
 .diagnostic-caption { color: #d8e6e4; font-size: .82rem; margin: .15rem 0 .5rem; }
 .diagnostic-table { border-collapse: collapse; font-size: .875rem; line-height: 1.25; table-layout: fixed; width: 100%; }
 .diagnostic-table th, .diagnostic-table td { border: 1px solid #426674; padding: .42rem .38rem; text-align: left; vertical-align: top; }
@@ -193,7 +215,7 @@ dd a { color: #9ed6c8; }
 .inline-related-landmark:hover { color: #c9eee5; }
 @media (max-width: 640px) {
   .atlas { padding: 0 .5rem; }
-  .explorer-tools { bottom: .5rem; right: .5rem; }
+  .explorer-tools { bottom: .5rem; left: 0; max-width: none; right: 0; }
   .read-scale, .return-zero, .language-toggle, dialog > button:first-child { min-height: 2.75rem; min-width: 2.75rem; }
   .scale { margin-inline: -.5rem; }
   .landmark .art, .landmark:hover .art, .landmark:focus-visible .art { filter: none; }

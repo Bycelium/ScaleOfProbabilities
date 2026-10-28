@@ -16,7 +16,8 @@ const matchingLocale = (preference: string | null): LocaleDefinition | undefined
   return code && Object.hasOwn(locales, code) ? locales[code] : undefined;
 };
 
-export const resolveInitialLocale = (): LocaleDefinition => {
+export const resolveInitialLocale = (explicitCode?: LocaleCode): LocaleDefinition => {
+  if (explicitCode) return locales[explicitCode];
   try {
     const saved = matchingLocale(localStorage.getItem("probability-scale-locale"));
     if (saved) return saved;

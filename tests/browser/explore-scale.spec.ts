@@ -198,7 +198,8 @@ test("explores radial depth and switches an open explanation to French", async (
   await preferencesMenu.locator('[data-locale-choice="fr"]').check();
   await expect(preferencesMenu).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
-  await expect(page).toHaveTitle("L’échelle des probabilités");
+  await expect(page).toHaveTitle("Au moins un as parmi cinq cartes · L’échelle des probabilités");
+  await expect(page).toHaveURL(/\/fr\/examples\/ace-in-five-cards\/$/);
   await expect(page.locator("[data-detail-title]")).toHaveText("Au moins un as parmi cinq cartes");
   await expect(page.locator("[data-detail-kind]")).toHaveText("Modèle exact");
   await expect(scale).toHaveAttribute("data-depth", depthBeforeLocale!);

@@ -10,7 +10,9 @@ Use vertical mouse-wheel or trackpad input on a desktop, the Up and Down arrow k
 
 Selecting an illustration or related example sets an exact destination and opens its details on arrival. The Return to 0 dBan control appears after the opening position.
 
-The atlas supports English, Français, 简体中文, and Español. A saved language choice takes precedence over the browser’s ordered language preferences. The shared language menu is available from the opening About dialog and the globe control; its **Show all references** checkbox includes examples associated with every region instead of the selected language’s default set.
+The atlas supports English, Français, 简体中文, and Español. A localized URL selects its language. A saved language choice then takes precedence over the browser’s ordered language preferences for neutral URLs. The shared language menu is available from the opening About dialog and the globe control; its **Show all references** checkbox includes examples associated with every region instead of the selected language’s default set.
+
+Each example has a stable URL. Use `/examples/<id>/` for the recipient’s language or `/en/examples/<id>/`, `/fr/examples/<id>/`, `/es/examples/<id>/`, or `/zh/examples/<id>/` to open a specific language. See [SEO and previews](docs/seo-and-previews.md) for static metadata, preview images, and release verification.
 
 ## Contributing
 

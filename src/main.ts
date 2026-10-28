@@ -1,3 +1,5 @@
 import "./style.css";
 import { createScale } from "./scale";
-createScale(document.querySelector<HTMLElement>("#app")!);
+import { parseSiteRoute } from "./site";
+
+createScale(document.querySelector<HTMLElement>("#app")!, { initialRoute: parseSiteRoute(location.pathname) ?? {} });

@@ -110,6 +110,12 @@ Vertical wheel and trackpad input, the Up and Down arrow keys, and a one-finger 
 
 Combine gesture events within one animation frame and preserve elapsed motion and velocity when continuing a journey. Directional destinations must leave enough room for visible braking; explicit illustration and return destinations remain exact. Normalize wheel pixel, line, and page units so desktop Firefox wheels and trackpads follow the same travel model.
 
+## Localized URLs and previews
+
+Every landmark ID is part of the public URL contract. Keep `/examples/<id>/` and each localized `/en/examples/<id>/`, `/fr/examples/<id>/`, `/es/examples/<id>/`, and `/zh/examples/<id>/` route working when changing navigation or locale behavior. A neutral link follows the recipient’s saved or browser-selected language. A localized link selects its language. An arrival route travels to the landmark and opens its detail card after arrival.
+
+When changing route metadata or preview generation, run `pnpm build` and inspect the generated HTML for canonical, alternate-language, Open Graph, Twitter card, static reference, sitemap, and robots fields. Follow [docs/seo-and-previews.md](docs/seo-and-previews.md).
+
 ## Checks
 
 Run the focused checks after a catalogue or translation change:
