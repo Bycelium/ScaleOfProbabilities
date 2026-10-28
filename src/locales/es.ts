@@ -40,6 +40,8 @@ export const es: LocaleDefinition = {
     oddsLabel: "Razón:",
     oddsWord: "razón",
     difference: "diferencia",
+    referenceDisclosure: "Referencia del ejemplo compartido",
+    catalogueDisclosure: "Explorar todos los ejemplos",
     privacy: {
       title: "Privacidad y analítica",
       review: "Privacidad",

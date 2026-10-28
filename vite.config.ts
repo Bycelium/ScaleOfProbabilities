@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
+import { staticSitePlugin } from "./build/static-site";
 
 export default defineConfig({
+  plugins: [staticSitePlugin()],
   define: {
     __VERCEL_OBSERVABILITY_CLIENT_CONFIG__: JSON.stringify(process.env.VERCEL_OBSERVABILITY_CLIENT_CONFIG ?? ""),
   },

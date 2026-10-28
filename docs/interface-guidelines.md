@@ -30,6 +30,7 @@ Read this guide before changing the scale scene, readout, navigation, details, A
 - Show signed dBan distance and an odds multiplier or divisor for directed or substantial travel.
 - Provide one explicit Return to 0 dBan control away from the opening position. It targets exactly 0 through the shared controller and never runs on a timer. Do not add other global resets, jump controls, or clickable overviews.
 - Beginning a journey closes details. An illustration or related example travels to its exact depth and opens full details only after arrival. Directional and return journeys do not open details on arrival.
+- A landmark URL starts the same exact journey from the opening depth and opens that landmark’s details only after arrival. Preserve the scene’s normal motion and reduced-motion behavior for URL arrivals.
 
 ## Details and relationships
 
@@ -46,6 +47,7 @@ Read this guide before changing the scale scene, readout, navigation, details, A
 ## Locales and regional references
 
 - Keep translations in separate locale files behind the locale registry. Share catalogue probabilities, positions, artwork structure, relations, and navigation behavior across languages.
-- A saved language wins. Otherwise select the first supported entry in the browser's ordered language preferences and fall back safely to English. Localize visible copy, accessibility labels, locale-sensitive numbers, and text embedded in artwork without changing the mathematical model. Switching language preserves current depth and open details.
+- A localized URL selects its language. For a neutral URL, a saved language wins; otherwise select the first supported entry in the browser's ordered language preferences and fall back safely to English. Localize visible copy, accessibility labels, locale-sensitive numbers, and text embedded in artwork without changing the mathematical model. Switching language preserves current depth and open details.
+- Keep a neutral `/examples/<id>/` URL for recipient-selected language and localized `/en/examples/<id>/`, `/fr/examples/<id>/`, `/es/examples/<id>/`, and `/zh/examples/<id>/` URLs for a pinned linked language. A visitor can still choose and save another language after arrival.
 - Keep regional weather, household equipment, postal-service, electricity, and national-lottery landmarks in central catalogue audience metadata. Default to the current language's regional selection and persist one All references map control beside the language picker.
-- Keep unannotated science, games, sports, cybersecurity, Enigma, EuroMillions, and US lightning examples common. Filtering preserves full-catalogue angles and current depth; motion, snapping, bounds, rings, and related links use the visible subset. Retain a filtered landmark only while its detail card remains open.
+- Keep unannotated science, games, sports, cybersecurity, Enigma, EuroMillions, and US lightning examples common. Filtering preserves full-catalogue angles and current depth; motion, snapping, bounds, rings, and related links use the visible subset. Retain a filtered shared-URL target during pending arrival and while its detail card remains open.

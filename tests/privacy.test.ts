@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Analytics, AnalyticsConsent, AnalyticsConsentListener } from "../src/analytics";
+import { displayLandmarks } from "../src/catalogue";
 import { createScale } from "../src/scale";
+import type { SiteRoute } from "../src/site";
 
 class TestResizeObserver {
   observe(): void {}
@@ -46,10 +48,10 @@ const createMockAnalytics = (available = true, initialConsent: AnalyticsConsent 
   return { analytics, setConsent, unsubscribe, notify };
 };
 
-const render = (analytics: Analytics, introSeen = true) => {
+const render = (analytics: Analytics, introSeen = true, initialRoute?: SiteRoute) => {
   document.body.innerHTML = '<main id="app"></main>';
   if (introSeen) sessionStorage.setItem("probability-scale-intro-seen", "true");
-  return createScale(document.querySelector<HTMLElement>("#app")!, { analytics });
+  return createScale(document.querySelector<HTMLElement>("#app")!, initialRoute ? { analytics, initialRoute } : { analytics });
 };
 
 describe("privacy and analytics choices", () => {
@@ -198,6 +200,28 @@ describe("privacy and analytics choices", () => {
     expect(privacy.open).toBe(false);
   });
 
+  it("keeps collapsed prerender links out of the About dialog focus order", () => {
+    const mocked = createMockAnalytics(false);
+    const dispose = render(mocked.analytics, false);
+    const intro = document.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
+    const disclosure = intro.querySelector<HTMLDetailsElement>(".prerender-disclosure")!;
+    const summary = disclosure.querySelector<HTMLElement>("summary")!;
+    const firstCatalogueLink = disclosure.querySelector<HTMLAnchorElement>("a[href]")!;
+    const privacyButton = intro.querySelector<HTMLButtonElement>("[data-privacy-from-intro]")!;
+
+    expect(disclosure.open).toBe(false);
+    summary.focus();
+    intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(privacyButton);
+    intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(summary);
+
+    disclosure.open = true;
+    intro.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(firstCatalogueLink);
+    dispose();
+  });
+
   it("preserves depth and details while privacy, About, and language controls update analytics", () => {
     const mocked = createMockAnalytics(true, "accepted");
     const dispose = render(mocked.analytics);
@@ -277,5 +301,117 @@ describe("privacy and analytics choices", () => {
     expect(document.querySelector<HTMLButtonElement>("[data-dismiss-intro]")?.disabled).toBe(true);
     expect(document.querySelector<HTMLElement>(".intro-consent")?.hidden).toBe(false);
     expect(document.querySelectorAll(".intro-consent [data-consent-choice]:not([hidden])")).toHaveLength(2);
+  });
+
+  it("waits for a normal About dismissal before starting a shared route", () => {
+    const mocked = createMockAnalytics(true, "accepted");
+    render(mocked.analytics, false, { locale: "en", landmarkId: "die-six" });
+    const intro = document.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
+    const detail = document.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    expect(intro.open).toBe(true);
+    expect(scale.dataset.depth).toBe("0");
+
+    intro.querySelector<HTMLButtonElement>('[data-preferences-toggle="intro"]')!.click();
+    document.querySelector<HTMLInputElement>('[data-locale-choice="fr"]')!.click();
+    expect(location.pathname).toBe("/fr/examples/die-six/");
+    expect(localStorage.getItem("probability-scale-locale")).toBe("fr");
+    expect(scale.dataset.depth).toBe("0");
+
+    intro.querySelector<HTMLButtonElement>("[data-privacy-from-intro]")!.click();
+    const privacy = document.querySelector<HTMLDialogElement>("[data-privacy-dialog]")!;
+    expect(privacy.open).toBe(true);
+    expect(detail.open).toBe(false);
+    expect(scale.dataset.depth).toBe("0");
+    privacy.querySelector<HTMLButtonElement>("[data-close-privacy]")!.click();
+    expect(intro.open).toBe(true);
+    expect(detail.open).toBe(false);
+
+    intro.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.click();
+    expect(detail.open).toBe(true);
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Un six avec un dé équilibré");
+  });
+
+  it("synchronizes arrival, locale, close, and popstate routes without replaying About", () => {
+    const mocked = createMockAnalytics(true, "accepted");
+    render(mocked.analytics, true);
+    const detail = document.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
+
+    document.querySelector<HTMLButtonElement>('[data-landmark="coin-heads"]')!.click();
+    expect(detail.open).toBe(true);
+    expect(location.pathname).toBe("/examples/coin-heads/");
+    document.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!.click();
+    document.querySelector<HTMLInputElement>('[data-locale-choice="fr"]')!.click();
+    expect(location.pathname).toBe("/fr/examples/coin-heads/");
+    expect(localStorage.getItem("probability-scale-locale")).toBe("fr");
+    document.querySelector<HTMLButtonElement>("[data-close-detail]")!.click();
+    expect(location.pathname).toBe("/fr/");
+
+    localStorage.setItem("probability-scale-locale", "es");
+    history.replaceState(null, "", "/en/examples/die-six/");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    expect(detail.open).toBe(true);
+    expect(document.querySelector("[data-detail-title]")?.textContent).toBe("A six on one fair die");
+    expect(document.documentElement.lang).toBe("en");
+    expect(document.querySelector<HTMLDialogElement>("[data-scale-intro]")?.open).toBe(false);
+    expect(localStorage.getItem("probability-scale-locale")).toBe("es");
+
+    history.replaceState(null, "", "/");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    expect(detail.open).toBe(false);
+    expect(document.documentElement.lang).toBe("es");
+    expect(location.pathname).toBe("/");
+  });
+
+  it("preserves and localizes prerendered reference and catalogue content", () => {
+    const mocked = createMockAnalytics(false);
+    document.body.innerHTML = `<main id="app">
+      <section data-prerender-catalogue>
+        <h1>Static title</h1>
+        <p>Static description</p>
+        <ol><li>Static example</li></ol>
+      </section>
+    </main>`;
+    const disposeCatalogue = createScale(document.querySelector<HTMLElement>("#app")!, {
+      analytics: mocked.analytics,
+      initialRoute: {},
+    });
+    const catalogue = document.querySelector<HTMLElement>("[data-scale-intro] [data-prerender-catalogue]")!;
+    expect(catalogue.querySelector("h1")?.textContent).toBe("The Scale of Probability");
+    expect(catalogue.querySelector("p")?.textContent).toContain("Probability ranges from 0");
+    expect(catalogue.querySelectorAll("ol a")).toHaveLength(displayLandmarks.length);
+    expect(catalogue.querySelector("ol")?.textContent).not.toContain("Static example");
+    disposeCatalogue();
+
+    document.body.innerHTML = `<main id="app">
+      <section data-prerender-reference>
+        <article data-reference-article><p>Static reference</p></article>
+      </section>
+    </main>`;
+    const disposeReference = createScale(document.querySelector<HTMLElement>("#app")!, {
+      analytics: mocked.analytics,
+      initialRoute: { landmarkId: "coin-heads" },
+    });
+    const reference = document.querySelector<HTMLElement>("[data-scale-intro] [data-prerender-reference]")!;
+    expect(reference.querySelectorAll("[data-reference-article]")).toHaveLength(1);
+    expect(reference.textContent).toContain("A chosen side of a fair coin");
+    expect(reference.textContent).not.toContain("Static reference");
+    disposeReference();
+  });
+
+  it("keeps invalid browser paths inert", () => {
+    const mocked = createMockAnalytics(false);
+    history.replaceState(null, "", "/missing-page");
+    const dispose = render(mocked.analytics);
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    const depth = scale.dataset.depth;
+
+    history.pushState(null, "", "/also-missing");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+
+    expect(location.pathname).toBe("/also-missing");
+    expect(scale.dataset.depth).toBe(depth);
+    expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(false);
+    dispose();
   });
 });

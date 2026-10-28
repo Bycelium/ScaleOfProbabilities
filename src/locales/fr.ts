@@ -40,6 +40,8 @@ export const fr: LocaleDefinition = {
     oddsLabel: "Cote :",
     oddsWord: "cote",
     difference: "écart",
+    referenceDisclosure: "Référence de l’exemple partagé",
+    catalogueDisclosure: "Parcourir tous les exemples",
     privacy: {
       title: "Confidentialité et mesure d’audience",
       review: "Confidentialité",

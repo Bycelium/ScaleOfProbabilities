@@ -165,18 +165,23 @@ test("shows captions for readable mobile artwork beyond the former depth window"
   expect(observed.every(candidate => candidate.artSize >= 32 && candidate.titleInsideViewport)).toBe(true);
 });
 
-test("keeps every French Scrabble tile icon selectable at its exact depth", async ({ page }) => {
-  const ids = [
-    "french-scrabble-consonant",
-    "french-scrabble-vowel",
-    "french-scrabble-blank",
-    "french-scrabble-vowel-rack",
-    "french-scrabble-consonant-rack",
-    "french-scrabble-blank-rack",
-  ] as const;
-  for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }, { width: 1365, height: 900 }]) {
+const frenchScrabbleIds = [
+  "french-scrabble-consonant",
+  "french-scrabble-vowel",
+  "french-scrabble-blank",
+  "french-scrabble-vowel-rack",
+  "french-scrabble-consonant-rack",
+  "french-scrabble-blank-rack",
+] as const;
+
+for (const [name, viewport] of [
+  ["320px mobile", { width: 320, height: 740 }],
+  ["390px mobile", { width: 390, height: 844 }],
+  ["desktop", { width: 1365, height: 900 }],
+] as const) {
+  test(`keeps every French Scrabble tile icon selectable at its exact depth on ${name}`, async ({ page }) => {
     await page.setViewportSize(viewport);
-    for (const id of ids) {
+    for (const id of frenchScrabbleIds) {
       const landmark = displayLandmarks.find(item => item.id === id)!;
       await openScene(page, "en", landmark.position);
       if (id === "french-scrabble-vowel" || id === "french-scrabble-blank") {
@@ -195,8 +200,8 @@ test("keeps every French Scrabble tile icon selectable at its exact depth", asyn
       await expect(page.locator("[data-detail-panel][open]")).toBeVisible();
       await expect(page.locator("[data-detail-title]")).toHaveText(landmark.title);
     }
-  }
-});
+  });
+}
 
 test("keeps every new astronomy icon selectable at its exact depth on compact mobile", async ({ page }) => {
   const ids = [

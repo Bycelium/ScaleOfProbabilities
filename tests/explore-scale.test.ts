@@ -1,3 +1,4 @@
+import { setImmediate as yieldToEventLoop } from "node:timers/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createAnalytics, type Analytics, type AnalyticsConfig } from "../src/analytics";
 import { catalogueOrder, displayLandmarks, landmarkModels, relatedLandmarkIds, sourceReferences } from "../src/catalogue";
@@ -140,10 +141,13 @@ describe("public probability exploration", () => {
     localStorage.clear();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    // Let Vitest receive the parent process's task-update acknowledgement between
+    // synchronous jsdom tests. Coverage makes this file longer than the RPC timeout.
+    await yieldToEventLoop();
   });
 
   it("opens on a restrained radial scene with a −5 to +5 dBan ruler", () => {
@@ -409,7 +413,8 @@ describe("public probability exploration", () => {
     expect(intro.textContent).toContain("Each additional 10 dBan multiplies the odds by ten");
     expect(intro.querySelector("[data-how-to-use]")?.textContent).toBe("How to use");
     expect(intro.querySelector("[data-odds-to-decibans]")!.compareDocumentPosition(intro.querySelector("[data-how-to-use]")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect([...intro.querySelectorAll("details summary")].map(summary => summary.textContent)).toEqual(["See the formula: probability → odds", "See the formula: odds → decibans"]);
+    expect([...intro.querySelectorAll(".math-disclosure summary")].map(summary => summary.textContent)).toEqual(["See the formula: probability → odds", "See the formula: odds → decibans"]);
+    expect(intro.querySelector(".prerender-disclosure summary")?.textContent).toBe("Browse every example");
     expect(intro.querySelector('[aria-label="Odds equals probability divided by one minus probability"]')?.textContent).toContain("o = p / (1 − p)");
     expect(intro.querySelector('[aria-label="Decibans equals ten times the base ten logarithm of odds"]')?.textContent).toContain("d = 10 log10(o)");
     const tab = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
@@ -555,7 +560,7 @@ describe("public probability exploration", () => {
   it("matches Chinese and Spanish browser preferences, keeps a saved choice, and formats their readouts", () => {
     vi.spyOn(window.navigator, "languages", "get").mockReturnValue(["ja-JP", "zh-Hant-TW", "es-ES"]);
     const first = render();
-    expect(document.documentElement.lang).toBe("zh");
+    expect(document.documentElement.lang).toBe("zh-Hans");
     expect(document.querySelector("[data-center-marker] .odds")?.textContent).toBe("胜算： 1 比 1");
     first.dispose();
 
@@ -796,7 +801,7 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!.click();
     for (const [code, title, art] of [["zh", "公平 d4 掷出四", "正"], ["es", "Un cuatro con un d4 equilibrado", "C"]] as const) {
       document.querySelector<HTMLInputElement>(`[data-preferences-menu] [data-locale-choice="${code}"]`)!.click();
-      expect(document.documentElement.lang).toBe(code);
+      expect(document.documentElement.lang).toBe(code === "zh" ? "zh-Hans" : code);
       expect(scale.dataset.depth).toBe(depth);
       expect(document.querySelector<HTMLDialogElement>("[data-detail-panel]")?.open).toBe(true);
       expect(document.querySelector("[data-detail-title]")?.textContent).toBe(title);
@@ -812,7 +817,7 @@ describe("public probability exploration", () => {
       ["-233.4", "eff-passphrase-six", "sixWords", "6 MOTS"],
       ["-38.9", "eff-word-one", "wordList", "7 776 mots"],
     ] as const) {
-      history.replaceState(null, "", `#d=${depth}`);
+      history.replaceState(null, "", `/#d=${depth}`);
       const rendered = render();
       expect(sceneArtwork(id).querySelector(`[data-art-text="${artKey}"]`)?.textContent).toBe(expected);
       rendered.dispose();
@@ -1870,7 +1875,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector('[data-related-landmark="pokemon-destined-rivals-special-illustration-rare"]')).not.toBeNull();
 
     localStorage.setItem("probability-scale-locale", "fr");
-    history.replaceState(null, "", `#d=${specialIllustrationRare!.position}`);
+    history.replaceState(null, "", `/#d=${specialIllustrationRare!.position}`);
     render(1200, true, false);
     document.querySelector<HTMLButtonElement>('[data-landmark="pokemon-destined-rivals-special-illustration-rare"]')!.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("Illustration rare spéciale");
@@ -1892,7 +1897,7 @@ describe("public probability exploration", () => {
     ]));
 
     localStorage.setItem("probability-scale-locale", "fr");
-    history.replaceState(null, "", `#d=${smartphone!.position}`);
+    history.replaceState(null, "", `/#d=${smartphone!.position}`);
     const french = render(1200, true, false);
     expect(document.querySelector('[data-landmark="fr-household-television-2025"]')).not.toBeNull();
     document.querySelector<HTMLButtonElement>('[data-landmark="fr-person-smartphone-2025"]')!.click();
@@ -1938,7 +1943,7 @@ describe("public probability exploration", () => {
     expect(evidence.querySelector('[data-diagnostic-row="positive"]')?.classList).toContain("selected");
 
     localStorage.setItem("probability-scale-locale", "fr");
-    history.replaceState(null, "", `#d=${covidNegative.position}`);
+    history.replaceState(null, "", `/#d=${covidNegative.position}`);
     render();
     document.querySelector<HTMLButtonElement>('[data-landmark="covid-scenario-negative"]')!.click();
     expect(document.querySelector<HTMLElement>("[data-detail-kind]")?.hidden).toBe(true);
@@ -2029,7 +2034,7 @@ describe("public probability exploration", () => {
     english.dispose();
 
     localStorage.setItem("probability-scale-locale", "fr");
-    history.replaceState(null, "", `#d=${byId.get("enigma-i-two-unknown-rings")!.position}`);
+    history.replaceState(null, "", `/#d=${byId.get("enigma-i-two-unknown-rings")!.position}`);
     render();
     document.querySelector<HTMLButtonElement>('[data-landmark="enigma-i-two-unknown-rings"]')!.click();
     const ringGain = document.querySelector('[data-related-landmark="enigma-i-known-rings"]');
@@ -2077,6 +2082,50 @@ describe("public probability exploration", () => {
     render();
     expect(document.querySelector("[data-center-marker]")?.textContent).toContain("0 dBan");
     expect(document.querySelector("[data-center-marker]")?.textContent).not.toContain("−0 dBan");
+  });
+
+  it("invalidates an in-flight shared target when directional input departs its route", () => {
+    const clock = new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    history.replaceState(null, "", "/examples/die-six/");
+    render();
+    const intro = document.querySelector<HTMLDialogElement>("[data-scale-intro]")!;
+    const detail = document.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
+    const scale = document.querySelector<HTMLElement>(".scale")!;
+    expect(scale.dataset.depth).toBe("0");
+    intro.querySelector<HTMLButtonElement>("[data-dismiss-intro]")!.click();
+    clock.advanceTo(16);
+    expect(detail.open).toBe(false);
+
+    scale.dispatchEvent(new WheelEvent("wheel", { deltaY: -120, bubbles: true, cancelable: true }));
+    expect(location.pathname).toBe("/");
+    clock.advanceTo(5000);
+    expect(detail.open).toBe(false);
+    expect(document.querySelector("[data-detail-title]")?.textContent).not.toBe("A six on one fair die");
+
+  });
+
+  it("keeps the localized homepage route while an ordinary landmark journey is in flight", () => {
+    new TestFrameClock();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render();
+    const detail = document.querySelector<HTMLDialogElement>("[data-detail-panel]")!;
+    const preferencesToggle = document.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!;
+
+    preferencesToggle.click();
+    document.querySelector<HTMLInputElement>('[data-locale-choice="fr"]')!.click();
+    expect(location.pathname).toBe("/fr/");
+    preferencesToggle.click();
+    document.querySelector<HTMLInputElement>('[data-locale-choice="en"]')!.click();
+    expect(location.pathname).toBe("/en/");
+
+    document.querySelector<HTMLButtonElement>('[data-landmark="die-d20-highest"]')!.click();
+    expect(detail.open).toBe(false);
+    preferencesToggle.click();
+    document.querySelector<HTMLInputElement>('[data-locale-choice="fr"]')!.click();
+
+    expect(location.pathname).toBe("/fr/");
+    expect(detail.open).toBe(false);
   });
 
   it("aligns a neutral zero tick with the same spoke projection as its ring", () => {
@@ -2148,12 +2197,12 @@ describe("public probability exploration", () => {
     expect(document.querySelector('[data-related-landmark="aes-128-key"]')).not.toBeNull();
     rendered.dispose();
 
-    history.replaceState(null, "", "#d=-20.5");
+    history.replaceState(null, "", "/#d=-20.5");
     const common = render();
     expect(document.querySelector('[data-landmark="password-123456"]')).not.toBeNull();
     common.dispose();
 
-    history.replaceState(null, "", "#d=-40");
+    history.replaceState(null, "", "/#d=-40");
     render();
     document.querySelector<HTMLButtonElement>('[data-landmark="four-digit-pin"]')!.click();
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("limit repeated attempts");
@@ -2212,13 +2261,13 @@ describe("public probability exploration", () => {
     expect(document.querySelector('[data-related-landmark="exact-hash-day"]')).not.toBeNull();
     aes128.dispose();
 
-    history.replaceState(null, "", "#d=-770.6");
+    history.replaceState(null, "", "/#d=-770.6");
     render();
     const aes256 = document.querySelector<HTMLButtonElement>('[data-landmark="aes-256-key"]')!;
     expect(aes256.querySelector(".landmark-title")?.textContent).toBe("256-bit AES key");
     expect(aes256.getAttribute("aria-label")).toContain("1 in 1.16 × 10⁷⁷");
 
-    history.replaceState(null, "", "#d=-511.3");
+    history.replaceState(null, "", "/#d=-511.3");
     render();
     const hash = document.querySelector<HTMLButtonElement>('[data-landmark="exact-hash-day"]')!;
     expect(hash.querySelector(".landmark-title")?.textContent).toBe("exact Bitcoin hash in a day");
@@ -2304,7 +2353,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-detail-title]")?.textContent).toContain("critical");
     expect(document.querySelector('[data-related-landmark="die-d20-no-critical-failure"]')).not.toBeNull();
 
-    history.replaceState(null, "", "#d=-233.4");
+    history.replaceState(null, "", "/#d=-233.4");
     render();
     const passphrase = document.querySelector<HTMLButtonElement>('[data-landmark="eff-passphrase-six"]')!;
     expect(passphrase.getAttribute("aria-label")).toContain("1 in 2.21 × 10²³");
@@ -2314,7 +2363,7 @@ describe("public probability exploration", () => {
     expect(document.querySelectorAll('[data-detail-sources] a[href*="eff.org"]')).toHaveLength(3);
     expect(document.querySelector('[data-related-landmark="eff-word-one"]')).not.toBeNull();
 
-    history.replaceState(null, "", "#d=-38.9");
+    history.replaceState(null, "", "/#d=-38.9");
     render();
     const word = document.querySelector<HTMLButtonElement>('[data-landmark="eff-word-one"]')!;
     expect(word.getAttribute("aria-label")).toContain("−38.9 dBan");
@@ -2324,7 +2373,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector('[data-related-landmark="die-six"]')).not.toBeNull();
     expect(document.querySelector('[data-related-landmark="eff-passphrase-six"]')).not.toBeNull();
 
-    history.replaceState(null, "", "#d=0");
+    history.replaceState(null, "", "/#d=0");
     render();
     document.querySelector<HTMLButtonElement>('[data-landmark="coin-heads"]')!.click();
     expect(document.querySelector('[data-related-landmark="die-d4-highest"]')).not.toBeNull();
@@ -2427,7 +2476,7 @@ describe("public probability exploration", () => {
     expect(relatedLandmarkIds[uuid.id]).toContain(item.id);
     expect(relatedLandmarkIds[uuid.id]).toContain("sha256-pair-collision");
     first.dispose();
-    history.replaceState(null, "", `#d=${uuid.position}`);
+    history.replaceState(null, "", `/#d=${uuid.position}`);
     const second = render(390);
     document.querySelector<HTMLButtonElement>('[data-landmark="uuid-v4-pair-collision"]')!.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Two UUIDv4 values collide");
@@ -2446,7 +2495,7 @@ describe("public probability exploration", () => {
     expect(new DOMParser().parseFromString(sha256.art, "image/svg+xml").querySelector(".sha256-art[data-bits='256']")).not.toBeNull();
     expect(relatedLandmarkIds[sha256.id]).toEqual(expect.arrayContaining([item.id, uuid.id]));
     second.dispose();
-    history.replaceState(null, "", `#d=${sha256.position}`);
+    history.replaceState(null, "", `/#d=${sha256.position}`);
     render(390);
     document.querySelector<HTMLButtonElement>('[data-landmark="sha256-pair-collision"]')!.click();
     expect(document.querySelector("[data-detail-title]")?.textContent).toBe("Two distinct inputs share one SHA-256 hash");
@@ -2509,7 +2558,7 @@ describe("public probability exploration", () => {
     expect(document.querySelector("[data-detail-assumptions]")?.textContent).toContain("one line in one draw");
     expect(document.querySelector("[data-detail-sources]")?.textContent).toContain("25 October 2026");
 
-    history.replaceState(null, "", "#d=-72.8");
+    history.replaceState(null, "", "/#d=-72.8");
     render(390);
     expect(sceneArtwork("france-loto-jackpot").querySelector(".lottery-ticket[data-event='jackpot'] .ticket-jackpot")?.textContent).toBe("Jackpot!");
   });
