@@ -62,13 +62,10 @@ export type UiTranslation = Readonly<{
     close: string;
     copyLink: string;
     copiedLink: string;
-    copyCitation: string;
-    copiedCitation: string;
     copyUnavailable: string;
     shareUnavailable: string;
     nativeText: string;
     nativeHomeText: string;
-    citationAccessed: string;
   }>;
   privacy: Readonly<{
     title: string;

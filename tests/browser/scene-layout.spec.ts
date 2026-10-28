@@ -209,7 +209,6 @@ test("keeps every new astronomy icon selectable at its exact depth on compact mo
     "terrestrial-massive-moon",
     "stellar-hydrogen-mass",
     "stellar-helium-mass",
-    "stellar-hydrogen-helium-mass",
     "main-sequence-star",
     "stellar-black-hole-baryonic-mass",
   ] as const;

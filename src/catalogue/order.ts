@@ -149,7 +149,6 @@ export const catalogueSlots = {
   "terrestrial-massive-moon": 152,
   "stellar-hydrogen-mass": 153,
   "stellar-helium-mass": 154,
-  "stellar-hydrogen-helium-mass": 155,
   "main-sequence-star": 156,
   "stellar-black-hole-baryonic-mass": 157,
 } as const;

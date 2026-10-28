@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { displayLandmarks, type DisplayLandmark } from "../src/catalogue";
+import { displayLandmarks } from "../src/catalogue";
 import { locales } from "../src/locales";
-import { citationText, createSharingControl, sharePayload, type ShareSelection } from "../src/sharing";
+import { createSharingControl, sharePayload, type ShareSelection } from "../src/sharing";
 
 const coin = displayLandmarks.find(item => item.id === "coin-heads")!;
 
@@ -42,7 +42,7 @@ describe("sharing", () => {
     vi.restoreAllMocks();
   });
 
-  it("builds localized native payloads and source-backed citations", () => {
+  it("builds localized native payloads", () => {
     expect(sharePayload(selection)).toEqual({
       title: "A chosen side of a fair coin",
       text: "Explore this probability: A chosen side of a fair coin",
@@ -54,19 +54,6 @@ describe("sharing", () => {
       url: "https://deciban.bycelium.com/fr/",
     });
 
-    const citation = citationText(selection, new Date("2026-01-02T12:00:00Z"));
-    expect(citation).toContain("Bycelium. A chosen side of a fair coin. The Scale of Probability.");
-    expect(citation).toContain("https://deciban.bycelium.com/en/examples/coin-heads/");
-    expect(citation).toContain("Accessed January 2, 2026.");
-    expect(citation).toContain("Sources:");
-
-    const sourceWithLink: DisplayLandmark = { ...coin, sources: [{ ...coin.sources[0]!, href: "https://example.test/source" }] };
-    expect(citationText({ ...selection, item: sourceWithLink }, new Date("2026-01-02T12:00:00Z"))).toContain("https://example.test/source");
-
-    const sourceWithoutLink: DisplayLandmark = { ...coin, sources: [{ ...coin.sources[0]!, href: undefined }] };
-    const unlinkedCitation = citationText({ ...selection, item: sourceWithoutLink }, new Date("2026-01-02T12:00:00Z"));
-    expect(unlinkedCitation.split("\n")[1]).toBe(`Sources: ${locales.en.sources[coin.sources[0]!.id].label}.`);
-    expect(citationText({ locale: locales.en, route: {} }, new Date("2026-01-02T12:00:00Z"))).not.toContain("Sources:");
   });
 
   it("keeps every localized Bluesky intent within its 300-grapheme limit", () => {
@@ -138,12 +125,12 @@ describe("sharing", () => {
     expect(dialog.querySelector<HTMLAnchorElement>("[data-share-linkedin]")?.href).toContain("linkedin.com/sharing/share-offsite");
     expect(dialog.querySelector<HTMLAnchorElement>("[data-share-bluesky]")?.href).toContain(encodeURIComponent("https://deciban.bycelium.com/en/examples/coin-heads/"));
     close.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
-    expect(document.activeElement).toBe(dialog.querySelector<HTMLButtonElement>("[data-copy-citation]"));
+    expect(document.activeElement).toBe(dialog.querySelector<HTMLAnchorElement>("[data-share-bluesky]"));
     dialog.querySelector<HTMLButtonElement>("[data-copy-link]")!.focus();
     dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(close);
-    dialog.querySelector<HTMLButtonElement>("[data-copy-citation]")!.focus();
-    dialog.querySelector<HTMLButtonElement>("[data-copy-citation]")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    dialog.querySelector<HTMLAnchorElement>("[data-share-bluesky]")!.focus();
+    dialog.querySelector<HTMLAnchorElement>("[data-share-bluesky]")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(close);
     const ordinaryKey = new KeyboardEvent("keydown", { key: "a", bubbles: true, cancelable: true });
     dialog.dispatchEvent(ordinaryKey);
@@ -173,9 +160,9 @@ describe("sharing", () => {
     control.destroy();
   });
 
-  it("copies links and citations and exposes selectable text when clipboard access fails", async () => {
+  it("copies links and exposes selectable text when clipboard access fails", async () => {
     setNavigatorProperty("share", undefined);
-    const writeText = vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("denied"));
+    const writeText = vi.fn().mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("denied"));
     setNavigatorProperty("clipboard", { writeText });
     const control = createSharingControl(root, trigger, () => selection);
     trigger.click();
@@ -188,11 +175,6 @@ describe("sharing", () => {
     expect(writeText).toHaveBeenLastCalledWith("https://deciban.bycelium.com/en/examples/coin-heads/");
     expect(status.textContent).toBe("Link copied.");
     expect(fallback.hidden).toBe(true);
-
-    dialog.querySelector<HTMLButtonElement>("[data-copy-citation]")!.click();
-    await settle();
-    expect(writeText.mock.calls[1]![0]).toContain("Bycelium. A chosen side of a fair coin.");
-    expect(status.textContent).toBe("Citation copied.");
 
     dialog.querySelector<HTMLButtonElement>("[data-copy-link]")!.click();
     await settle();

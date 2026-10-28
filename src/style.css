@@ -117,8 +117,6 @@ dialog[data-detail-panel] > [data-close-detail] { align-self: flex-end; flex: no
 .share-action-icon { align-items: center; background: #183d4b; border: 1px solid #547984; border-radius: 50%; display: inline-flex; height: 3rem; justify-content: center; transition: background 120ms ease; width: 3rem; }
 .share-destinations > :is(button, a):hover .share-action-icon { background: #286454; }
 .share-action-icon svg { fill: none; height: 1.35rem; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 1.35rem; }
-.share-utilities { align-items: center; border-top: 1px solid #426674; display: flex; flex-wrap: wrap; gap: .3rem 1rem; padding-top: .75rem; }
-.share-utilities button { background: none; border: 0; color: #9ed6c8; font-size: .82rem; padding: .25rem 0; text-decoration: underline; text-decoration-color: #9ed6c866; text-underline-offset: .18em; }
 .share-status { color: #cfe2df; font-size: .82rem; line-height: 1.35; margin: .7rem 0 0; }
 .share-status:empty { display: none; }
 .share-sheet textarea { background: #071522; border: 1px solid #547984; border-radius: .55rem; color: #edf4eb; line-height: 1.35; margin-top: .65rem; min-height: 5.5rem; padding: .6rem; resize: vertical; width: 100%; }

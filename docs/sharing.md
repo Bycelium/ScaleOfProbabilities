@@ -6,7 +6,7 @@ The published atlas is at `https://deciban.bycelium.com`. Share the URL currentl
 
 The toolbar has one Share icon. On platforms with the [Web Share API](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share), it opens the native operating-system share sheet with the current URL. Device-provided destinations vary by device, installed apps, and platform. TikTok or Instagram can appear when the device supports them.
 
-When native sharing is unavailable or returns a non-cancelled failure, a mobile bottom sheet opens. It gives equal emphasis to Copy link, X, LinkedIn, and Bluesky. Copy citation remains a quieter supporting action. The web links cover X, LinkedIn, and [Bluesky intent links](https://bsky.network/docs/intent-links/); TikTok and Instagram use device-app targets offered by the native share sheet.
+When native sharing is unavailable or returns a non-cancelled failure, a mobile bottom sheet opens. It gives equal emphasis to Copy link, X, LinkedIn, and Bluesky. The web links cover X, LinkedIn, and [Bluesky intent links](https://bsky.network/docs/intent-links/); TikTok and Instagram use device-app targets offered by the native share sheet.
 
 The visible localized Feedback / Request toolbar link opens `mailto:feedback.scaleofprobabilities@bycelium.com`.
 

@@ -50,13 +50,6 @@ export const astronomyEN = {
     calculation: "p ≈ 0.28 by mass",
     assumptions: "The NASA representative mixture is about 70% hydrogen, 28% helium, and 2% heavier elements by mass. The model samples equal-mass portions, not atoms. It is an approximate teaching composition, not an exact value for every star or an empirical aggregate of the whole galaxy.",
   },
-  "stellar-hydrogen-helium-mass": {
-    title: "Hydrogen or helium in a common star",
-    shortTitle: "hydrogen or helium in a common star",
-    explanation: "Almost all of a representative common star is just two elements: about 98% hydrogen or helium by mass.",
-    calculation: "p ≈ 0.70 + 0.28 = 0.98 by mass",
-    assumptions: "The NASA representative mixture is about 70% hydrogen, 28% helium, and 2% heavier elements by mass. The model samples equal-mass portions, not atoms. It is an approximate teaching composition, not an exact value for every star or an empirical aggregate of the whole galaxy.",
-  },
   "main-sequence-star": {
     title: "A randomly chosen star is on the main sequence",
     shortTitle: "main-sequence star",

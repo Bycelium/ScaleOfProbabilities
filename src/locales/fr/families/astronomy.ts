@@ -50,13 +50,6 @@ export const astronomyFR = {
     calculation: "p ≈ 0,28 en masse",
     assumptions: "Le mélange représentatif de la NASA contient environ 70 % d’hydrogène, 28 % d’hélium et 2 % d’éléments plus lourds en masse. Le modèle échantillonne des portions de masse égale, pas des atomes. Cette composition pédagogique approximative ne donne ni la valeur exacte de chaque étoile ni un agrégat empirique de toute la galaxie.",
   },
-  "stellar-hydrogen-helium-mass": {
-    title: "Hydrogène ou hélium dans une étoile",
-    shortTitle: "hydrogène ou hélium dans une étoile",
-    explanation: "Une étoile commune représentative se compose presque entièrement de deux éléments : environ 98 % d’hydrogène ou d’hélium en masse.",
-    calculation: "p ≈ 0,70 + 0,28 = 0,98 en masse",
-    assumptions: "Le mélange représentatif de la NASA contient environ 70 % d’hydrogène, 28 % d’hélium et 2 % d’éléments plus lourds en masse. Le modèle échantillonne des portions de masse égale, pas des atomes. Cette composition pédagogique approximative ne donne ni la valeur exacte de chaque étoile ni un agrégat empirique de toute la galaxie.",
-  },
   "main-sequence-star": {
     title: "Une étoile choisie au hasard est sur la séquence principale",
     shortTitle: "étoile de la séquence principale",

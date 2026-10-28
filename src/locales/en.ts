@@ -50,13 +50,10 @@ export const en: LocaleDefinition = {
       close: "Close sharing options",
       copyLink: "Copy link",
       copiedLink: "Link copied.",
-      copyCitation: "Copy citation",
-      copiedCitation: "Citation copied.",
       copyUnavailable: "Copying is unavailable. Select and copy the text below.",
       shareUnavailable: "Device sharing did not open. Choose an option below.",
       nativeText: "Explore this probability:",
       nativeHomeText: "Explore events from everyday odds to the nearly impossible.",
-      citationAccessed: "Accessed",
     },
     privacy: {
       title: "Privacy & analytics",

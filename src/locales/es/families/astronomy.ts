@@ -50,13 +50,6 @@ export const astronomyES = {
     calculation: "p ≈ 0,28 por masa",
     assumptions: "La mezcla representativa de la NASA contiene cerca del 70 % de hidrógeno, el 28 % de helio y el 2 % de elementos más pesados por masa. El modelo muestrea porciones de igual masa, no átomos. Es una composición didáctica aproximada, no un valor exacto para cada estrella ni un agregado empírico de toda la galaxia.",
   },
-  "stellar-hydrogen-helium-mass": {
-    title: "Hidrógeno o helio en una estrella",
-    shortTitle: "hidrógeno o helio en una estrella",
-    explanation: "Casi toda una estrella común representativa está formada por solo dos elementos: cerca del 98 % de hidrógeno o helio por masa.",
-    calculation: "p ≈ 0,70 + 0,28 = 0,98 por masa",
-    assumptions: "La mezcla representativa de la NASA contiene cerca del 70 % de hidrógeno, el 28 % de helio y el 2 % de elementos más pesados por masa. El modelo muestrea porciones de igual masa, no átomos. Es una composición didáctica aproximada, no un valor exacto para cada estrella ni un agregado empírico de toda la galaxia.",
-  },
   "main-sequence-star": {
     title: "Una estrella elegida al azar está en la secuencia principal",
     shortTitle: "estrella de la secuencia principal",

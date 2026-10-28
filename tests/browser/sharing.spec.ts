@@ -103,7 +103,6 @@ test("the fallback sheet offers equal provider actions, a selectable copy fallba
     length: element.value.length,
   }))).toEqual({ start: 0, end: frenchLotoUrl.length, length: frenchLotoUrl.length });
   await expect(dialog.locator("[data-share-status]")).not.toBeEmpty();
-  await expect(dialog.locator("[data-copy-citation]")).toBeVisible();
 
   const mobileSheet = await sheet.evaluate(element => {
     const { left, right, bottom, width } = element.getBoundingClientRect();

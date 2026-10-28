@@ -50,13 +50,10 @@ export const fr: LocaleDefinition = {
       close: "Fermer les options de partage",
       copyLink: "Copier le lien",
       copiedLink: "Lien copié.",
-      copyCitation: "Copier la référence",
-      copiedCitation: "Référence copiée.",
       copyUnavailable: "La copie est indisponible. Sélectionnez et copiez le texte ci-dessous.",
       shareUnavailable: "Le partage de l’appareil ne s’est pas ouvert. Choisissez une option ci-dessous.",
       nativeText: "Explorez cette probabilité :",
       nativeHomeText: "Explorez des événements, des plus courants aux presque impossibles.",
-      citationAccessed: "Consulté le",
     },
     privacy: {
       title: "Confidentialité et mesure d’audience",

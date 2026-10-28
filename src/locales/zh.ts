@@ -50,13 +50,10 @@ export const zh: LocaleDefinition = {
       close: "关闭分享选项",
       copyLink: "复制链接",
       copiedLink: "链接已复制。",
-      copyCitation: "复制引用",
-      copiedCitation: "引用已复制。",
       copyUnavailable: "无法自动复制。请选中并复制下方文本。",
       shareUnavailable: "设备分享未打开。请从下方选择一种方式。",
       nativeText: "探索这一概率：",
       nativeHomeText: "探索从日常概率到几乎不可能发生的事件。",
-      citationAccessed: "访问日期：",
     },
     privacy: {
       title: "隐私与分析",

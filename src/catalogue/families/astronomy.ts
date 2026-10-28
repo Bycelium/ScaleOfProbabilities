@@ -14,7 +14,6 @@ export const astronomyModels = [
   { id: "solar-eclipse-local-year", chance: oneIn(375), size: 96, art: localEclipseArtwork("#202a31"), sourceIds: ["nasa-gsfc-total-solar-eclipses-and-local-recurrence"], classification: "Estimate" },
   { id: "stellar-hydrogen-mass", chance: lower(.70), size: 92, art: stellarCompositionArtwork("hydrogen"), sourceIds: ["nasa-stellar-composition"], classification: "Estimate" },
   { id: "stellar-helium-mass", chance: lower(.28), size: 90, art: stellarCompositionArtwork("helium"), sourceIds: ["nasa-stellar-composition"], classification: "Estimate" },
-  { id: "stellar-hydrogen-helium-mass", chance: lower(.98), size: 94, art: stellarCompositionArtwork("hydrogen-helium"), sourceIds: ["nasa-stellar-composition"], classification: "Estimate" },
   { id: "main-sequence-star", chance: lower(.90), size: 92, art: mainSequenceArtwork(), sourceIds: ["nasa-star-types"], classification: "Estimate" },
   { id: "stellar-black-hole-baryonic-mass", chance: lower(.01), size: 94, art: blackHoleArtwork(), sourceIds: ["stellar-black-holes-sicilia-2022"], classification: "Estimate" },
 ] satisfies readonly LandmarkModel[];
