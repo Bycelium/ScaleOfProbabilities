@@ -23,6 +23,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .return-zero-icon { display: none; }
 .toolbar-icon { align-items: center; color: #edf4eb; display: inline-flex; height: 2.75rem; justify-content: center; padding: 0; text-decoration: none; width: 2.75rem; }
 .toolbar-icon svg, .return-zero-icon { fill: none; height: 1.25rem; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; width: 1.25rem; }
+.feedback-link { padding-inline: .75rem; width: auto; }
+.feedback-link [data-feedback-label] { line-height: 1.15; }
 .language-picker { position: relative; }
 .language-toggle { align-items: center; display: inline-flex; justify-content: center; min-width: 2.25rem; padding-inline: .55rem; }
 .preferences-menu { background: #0b202d; border: 1px solid #6da3a0; border-radius: .8rem; box-shadow: 0 16px 42px #000b; color: #edf4eb; inset: auto; left: var(--preferences-left, .5rem); margin: 0; overflow-y: auto; padding: .45rem; position: fixed; width: min(19rem, calc(100vw - 1rem)); z-index: 200; }
@@ -116,7 +118,7 @@ dialog[data-detail-panel] > [data-close-detail] { align-self: flex-end; flex: no
 .share-destinations > :is(button, a):hover .share-action-icon { background: #286454; }
 .share-action-icon svg { fill: none; height: 1.35rem; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 1.35rem; }
 .share-utilities { align-items: center; border-top: 1px solid #426674; display: flex; flex-wrap: wrap; gap: .3rem 1rem; padding-top: .75rem; }
-.share-utilities :is(button, a) { background: none; border: 0; color: #9ed6c8; font-size: .82rem; padding: .25rem 0; text-decoration: underline; text-decoration-color: #9ed6c866; text-underline-offset: .18em; }
+.share-utilities button { background: none; border: 0; color: #9ed6c8; font-size: .82rem; padding: .25rem 0; text-decoration: underline; text-decoration-color: #9ed6c866; text-underline-offset: .18em; }
 .share-status { color: #cfe2df; font-size: .82rem; line-height: 1.35; margin: .7rem 0 0; }
 .share-status:empty { display: none; }
 .share-sheet textarea { background: #071522; border: 1px solid #547984; border-radius: .55rem; color: #edf4eb; line-height: 1.35; margin-top: .65rem; min-height: 5.5rem; padding: .6rem; resize: vertical; width: 100%; }
@@ -238,10 +240,11 @@ dd li + li { margin-top: .3rem; }
 .inline-related-landmark:hover { color: #c9eee5; }
 @media (max-width: 640px) {
   .atlas { padding: 0 .5rem; }
-  .explorer-tools { bottom: .5rem; left: 0; max-width: none; right: 0; }
+  .explorer-tools { bottom: .5rem; gap: .2rem; left: 0; max-width: none; right: 0; }
   .read-scale, .return-zero, .language-toggle, .toolbar-icon, dialog > button:first-child { min-height: 2.75rem; min-width: 2.75rem; }
   .return-zero { padding: 0; width: 2.75rem; }
   .return-zero-icon { display: block; }
+  .feedback-link { justify-content: center; padding-inline: .5rem; width: 6.75rem; }
   [data-return-label] { display: none; }
   .scale { margin-inline: -.5rem; }
   .landmark .art, .landmark:hover .art, .landmark:focus-visible .art { filter: none; }
@@ -269,6 +272,12 @@ dd li + li { margin-top: .3rem; }
   .intro-directions svg { height: 6rem; }
   .intro-directions p { font-size: .86rem; gap: .5rem; }
   .gap-caption { bottom: 7.5rem; font-size: .75rem; max-width: calc(100vw - 1.6rem); white-space: normal; width: max-content; }
+}
+@media (max-width: 380px) {
+  .explorer-tools { gap: .1rem; }
+  .feedback-link { justify-content: center; padding-inline: .25rem; width: 4.75rem; }
+  .feedback-link [data-feedback-label] { font-size: .8125rem; line-height: 1.05; text-align: center; }
+  .read-scale { font-size: .875rem; padding-inline: .55rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .depth-readout, .current-readout-stack { transition: none; }

@@ -129,7 +129,6 @@ describe("sharing", () => {
     trigger.click();
     const dialog = root.querySelector<HTMLDialogElement>("[data-share-dialog]")!;
     const close = dialog.querySelector<HTMLButtonElement>("[data-close-share]")!;
-    const download = dialog.querySelector<HTMLAnchorElement>("[data-download-gif]")!;
 
     expect(control.isOpen()).toBe(true);
     expect(document.activeElement).toBe(close);
@@ -138,15 +137,13 @@ describe("sharing", () => {
     expect(dialog.querySelector<HTMLAnchorElement>("[data-share-x]")?.href).toContain("url=https%3A%2F%2Fdeciban.bycelium.com%2Fen%2Fexamples%2Fcoin-heads%2F");
     expect(dialog.querySelector<HTMLAnchorElement>("[data-share-linkedin]")?.href).toContain("linkedin.com/sharing/share-offsite");
     expect(dialog.querySelector<HTMLAnchorElement>("[data-share-bluesky]")?.href).toContain(encodeURIComponent("https://deciban.bycelium.com/en/examples/coin-heads/"));
-    expect(download.getAttribute("href")).toBe("/social/loto-journey.gif");
-
     close.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
-    expect(document.activeElement).toBe(download);
+    expect(document.activeElement).toBe(dialog.querySelector<HTMLButtonElement>("[data-copy-citation]"));
     dialog.querySelector<HTMLButtonElement>("[data-copy-link]")!.focus();
     dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(close);
-    download.focus();
-    download.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    dialog.querySelector<HTMLButtonElement>("[data-copy-citation]")!.focus();
+    dialog.querySelector<HTMLButtonElement>("[data-copy-citation]")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(close);
     const ordinaryKey = new KeyboardEvent("keydown", { key: "a", bubbles: true, cancelable: true });
     dialog.dispatchEvent(ordinaryKey);

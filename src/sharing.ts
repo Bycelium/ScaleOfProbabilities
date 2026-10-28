@@ -60,7 +60,7 @@ export const createSharingControl = (
       <a data-share-linkedin target="_blank" rel="noreferrer">${linkedInIcon}<span>LinkedIn</span></a>
       <a data-share-bluesky target="_blank" rel="noreferrer">${blueskyIcon}<span>Bluesky</span></a>
     </div>
-    <div class="share-utilities"><button type="button" data-copy-citation></button><a href="/social/loto-journey.gif" download data-download-gif></a></div>
+    <div class="share-utilities"><button type="button" data-copy-citation></button></div>
     <p class="share-status" data-share-status role="status" aria-live="polite"></p>
     <textarea data-share-fallback readonly hidden></textarea>
   </div>`;
@@ -95,7 +95,6 @@ export const createSharingControl = (
     closeButton.title = locale.ui.share.close;
     dialog.querySelector<HTMLElement>("[data-copy-link-label]")!.textContent = locale.ui.share.copyLink;
     dialog.querySelector<HTMLButtonElement>("[data-copy-citation]")!.textContent = locale.ui.share.copyCitation;
-    dialog.querySelector<HTMLAnchorElement>("[data-download-gif]")!.textContent = locale.ui.share.downloadGif;
     x.href = `https://x.com/intent/tweet?text=${encodeURIComponent(String(payload.text))}&url=${encodeURIComponent(String(payload.url))}`;
     linkedIn.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(String(payload.url))}`;
     bluesky.href = `https://bsky.app/intent/compose?text=${encodeURIComponent(shareText)}`;

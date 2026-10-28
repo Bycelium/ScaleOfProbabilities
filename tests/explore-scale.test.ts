@@ -1566,6 +1566,8 @@ describe("public probability exploration", () => {
     expect(detail.open).toBe(true);
     expect(detail.querySelector("[data-open-share]")).toBeNull();
     expect(feedback.href).toBe("mailto:feedback.scaleofprobabilities@bycelium.com");
+    expect(feedback.textContent).toBe("Feedback / Request");
+    expect(share.textContent).toBe("");
     share.click();
     const shareDialog = document.querySelector<HTMLDialogElement>("[data-share-dialog]")!;
     expect(shareDialog.open).toBe(true);
@@ -1584,7 +1586,8 @@ describe("public probability exploration", () => {
     document.querySelector<HTMLButtonElement>('[data-preferences-toggle="toolbar"]')!.click();
     document.querySelector<HTMLInputElement>('[data-locale-choice="fr"]')!.click();
     expect(share.getAttribute("aria-label")).toBe("Partager");
-    expect(feedback.getAttribute("aria-label")).toBe("Envoyer un commentaire");
+    expect(feedback.getAttribute("aria-label")).toBe("Avis / demande");
+    expect(feedback.textContent).toBe("Avis / demande");
     rendered.dispose();
   });
 

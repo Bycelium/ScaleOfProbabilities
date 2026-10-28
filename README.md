@@ -2,7 +2,7 @@
 
 The Scale of Probability is an interactive atlas of probabilities expressed in decibans, odds, and percentages. It places each event at its exact depth on a continuous radial scale and provides the model, assumptions, calculations, and sources behind each example.
 
-[![Explore the Scale of Probability: illustrated examples arranged around the current deciban depth](docs/assets/scale-preview.png)](https://deciban.bycelium.com)
+[![Animated journey from 0 decibans to the French Loto jackpot, showing 1 in 19,068,840](public/social/loto-journey.gif)](https://deciban.bycelium.com)
 
 **[Explore the live website](https://deciban.bycelium.com)**
 

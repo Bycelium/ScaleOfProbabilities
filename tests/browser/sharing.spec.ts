@@ -49,6 +49,7 @@ test("the global Share button invokes native sharing with the localized deep lin
   await expect(page.locator("[data-share-dialog]")).toBeHidden();
   await expect(share).toBeFocused();
   await expect(page.locator("[data-feedback-link]")).toHaveAttribute("href", feedbackHref);
+  await expect(page.locator("[data-feedback-link]")).toHaveText("Avis / demande");
 });
 
 test("the fallback sheet offers equal provider actions, a selectable copy fallback, and restores focus", async ({ page }) => {
@@ -103,7 +104,6 @@ test("the fallback sheet offers equal provider actions, a selectable copy fallba
   }))).toEqual({ start: 0, end: frenchLotoUrl.length, length: frenchLotoUrl.length });
   await expect(dialog.locator("[data-share-status]")).not.toBeEmpty();
   await expect(dialog.locator("[data-copy-citation]")).toBeVisible();
-  await expect(dialog.locator("[data-download-gif]")).toHaveAttribute("href", "/social/loto-journey.gif");
 
   const mobileSheet = await sheet.evaluate(element => {
     const { left, right, bottom, width } = element.getBoundingClientRect();
@@ -129,8 +129,8 @@ test("the fallback sheet offers equal provider actions, a selectable copy fallba
 });
 
 for (const scenario of [
-  { locale: "fr" as const, width: 320, height: 640 },
-  { locale: "en" as const, width: 390, height: 844 },
+  { locale: "fr" as const, feedback: "Avis / demande", width: 320, height: 640 },
+  { locale: "en" as const, feedback: "Feedback / Request", width: 390, height: 844 },
 ]) {
   test(`keeps all five ${scenario.locale} toolbar controls usable at ${scenario.width}px`, async ({ page }) => {
     await page.setViewportSize({ width: scenario.width, height: scenario.height });
@@ -141,6 +141,7 @@ for (const scenario of [
     await expect(controls).toHaveCount(5);
     await expect(toolbar.locator("[data-open-share]")).toHaveCount(1);
     await expect(toolbar.locator("[data-feedback-link]")).toHaveAttribute("href", feedbackHref);
+    await expect(toolbar.locator("[data-feedback-link]")).toHaveText(scenario.feedback);
     await expect(toolbar.locator("[data-return-label]")).toBeHidden();
 
     const geometry = await controls.evaluateAll((elements, viewport) => {

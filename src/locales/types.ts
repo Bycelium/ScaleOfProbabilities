@@ -64,7 +64,6 @@ export type UiTranslation = Readonly<{
     copiedLink: string;
     copyCitation: string;
     copiedCitation: string;
-    downloadGif: string;
     copyUnavailable: string;
     shareUnavailable: string;
     nativeText: string;

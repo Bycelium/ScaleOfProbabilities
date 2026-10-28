@@ -118,7 +118,7 @@ When changing route metadata or preview generation, run `pnpm build` and inspect
 
 ## Sharing and social GIFs
 
-The single Share icon uses the current URL. It opens the native operating-system share sheet when available, otherwise it opens the fallback bottom sheet. Keep the URL locale unchanged and do not add a sharing-language control. The Feedback toolbar icon uses `mailto:feedback.scaleofprobabilities@bycelium.com`.
+The single Share icon uses the current URL. It opens the native operating-system share sheet when available, otherwise it opens the fallback bottom sheet. Keep the URL locale unchanged and do not add a sharing-language control. The visible localized Feedback / Request toolbar link uses `mailto:feedback.scaleofprobabilities@bycelium.com`.
 
 Regenerate `public/social/loto-journey.gif` when its scene, selected landmark, or visible probability changes. Follow [docs/sharing.md](docs/sharing.md) for the capture command, media review artifacts, and supported sharing destinations.
 
